@@ -12,6 +12,16 @@ interface BlogClientProps {
 
 export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Calculate tag counts for sorting by popularity
+  const tagCounts = allTags.reduce((acc, tag) => {
+    acc[tag] = initialPosts.filter(post => post.tags?.includes(tag)).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Sort tags by count (most popular first)
+  const sortedTags = [...allTags].sort((a, b) => tagCounts[b] - tagCounts[a]);
 
   // Filter posts by selected tag
   const posts = selectedTag
@@ -20,24 +30,50 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Hero Section */}
         <div className="mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-text-primary via-accent-blue to-accent-teal bg-clip-text text-transparent">
-            Engineering & Thoughts
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-text-primary">
+            Meta-Engineering
           </h1>
-          <p className="text-xl md:text-2xl text-text-secondary max-w-3xl leading-relaxed">
-            Exploring agile methodologies, agentic discovery, higher-order abstractions, and the ideas that shape how I build software.
+          <p className="text-xl md:text-2xl text-text-secondary leading-relaxed">
+            Exploring abstractions, diving into the unknown, and discovering what&apos;s possible when we rethink how we build.
           </p>
         </div>
 
-        {/* Tag Filter */}
+        {/* Collapsible Filter Section */}
         <div className="mb-12">
-          <TagFilter tags={allTags} selectedTag={selectedTag} onTagChange={setSelectedTag} />
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="group flex items-center gap-3 px-4 py-2.5 bg-background-secondary/50 hover:bg-background-secondary border border-gray-800 hover:border-gray-700 rounded-lg transition-all duration-200 w-full md:w-auto"
+          >
+            <svg
+              className={`w-4 h-4 text-text-secondary group-hover:text-accent-blue transition-all duration-200 ${isFilterOpen ? 'rotate-90' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">
+              Filter by Topic
+            </span>
+            {selectedTag && (
+              <span className="ml-auto px-2.5 py-0.5 text-xs font-medium bg-accent-blue/20 text-accent-blue rounded-full">
+                {selectedTag}
+              </span>
+            )}
+          </button>
+
+          {isFilterOpen && (
+            <div className="mt-4 p-4 bg-background-secondary/30 border border-gray-800 rounded-lg">
+              <TagFilter tags={sortedTags} selectedTag={selectedTag} onTagChange={setSelectedTag} />
+            </div>
+          )}
         </div>
 
-        {/* Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Posts List - Single Column */}
+        <div className="flex flex-col gap-6">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

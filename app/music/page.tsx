@@ -3,6 +3,7 @@ import SpotifyEmbed from "@/components/music/SpotifyEmbed";
 import YouTubeEmbed from "@/components/music/YouTubeEmbed";
 import SocialLinks from "@/components/music/SocialLinks";
 import Button from "@/components/ui/Button";
+import { getSiteConfig } from "@/lib/supabase/queries";
 
 export const metadata: Metadata = {
   title: "Music & Performance | Sam Swerczek",
@@ -14,7 +15,29 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MusicPage() {
+// Disable caching to always fetch fresh config
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export default async function MusicPage() {
+  // Fetch site config from Supabase
+  const siteConfig = await getSiteConfig('music_social');
+
+  // Extract URLs from config
+  const spotifyUrl = siteConfig.find(c => c.key === 'spotify_url')?.value;
+  const instagramUrl = siteConfig.find(c => c.key === 'instagram_music')?.value;
+  const facebookUrl = siteConfig.find(c => c.key === 'facebook_music')?.value;
+  const tiktokUrl = siteConfig.find(c => c.key === 'tiktok_music')?.value;
+  const patreonUrl = siteConfig.find(c => c.key === 'patreon_url')?.value;
+  const bookingEmail = siteConfig.find(c => c.key === 'booking_email')?.value;
+
+  // Extract YouTube video IDs
+  const videoIds = [
+    siteConfig.find(c => c.key === 'youtube_video_1')?.value,
+    siteConfig.find(c => c.key === 'youtube_video_2')?.value,
+    siteConfig.find(c => c.key === 'youtube_video_3')?.value,
+    siteConfig.find(c => c.key === 'youtube_video_4')?.value,
+  ].filter(Boolean);
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -46,7 +69,7 @@ export default function MusicPage() {
                 Your support helps me create more music and content for you to enjoy.
               </p>
               <Button
-                href="#"
+                href={patreonUrl}
                 variant="accent"
                 size="lg"
                 target="_blank"
@@ -69,7 +92,7 @@ export default function MusicPage() {
             </div>
             <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
               <SpotifyEmbed
-                url="https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4"
+                url={spotifyUrl}
                 type="artist"
                 height="380"
               />
@@ -77,40 +100,26 @@ export default function MusicPage() {
           </section>
 
           {/* YouTube Videos Section */}
-          <section>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Featured Performances</h2>
-              <p className="text-text-secondary text-lg">
-                Watch live sessions and music videos
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
-                <YouTubeEmbed
-                  videoId="dQw4w9WgXcQ"
-                  title="Live Acoustic Session - Original Song"
-                />
+          {videoIds.length > 0 && (
+            <section>
+              <div className="mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold mb-3">Featured Performances</h2>
+                <p className="text-text-secondary text-lg">
+                  Watch live sessions and music videos
+                </p>
               </div>
-              <div className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
-                <YouTubeEmbed
-                  videoId="jNQXAC9IVRw"
-                  title="Performance at Local Venue"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {videoIds.map((videoId, index) => (
+                  <div key={videoId} className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
+                    <YouTubeEmbed
+                      videoId={videoId}
+                      title={`Featured Video ${index + 1}`}
+                    />
+                  </div>
+                ))}
               </div>
-              <div className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
-                <YouTubeEmbed
-                  videoId="9bZkp7q19f0"
-                  title="Studio Session - Behind the Scenes"
-                />
-              </div>
-              <div className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
-                <YouTubeEmbed
-                  videoId="kJQP7kiw5Fk"
-                  title="Cover Performance"
-                />
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Social Media Section */}
           <section>
@@ -122,10 +131,10 @@ export default function MusicPage() {
             </div>
             <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
               <SocialLinks
-                instagramUrl="#"
-                facebookUrl="#"
-                linkedinUrl="#"
-                tiktokUrl="#"
+                instagramUrl={instagramUrl}
+                facebookUrl={facebookUrl}
+                tiktokUrl={tiktokUrl}
+                patreonUrl={patreonUrl}
                 layout="grid"
               />
             </div>
@@ -158,7 +167,7 @@ export default function MusicPage() {
                 <p className="text-text-secondary mb-6">
                   Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!
                 </p>
-                <Button href="#" variant="secondary" size="md">
+                <Button href={bookingEmail ? `mailto:${bookingEmail}` : '#'} variant="secondary" size="md">
                   Book a Show
                 </Button>
               </div>

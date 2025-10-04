@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface TagFilterProps {
   tags: string[];
   selectedTag: string | null;
@@ -7,44 +9,51 @@ interface TagFilterProps {
 }
 
 export default function TagFilter({ tags, selectedTag, onTagChange }: TagFilterProps) {
+  const [showAll, setShowAll] = useState(false);
+
   if (!tags || tags.length === 0) {
     return null;
   }
 
+  // Show top 5 tags by default, or all if showAll is true
+  const topTags = tags.slice(0, 5);
+  const remainingTags = tags.slice(5);
+  const displayTags = showAll ? tags : topTags;
+  const hasMore = remainingTags.length > 0;
+
   return (
-    <div className="flex flex-col gap-4">
-      <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
-        Filter by Topic
-      </h3>
-      <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={() => onTagChange(null)}
+        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
+          selectedTag === null
+            ? "bg-accent-blue text-white"
+            : "bg-background-secondary text-text-secondary hover:text-text-primary hover:bg-background-secondary/80 border border-gray-700/50"
+        }`}
+      >
+        All
+      </button>
+      {displayTags.map((tag) => (
         <button
-          onClick={() => onTagChange(null)}
-          className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
-            selectedTag === null
+          key={tag}
+          onClick={() => onTagChange(tag)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
+            selectedTag === tag
               ? "bg-accent-blue text-white"
-              : "bg-background-secondary text-text-secondary hover:text-text-primary hover:bg-background-secondary/80"
+              : "bg-background-secondary text-text-secondary hover:text-text-primary hover:bg-background-secondary/80 border border-gray-700/50"
           }`}
         >
-          All Posts
+          {tag}
         </button>
-        {tags.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => onTagChange(tag)}
-            className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
-              selectedTag === tag
-                ? "bg-accent-blue text-white"
-                : "bg-background-secondary text-text-secondary hover:text-text-primary hover:bg-background-secondary/80"
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-      {selectedTag && (
-        <p className="text-sm text-text-secondary">
-          Showing posts tagged with <span className="text-accent-blue font-medium">{selectedTag}</span>
-        </p>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 bg-background-secondary text-text-secondary hover:text-accent-blue hover:bg-background-secondary/80 border border-gray-700/50"
+          title={showAll ? "Show less" : `Show ${remainingTags.length} more`}
+        >
+          {showAll ? "Less" : "..."}
+        </button>
       )}
     </div>
   );

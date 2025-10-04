@@ -17,33 +17,35 @@ export default function PostCard({ post }: PostCardProps) {
     : '';
 
   return (
-    <Card hover className="h-full flex flex-col">
-      <CardContent className="flex-grow pt-6">
-        <Link href={`/blog/${post.slug}`} className="group">
-          <h3 className="text-xl md:text-2xl font-bold text-text-primary mb-3 group-hover:text-accent-blue transition-colors duration-200">
-            {post.title}
-          </h3>
-        </Link>
+    <Card hover className="w-full">
+      <CardContent className="pt-6 pb-6">
+        <div className="mb-4">
+          <Link href={`/blog/${post.slug}`} className="group">
+            <h3 className="text-2xl md:text-3xl font-bold text-text-primary mb-2 group-hover:text-accent-blue transition-colors duration-200">
+              {post.title}
+            </h3>
+          </Link>
 
-        <div className="flex items-center text-sm text-text-secondary mb-4">
-          <time dateTime={post.published_at || undefined}>
-            {publishedDate}
-          </time>
+          <div className="flex items-center text-sm text-text-secondary mb-2">
+            <time dateTime={post.published_at || undefined}>
+              {publishedDate}
+            </time>
+          </div>
+
+          {post.tags && post.tags.length > 0 && (
+            <div>
+              <TagsList tags={post.tags} compact />
+            </div>
+          )}
         </div>
 
-        <p className="text-text-secondary leading-relaxed mb-4 line-clamp-3">
+        <p className="text-text-secondary leading-relaxed mb-4 text-base md:text-lg">
           {post.excerpt}
         </p>
 
-        {post.tags && post.tags.length > 0 && (
-          <TagsList tags={post.tags} />
-        )}
-      </CardContent>
-
-      <CardFooter>
         <Link
           href={`/blog/${post.slug}`}
-          className="text-accent-blue hover:text-accent-teal transition-colors duration-200 font-medium inline-flex items-center group"
+          className="text-accent-blue hover:text-accent-teal transition-colors duration-200 font-medium inline-flex items-center group text-sm"
         >
           Read More
           <svg
@@ -60,7 +62,7 @@ export default function PostCard({ post }: PostCardProps) {
             />
           </svg>
         </Link>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }

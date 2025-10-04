@@ -27,6 +27,10 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   { key: 'facebook_music', value: '', category: 'music_social', label: 'Facebook (Music)', placeholder: 'https://facebook.com/...' },
   { key: 'tiktok_music', value: '', category: 'music_social', label: 'TikTok', placeholder: 'https://tiktok.com/@...' },
   { key: 'patreon_url', value: '', category: 'music_social', label: 'Patreon', placeholder: 'https://patreon.com/...' },
+  { key: 'youtube_video_1', value: '', category: 'music_social', label: 'Featured Video 1 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_2', value: '', category: 'music_social', label: 'Featured Video 2 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_3', value: '', category: 'music_social', label: 'Featured Video 3 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_4', value: '', category: 'music_social', label: 'Featured Video 4 ID', placeholder: 'dQw4w9WgXcQ' },
 
   // Engineering Social
   { key: 'linkedin_url', value: '', category: 'engineering_social', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/...' },
@@ -169,7 +173,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
                   htmlFor={item.key}
                   className="block text-sm font-medium text-text-primary mb-2"
                 >
-                  {item.label}
+                  {item.label} <span className="text-xs text-text-secondary font-mono">({item.key})</span>
                 </label>
                 <input
                   type="text"

@@ -5,17 +5,74 @@ import Button from "@/components/ui/Button";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setMousePosition({ x, y });
+  };
+
+  // Calculate which side is more in focus based on mouse position
+  const leftFocus = mousePosition.x < 0.5 ? 1 : 0.5;
+  const rightFocus = mousePosition.x >= 0.5 ? 1 : 0.5;
+
   return (
     <>
       {/* Hero Section */}
-      <div className="relative min-h-[calc(100vh-200px)] flex items-center justify-center overflow-hidden">
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background-primary via-background-navy to-background-primary">
+      <div
+        className="relative min-h-screen flex items-center justify-center overflow-hidden"
+        onMouseMove={handleMouseMove}
+      >
+        {/* Split Image Background - Only visible on desktop */}
+        <div className="absolute inset-0 hidden md:block">
+          {/* Left side - Music */}
+          <div
+            className="absolute inset-y-0 left-0 w-1/2 overflow-hidden transition-all duration-700 ease-out"
+            style={{
+              opacity: leftFocus * 0.4,
+              filter: `blur(${(1 - leftFocus) * 3}px) brightness(${0.6 + leftFocus * 0.3})`,
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out"
+              style={{
+                backgroundImage: 'url(https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80)',
+                transform: `scale(${1 + (1 - leftFocus) * 0.05})`,
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background-primary/40" />
+          </div>
+
+          {/* Right side - Tech */}
+          <div
+            className="absolute inset-y-0 right-0 w-1/2 overflow-hidden transition-all duration-700 ease-out"
+            style={{
+              opacity: rightFocus * 0.4,
+              filter: `blur(${(1 - rightFocus) * 3}px) brightness(${0.6 + rightFocus * 0.3})`,
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out"
+              style={{
+                backgroundImage: 'url(https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80)',
+                transform: `scale(${1 + (1 - rightFocus) * 0.05})`,
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background-primary/40" />
+          </div>
+
+          {/* Center divider line - subtle */}
+          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-accent-blue/20 to-transparent" />
+        </div>
+
+        {/* Animated background gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background-primary/95 via-background-navy/90 to-background-primary/95">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(74,158,255,0.1),transparent_50%)] animate-pulse"></div>
         </div>
 
@@ -28,7 +85,7 @@ export default function Home() {
           <div className="max-w-5xl mx-auto text-center">
             {/* Hero Section with fade-in animation */}
             <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold mb-6 bg-gradient-to-r from-text-primary via-accent-blue to-accent-teal bg-clip-text text-transparent animate-gradient-x">
+              <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold mb-6 text-text-primary">
                 Sam Swerczek
               </h1>
             </div>
