@@ -58,25 +58,13 @@ export async function getPostsByStatus(published: boolean) {
 
 /**
  * Search posts by title, content, or excerpt (admin version)
- * @param searchTerm - The search term
- * @returns Posts matching the search term
+ * NOTE: This function has been consolidated into queries.ts
+ * For admin use cases, import searchPosts from queries.ts and use:
+ * searchPosts(searchTerm, { publishedOnly: false })
+ *
+ * This provides a unified search function that can be used for both
+ * public (published posts only) and admin (all posts) scenarios.
  */
-export async function searchPosts(searchTerm: string) {
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error searching posts:', error);
-    throw new Error('Failed to search posts');
-  }
-
-  return data as Post[];
-}
 
 export async function getPostStats() {
   const supabase = createServerClient();

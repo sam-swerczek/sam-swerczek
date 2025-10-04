@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Post } from '@/lib/types';
 import PostList from '@/components/admin/PostList';
 import { deletePost, togglePostPublished } from '@/lib/supabase/admin';
+import { getButtonClasses } from '@/lib/utils/buttonStyles';
 
 interface ManagePostsClientProps {
   initialPosts: Post[];
@@ -79,31 +80,19 @@ export default function ManagePostsClient({ initialPosts }: ManagePostsClientPro
           <div className="flex gap-2">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'all'
-                  ? 'bg-accent-blue text-white'
-                  : 'bg-background-primary text-text-secondary hover:text-text-primary border border-gray-700'
-              }`}
+              className={getButtonClasses('filter', filterStatus === 'all')}
             >
               All ({stats.all})
             </button>
             <button
               onClick={() => setFilterStatus('published')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'published'
-                  ? 'bg-accent-blue text-white'
-                  : 'bg-background-primary text-text-secondary hover:text-text-primary border border-gray-700'
-              }`}
+              className={getButtonClasses('filter', filterStatus === 'published')}
             >
               Published ({stats.published})
             </button>
             <button
               onClick={() => setFilterStatus('drafts')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'drafts'
-                  ? 'bg-accent-blue text-white'
-                  : 'bg-background-primary text-text-secondary hover:text-text-primary border border-gray-700'
-              }`}
+              className={getButtonClasses('filter', filterStatus === 'drafts')}
             >
               Drafts ({stats.drafts})
             </button>

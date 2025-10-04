@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPublishedPosts } from '@/lib/supabase/queries';
 import TagsList from '@/components/blog/TagsList';
+import { ArrowRightIcon } from '@/components/ui/icons';
 
 export default async function FeaturedBlog() {
   const posts = await getPublishedPosts();
@@ -49,9 +50,7 @@ export default async function FeaturedBlog() {
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent-blue hover:bg-accent-teal text-white rounded-lg font-semibold transition-colors group"
                 >
                   Read Article
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
+                  <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   href="/blog"

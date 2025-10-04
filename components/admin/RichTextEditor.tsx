@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { marked } from 'marked';
 
 interface RichTextEditorProps {
   value: string;
@@ -27,34 +28,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
   };
 
   const renderPreview = () => {
-    // Simple markdown preview - converts basic markdown to HTML
-    let html = value;
-
-    // Headers
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mb-2 mt-4">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mb-3 mt-6">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mb-4 mt-8">$1</h1>');
-
-    // Bold and Italic
-    html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-accent-blue hover:underline">$1</a>');
-
-    // Code blocks
-    html = html.replace(/```([^`]+)```/g, '<pre class="bg-background-primary p-4 rounded my-4 overflow-x-auto"><code>$1</code></pre>');
-    html = html.replace(/`([^`]+)`/g, '<code class="bg-background-primary px-2 py-1 rounded text-sm font-mono">$1</code>');
-
-    // Lists
-    html = html.replace(/^\* (.*$)/gim, '<li class="ml-4">$1</li>');
-    html = html.replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>');
-
-    // Line breaks
-    html = html.replace(/\n/g, '<br/>');
-
-    return { __html: html };
+    return { __html: marked(value, { breaks: true, gfm: true }) as string };
   };
 
   return (

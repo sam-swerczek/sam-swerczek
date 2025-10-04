@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button';
+import { MusicIcon, CodeIcon } from '@/components/ui/icons';
 
 export default function NavigationSection() {
   return (
@@ -20,9 +21,7 @@ export default function NavigationSection() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent-blue/10 rounded-full blur-3xl -z-0" />
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
-                <svg className="w-8 h-8 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
+                <MusicIcon className="w-8 h-8 text-accent-blue" />
                 <h3 className="text-2xl font-bold text-text-primary">Music & Performance</h3>
               </div>
               <p className="text-text-secondary mb-6 leading-relaxed flex-1">
@@ -40,9 +39,7 @@ export default function NavigationSection() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
-                <svg className="w-8 h-8 text-accent-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
+                <CodeIcon className="w-8 h-8 text-accent-teal" />
                 <h3 className="text-2xl font-bold text-text-primary">Engineering & Blog</h3>
               </div>
               <p className="text-text-secondary mb-6 leading-relaxed flex-1">

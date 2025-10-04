@@ -201,24 +201,36 @@ export async function getPublishedPostsCount(tags?: string[]): Promise<number> {
 /**
  * Search posts by title, content, or excerpt
  * @param searchTerm - The search term
- * @param options - Query options (limit, offset)
+ * @param options - Query options (limit, offset, publishedOnly)
  * @returns Posts matching the search term
  */
 export async function searchPosts(searchTerm: string, options?: {
   limit?: number;
   offset?: number;
+  publishedOnly?: boolean;
 }) {
-  const { data, error } = await supabase
+  // Use publishedOnly flag (defaults to true for public API)
+  const publishedOnly = options?.publishedOnly !== false;
+
+  let query = supabase
     .from('posts')
-    .select('*')
-    .eq('published', true)
+    .select('*');
+
+  // Only filter by published status if publishedOnly is true
+  if (publishedOnly) {
+    query = query.eq('published', true);
+  }
+
+  query = query
     .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
-    .order('published_at', { ascending: false })
+    .order(publishedOnly ? 'published_at' : 'created_at', { ascending: false })
     .limit(options?.limit || 10)
     .range(
       options?.offset || 0,
       (options?.offset || 0) + (options?.limit || 10) - 1
     );
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error searching posts:', error);

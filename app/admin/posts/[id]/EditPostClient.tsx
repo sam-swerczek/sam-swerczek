@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import PostForm from '@/components/admin/PostForm';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { updatePost, deletePost } from '@/lib/supabase/admin';
+import { Alert } from '@/components/ui/Alert';
+import { useFormSubmit } from '@/lib/hooks/useFormSubmit';
 import type { Post } from '@/lib/types';
 
 interface EditPostClientProps {
@@ -13,37 +15,26 @@ interface EditPostClientProps {
 
 export default function EditPostClient({ post }: EditPostClientProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSubmit = async (postData: Omit<Post, 'id' | 'created_at' | 'updated_at'>) => {
-    setIsLoading(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      await updatePost(post.id, postData);
-      setSuccess(true);
-
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
-
+  const { handleSubmit, isLoading, error, success } = useFormSubmit({
+    successDuration: 3000,
+    onSuccess: () => {
       router.refresh();
-    } catch (err) {
-      console.error('Error updating post:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update post');
-    } finally {
-      setIsLoading(false);
     }
+  });
+
+  const onSubmit = async (postData: Omit<Post, 'id' | 'created_at' | 'updated_at'>) => {
+    await handleSubmit(async () => {
+      await updatePost(post.id, postData);
+    });
   };
 
   const handleDelete = async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsDeleting(true);
+    setDeleteError(null);
 
     try {
       await deletePost(post.id);
@@ -51,8 +42,8 @@ export default function EditPostClient({ post }: EditPostClientProps) {
       router.refresh();
     } catch (err) {
       console.error('Error deleting post:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete post');
-      setIsLoading(false);
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete post');
+      setIsDeleting(false);
       setDeleteDialogOpen(false);
     }
   };
@@ -61,37 +52,26 @@ export default function EditPostClient({ post }: EditPostClientProps) {
     <div>
       {/* Success Message */}
       {success && (
-        <div className="mb-6 p-4 bg-green-900/30 border border-green-700 rounded-lg animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 text-green-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <p className="font-medium">Post updated successfully!</p>
-          </div>
+        <div className="mb-6 animate-in fade-in duration-200">
+          <Alert type="success" message="Post updated successfully!" />
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-lg">
-          <div className="flex items-start gap-2 text-red-400">
-            <svg className="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div>
-              <p className="font-medium">Error updating post</p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
-          </div>
+        <div className="mb-6">
+          <Alert type="error" title="Error updating post" message={error} />
         </div>
       )}
 
-      <PostForm post={post} onSubmit={handleSubmit} isLoading={isLoading} />
+      {/* Delete Error Message */}
+      {deleteError && (
+        <div className="mb-6">
+          <Alert type="error" title="Error deleting post" message={deleteError} />
+        </div>
+      )}
+
+      <PostForm post={post} onSubmit={onSubmit} isLoading={isLoading} />
 
       {/* Delete Button */}
       <div className="mt-8 pt-8 border-t border-gray-700">
@@ -104,7 +84,7 @@ export default function EditPostClient({ post }: EditPostClientProps) {
           </div>
           <button
             onClick={() => setDeleteDialogOpen(true)}
-            disabled={isLoading}
+            disabled={isLoading || isDeleting}
             className="px-6 py-2 bg-red-900/30 border border-red-700 text-red-400 rounded-lg font-semibold hover:bg-red-900/50 transition-colors disabled:opacity-50"
           >
             Delete Post

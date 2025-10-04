@@ -4,6 +4,7 @@ import YouTubeEmbed from "@/components/music/YouTubeEmbed";
 import SocialLinks from "@/components/music/SocialLinks";
 import Button from "@/components/ui/Button";
 import { getSiteConfig } from "@/lib/supabase/queries";
+import { CalendarIcon } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   title: "Music & Performance | Sam Swerczek",
@@ -164,19 +165,7 @@ export default async function MusicPage() {
             </div>
             <div className="bg-background-secondary/50 backdrop-blur-sm p-8 md:p-12 rounded-2xl border border-text-secondary/10 text-center">
               <div className="max-w-md mx-auto">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4 text-accent-blue/40"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-accent-blue/40" />
                 <h3 className="text-xl font-semibold mb-2">No Shows Scheduled Yet</h3>
                 <p className="text-text-secondary mb-6">
                   Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!

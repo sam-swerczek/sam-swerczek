@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Post } from '@/lib/types';
 import Card, { CardContent, CardFooter } from '@/components/ui/Card';
 import TagsList from './TagsList';
+import { CalendarIcon, ClockIcon, ArrowRightIcon } from '@/components/ui/icons';
 
 interface PostCardProps {
   post: Post;
@@ -27,9 +28,7 @@ export default function PostCard({ post }: PostCardProps) {
 
             <div className="flex items-center gap-3 text-sm text-text-secondary/80 mb-3">
               <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <CalendarIcon className="w-4 h-4" />
                 <time dateTime={post.published_at || undefined}>
                   {publishedDate}
                 </time>
@@ -50,24 +49,10 @@ export default function PostCard({ post }: PostCardProps) {
           <div className="flex items-center justify-between">
             <span className="text-accent-blue group-hover:text-accent-teal transition-colors duration-200 font-semibold inline-flex items-center text-sm">
               Read Article
-              <svg
-                className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
+              <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
             </span>
             <div className="flex items-center gap-1.5 text-text-secondary/60 text-xs">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ClockIcon className="w-4 h-4" />
               <span>5 min read</span>
             </div>
           </div>

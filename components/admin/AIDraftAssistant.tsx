@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { Alert } from '@/components/ui/Alert';
+import { DraftPreview } from './DraftPreview';
+import { LightbulbIcon, CloseIcon, SpinnerIcon } from '@/components/ui/icons';
 
 interface GeneratedDraft {
   title: string;
@@ -81,20 +84,7 @@ export default function AIDraftAssistant({ onUseDraft }: AIDraftAssistantProps) 
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-blue to-accent-teal hover:from-accent-teal hover:to-accent-blue text-white rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
       >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-          />
-        </svg>
+        <LightbulbIcon className="w-5 h-5" />
         AI Draft Assistant
       </button>
 
@@ -106,19 +96,7 @@ export default function AIDraftAssistant({ onUseDraft }: AIDraftAssistantProps) 
             <div className="flex items-center justify-between p-6 border-b border-gray-700 bg-gradient-to-r from-accent-blue/10 to-accent-teal/10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-accent-blue to-accent-teal rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                    />
-                  </svg>
+                  <LightbulbIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-text-primary">AI Draft Assistant</h2>
@@ -129,19 +107,7 @@ export default function AIDraftAssistant({ onUseDraft }: AIDraftAssistantProps) 
                 onClick={handleClose}
                 className="p-2 hover:bg-background-primary rounded-lg transition-colors"
               >
-                <svg
-                  className="w-6 h-6 text-text-secondary hover:text-text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <CloseIcon className="w-6 h-6 text-text-secondary hover:text-text-primary" />
               </button>
             </div>
 
@@ -170,53 +136,14 @@ export default function AIDraftAssistant({ onUseDraft }: AIDraftAssistantProps) 
 
               {/* Error Message */}
               {error && (
-                <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg">
-                  <div className="flex items-start gap-2 text-red-400">
-                    <svg
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p className="font-medium">Error generating draft</p>
-                      <p className="text-sm mt-1">{error}</p>
-                    </div>
-                  </div>
-                </div>
+                <Alert type="error" title="Error generating draft" message={error} />
               )}
 
               {/* Loading State */}
               {isGenerating && (
                 <div className="p-8 text-center">
                   <div className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-accent-blue/20 to-accent-teal/20 border border-accent-blue/50 rounded-lg">
-                    <svg
-                      className="animate-spin h-6 w-6 text-accent-blue"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <SpinnerIcon className="h-6 w-6 text-accent-blue" />
                     <p className="text-lg font-medium text-text-primary">
                       Generating your draft with Claude...
                     </p>
@@ -228,57 +155,8 @@ export default function AIDraftAssistant({ onUseDraft }: AIDraftAssistantProps) 
               {/* Generated Draft Preview */}
               {generatedDraft && !isGenerating && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <p className="font-medium">Draft generated successfully!</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 p-4 bg-background-primary border border-gray-700 rounded-lg max-h-96 overflow-y-auto">
-                    <div>
-                      <h3 className="text-sm font-medium text-text-secondary mb-1">Title</h3>
-                      <p className="text-lg font-semibold text-text-primary">{generatedDraft.title}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-medium text-text-secondary mb-1">Slug</h3>
-                      <p className="text-sm text-accent-blue font-mono">{generatedDraft.slug}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-medium text-text-secondary mb-1">Excerpt</h3>
-                      <p className="text-sm text-text-primary">{generatedDraft.excerpt}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-medium text-text-secondary mb-1">Tags</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {generatedDraft.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-accent-blue/20 text-accent-blue text-xs rounded-md border border-accent-blue/30"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-medium text-text-secondary mb-1">Content Preview</h3>
-                      <div className="text-sm text-text-primary bg-background-secondary p-3 rounded border border-gray-700 max-h-48 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap font-sans">{generatedDraft.content.slice(0, 500)}...</pre>
-                      </div>
-                    </div>
-                  </div>
+                  <Alert type="success" message="Draft generated successfully!" />
+                  <DraftPreview draft={generatedDraft} />
                 </div>
               )}
             </div>

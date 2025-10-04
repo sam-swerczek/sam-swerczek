@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SiteConfig } from '@/lib/types';
 import { updateSiteConfig, createSiteConfig } from '@/lib/supabase/admin';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { Alert } from '@/components/ui/Alert';
 
 interface SiteConfigClientProps {
   initialConfig: SiteConfig[];
@@ -132,34 +133,14 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
     <div className="space-y-6">
       {/* Success Message */}
       {success && (
-        <div className="p-4 bg-green-900/30 border border-green-700 rounded-lg animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 text-green-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <p className="font-medium">Configuration saved successfully!</p>
-          </div>
+        <div className="animate-in fade-in duration-200">
+          <Alert type="success" message="Configuration saved successfully!" />
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg">
-          <div className="flex items-start gap-2 text-red-400">
-            <svg className="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div>
-              <p className="font-medium">Error saving configuration</p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
-          </div>
-        </div>
+        <Alert type="error" title="Error saving configuration" message={error} />
       )}
 
       {/* Config Sections */}

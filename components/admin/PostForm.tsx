@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Post } from '@/lib/types';
 import RichTextEditor from './RichTextEditor';
 import { generateSlug } from '@/lib/utils/slugify';
+import { FormField } from '@/components/ui/FormField';
+import { inputClassName, textareaClassName } from '@/lib/utils/formStyles';
 
 interface PostFormProps {
   post?: Post;
@@ -110,31 +112,25 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
   return (
     <form className="space-y-6">
       {/* Title */}
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-text-primary mb-2">
-          Title *
-        </label>
+      <FormField id="title" label="Title" required error={errors.title}>
         <input
           type="text"
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className={`w-full px-4 py-2 bg-background-secondary border ${
-            errors.title ? 'border-red-500' : 'border-gray-700'
-          } rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue`}
+          className={inputClassName(!!errors.title)}
           placeholder="Enter post title"
         />
-        {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
-      </div>
+      </FormField>
 
       {/* Slug */}
-      <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-text-primary mb-2">
-          Slug *
-          <span className="ml-2 text-xs text-text-secondary font-normal">
-            (URL-friendly version of the title)
-          </span>
-        </label>
+      <FormField
+        id="slug"
+        label="Slug"
+        required
+        error={errors.slug}
+        helperText="URL-friendly version of the title"
+      >
         <div className="flex items-start gap-2">
           <input
             type="text"
@@ -144,9 +140,7 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
               setSlug(e.target.value);
               setAutoSlug(false);
             }}
-            className={`flex-1 px-4 py-2 bg-background-secondary border ${
-              errors.slug ? 'border-red-500' : 'border-gray-700'
-            } rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue`}
+            className={inputClassName(!!errors.slug)}
             placeholder="my-blog-post"
           />
           <button
@@ -160,29 +154,25 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
             Auto-generate
           </button>
         </div>
-        {errors.slug && <p className="mt-1 text-sm text-red-500">{errors.slug}</p>}
-      </div>
+      </FormField>
 
       {/* Excerpt */}
-      <div>
-        <label htmlFor="excerpt" className="block text-sm font-medium text-text-primary mb-2">
-          Excerpt *
-          <span className="ml-2 text-xs text-text-secondary font-normal">
-            (Brief summary shown on listing pages)
-          </span>
-        </label>
+      <FormField
+        id="excerpt"
+        label="Excerpt"
+        required
+        error={errors.excerpt}
+        helperText="Brief summary shown on listing pages"
+      >
         <textarea
           id="excerpt"
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
           rows={3}
-          className={`w-full px-4 py-2 bg-background-secondary border ${
-            errors.excerpt ? 'border-red-500' : 'border-gray-700'
-          } rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue resize-none`}
+          className={textareaClassName(!!errors.excerpt)}
           placeholder="A brief description of your post..."
         />
-        {errors.excerpt && <p className="mt-1 text-sm text-red-500">{errors.excerpt}</p>}
-      </div>
+      </FormField>
 
       {/* Content */}
       <div>
@@ -198,67 +188,58 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
       </div>
 
       {/* Tags */}
-      <div>
-        <label htmlFor="tags" className="block text-sm font-medium text-text-primary mb-2">
-          Tags
-          <span className="ml-2 text-xs text-text-secondary font-normal">
-            (Comma-separated, e.g., &quot;engineering, typescript, react&quot;)
-          </span>
-        </label>
+      <FormField
+        id="tags"
+        label="Tags"
+        helperText='Comma-separated, e.g., "engineering, typescript, react"'
+      >
         <input
           type="text"
           id="tags"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          className="w-full px-4 py-2 bg-background-secondary border border-gray-700 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
+          className={inputClassName()}
           placeholder="engineering, typescript, react"
         />
-      </div>
+      </FormField>
 
       {/* Featured Image URL */}
-      <div>
-        <label htmlFor="featuredImage" className="block text-sm font-medium text-text-primary mb-2">
-          Featured Image URL
-          <span className="ml-2 text-xs text-text-secondary font-normal">(optional)</span>
-        </label>
+      <FormField
+        id="featuredImage"
+        label="Featured Image URL"
+        helperText="optional"
+      >
         <input
           type="url"
           id="featuredImage"
           value={featuredImageUrl}
           onChange={(e) => setFeaturedImageUrl(e.target.value)}
-          className="w-full px-4 py-2 bg-background-secondary border border-gray-700 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
+          className={inputClassName()}
           placeholder="https://example.com/image.jpg"
         />
-      </div>
+      </FormField>
 
       {/* Meta Description */}
-      <div>
-        <label htmlFor="metaDescription" className="block text-sm font-medium text-text-primary mb-2">
-          Meta Description (SEO) *
-          <span className="ml-2 text-xs text-text-secondary font-normal">
-            (150-160 characters recommended)
-          </span>
-        </label>
+      <FormField
+        id="metaDescription"
+        label="Meta Description (SEO)"
+        required
+        error={errors.metaDescription}
+        helperText="150-160 characters recommended"
+      >
         <textarea
           id="metaDescription"
           value={metaDescription}
           onChange={(e) => setMetaDescription(e.target.value)}
           rows={2}
           maxLength={160}
-          className={`w-full px-4 py-2 bg-background-secondary border ${
-            errors.metaDescription ? 'border-red-500' : 'border-gray-700'
-          } rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue resize-none`}
+          className={textareaClassName(!!errors.metaDescription)}
           placeholder="This description will appear in search engine results..."
         />
-        <div className="flex justify-between mt-1">
-          {errors.metaDescription && (
-            <p className="text-sm text-red-500">{errors.metaDescription}</p>
-          )}
-          <p className="text-xs text-text-secondary ml-auto">
-            {metaDescription.length}/160 characters
-          </p>
-        </div>
-      </div>
+        <p className="text-xs text-text-secondary mt-1">
+          {metaDescription.length}/160 characters
+        </p>
+      </FormField>
 
       {/* Published Checkbox */}
       <div className="flex items-center gap-3 p-4 bg-background-secondary rounded-lg border border-gray-700">

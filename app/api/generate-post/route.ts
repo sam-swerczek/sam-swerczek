@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { generateSlug } from '@/lib/utils/slugify';
 
 /**
  * POST /api/generate-post
@@ -129,13 +130,8 @@ IMPORTANT: Respond with ONLY a valid JSON object. Make sure all newlines in the 
       throw new Error('Incomplete response from Claude. Missing required fields.');
     }
 
-    // Generate slug from title (convert to lowercase, replace spaces with hyphens, remove special chars)
-    const slug = generatedPost.title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    // Generate slug from title using shared utility
+    const slug = generateSlug(generatedPost.title);
 
     // Return the generated post data
     return NextResponse.json({
