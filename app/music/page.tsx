@@ -37,7 +37,7 @@ export default async function MusicPage() {
     siteConfig.find(c => c.key === 'youtube_video_2')?.value,
     siteConfig.find(c => c.key === 'youtube_video_3')?.value,
     siteConfig.find(c => c.key === 'youtube_video_4')?.value,
-  ].filter(Boolean);
+  ].filter((id): id is string => Boolean(id));
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -83,21 +83,23 @@ export default async function MusicPage() {
           </section>
 
           {/* Spotify Section */}
-          <section>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Listen on Spotify</h2>
-              <p className="text-text-secondary text-lg">
-                Stream my latest tracks and playlists
-              </p>
-            </div>
-            <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
-              <SpotifyEmbed
-                url={spotifyUrl}
-                type="artist"
-                height="380"
-              />
-            </div>
-          </section>
+          {spotifyUrl && (
+            <section>
+              <div className="mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold mb-3">Listen on Spotify</h2>
+                <p className="text-text-secondary text-lg">
+                  Stream my latest tracks and playlists
+                </p>
+              </div>
+              <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
+                <SpotifyEmbed
+                  url={spotifyUrl}
+                  type="artist"
+                  height="380"
+                />
+              </div>
+            </section>
+          )}
 
           {/* YouTube Videos Section */}
           {videoIds.length > 0 && (
