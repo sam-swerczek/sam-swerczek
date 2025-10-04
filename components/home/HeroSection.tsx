@@ -83,7 +83,7 @@ export default function HeroSection() {
         <div className="max-w-5xl mx-auto text-center">
           {/* Hero Section with fade-in animation */}
           <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold mb-6 text-text-primary">
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold mb-6 text-text-primary font-montserrat tracking-tight">
               Sam Swerczek
             </h1>
           </div>

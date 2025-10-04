@@ -31,13 +31,25 @@ export default async function MusicPage() {
   const patreonUrl = siteConfig.find(c => c.key === 'patreon_url')?.value;
   const bookingEmail = siteConfig.find(c => c.key === 'booking_email')?.value;
 
-  // Extract YouTube video IDs
-  const videoIds = [
-    siteConfig.find(c => c.key === 'youtube_video_1')?.value,
-    siteConfig.find(c => c.key === 'youtube_video_2')?.value,
-    siteConfig.find(c => c.key === 'youtube_video_3')?.value,
-    siteConfig.find(c => c.key === 'youtube_video_4')?.value,
-  ].filter((id): id is string => Boolean(id));
+  // Extract YouTube video IDs and titles
+  const videos = [
+    {
+      id: siteConfig.find(c => c.key === 'youtube_video_1')?.value,
+      title: siteConfig.find(c => c.key === 'youtube_video_1_title')?.value
+    },
+    {
+      id: siteConfig.find(c => c.key === 'youtube_video_2')?.value,
+      title: siteConfig.find(c => c.key === 'youtube_video_2_title')?.value
+    },
+    {
+      id: siteConfig.find(c => c.key === 'youtube_video_3')?.value,
+      title: siteConfig.find(c => c.key === 'youtube_video_3_title')?.value
+    },
+    {
+      id: siteConfig.find(c => c.key === 'youtube_video_4')?.value,
+      title: siteConfig.find(c => c.key === 'youtube_video_4_title')?.value
+    },
+  ].filter(video => Boolean(video.id));
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -102,7 +114,7 @@ export default async function MusicPage() {
           )}
 
           {/* YouTube Videos Section */}
-          {videoIds.length > 0 && (
+          {videos.length > 0 && (
             <section>
               <div className="mb-8">
                 <h2 className="text-3xl md:text-4xl font-bold mb-3">Featured Performances</h2>
@@ -111,11 +123,11 @@ export default async function MusicPage() {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {videoIds.map((videoId, index) => (
-                  <div key={videoId} className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
+                {videos.map((video) => (
+                  <div key={video.id} className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
                     <YouTubeEmbed
-                      videoId={videoId}
-                      title={`Featured Video ${index + 1}`}
+                      videoId={video.id!}
+                      title={video.title || 'YouTube Video'}
                     />
                   </div>
                 ))}

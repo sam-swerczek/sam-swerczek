@@ -29,9 +29,13 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   { key: 'tiktok_music', value: '', category: 'music_social', label: 'TikTok', placeholder: 'https://tiktok.com/@...' },
   { key: 'patreon_url', value: '', category: 'music_social', label: 'Patreon', placeholder: 'https://patreon.com/...' },
   { key: 'youtube_video_1', value: '', category: 'music_social', label: 'Featured Video 1 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_1_title', value: '', category: 'music_social', label: 'Featured Video 1 Title', placeholder: 'My Awesome Performance' },
   { key: 'youtube_video_2', value: '', category: 'music_social', label: 'Featured Video 2 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_2_title', value: '', category: 'music_social', label: 'Featured Video 2 Title', placeholder: 'Live Session' },
   { key: 'youtube_video_3', value: '', category: 'music_social', label: 'Featured Video 3 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_3_title', value: '', category: 'music_social', label: 'Featured Video 3 Title', placeholder: 'Cover Song' },
   { key: 'youtube_video_4', value: '', category: 'music_social', label: 'Featured Video 4 ID', placeholder: 'dQw4w9WgXcQ' },
+  { key: 'youtube_video_4_title', value: '', category: 'music_social', label: 'Featured Video 4 Title', placeholder: 'Original Music' },
 
   // Engineering Social
   { key: 'linkedin_url', value: '', category: 'engineering_social', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/...' },

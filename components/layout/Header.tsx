@@ -16,7 +16,7 @@ export default function Header() {
     <header className="border-b border-background-secondary">
       <nav className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold hover:text-accent-blue transition-colors">
+          <Link href="/" className="text-2xl font-bold hover:text-accent-blue transition-colors font-montserrat tracking-tight">
             Sam Swerczek
           </Link>
 

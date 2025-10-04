@@ -28,6 +28,7 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['Fira Code', 'JetBrains Mono', 'monospace'],
+        montserrat: ['var(--font-montserrat)', 'sans-serif'],
       },
       animation: {
         'gradient-x': 'gradient-x 3s ease infinite',
