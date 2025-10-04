@@ -45,6 +45,14 @@ export default function Header() {
             >
               Blog
             </Link>
+            <Link
+              href="/contact"
+              className={`hover:text-accent-blue transition-colors ${
+                isActive("/contact") ? "text-accent-blue" : "text-text-secondary"
+              }`}
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </nav>

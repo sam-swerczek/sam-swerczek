@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { SiteConfig } from '@/lib/types';
 import { updateSiteConfig, createSiteConfig } from '@/lib/supabase/admin';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 interface SiteConfigClientProps {
   initialConfig: SiteConfig[];
@@ -40,6 +41,7 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   // General
   { key: 'contact_email', value: '', category: 'general', label: 'Contact Email', placeholder: 'hello@example.com' },
   { key: 'booking_email', value: '', category: 'general', label: 'Booking Email', placeholder: 'booking@example.com' },
+  { key: 'profile_image_url', value: '', category: 'general', label: 'Profile Image URL', placeholder: 'https://example.com/image.jpg' },
 ];
 
 export default function SiteConfigClient({ initialConfig }: SiteConfigClientProps) {
@@ -169,20 +171,30 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.key}>
-                <label
-                  htmlFor={item.key}
-                  className="block text-sm font-medium text-text-primary mb-2"
-                >
-                  {item.label} <span className="text-xs text-text-secondary font-mono">({item.key})</span>
-                </label>
-                <input
-                  type="text"
-                  id={item.key}
-                  value={item.value}
-                  onChange={(e) => handleValueChange(item.key, e.target.value)}
-                  placeholder={item.placeholder}
-                  className="w-full px-4 py-2 bg-background-primary border border-gray-700 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
+                {item.key === 'profile_image_url' ? (
+                  <ImageUpload
+                    currentImageUrl={item.value}
+                    onImageUploaded={(url) => handleValueChange(item.key, url)}
+                    label={item.label}
+                  />
+                ) : (
+                  <>
+                    <label
+                      htmlFor={item.key}
+                      className="block text-sm font-medium text-text-primary mb-2"
+                    >
+                      {item.label} <span className="text-xs text-text-secondary font-mono">({item.key})</span>
+                    </label>
+                    <input
+                      type="text"
+                      id={item.key}
+                      value={item.value}
+                      onChange={(e) => handleValueChange(item.key, e.target.value)}
+                      placeholder={item.placeholder}
+                      className="w-full px-4 py-2 bg-background-primary border border-gray-700 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                    />
+                  </>
+                )}
               </div>
             ))}
           </div>

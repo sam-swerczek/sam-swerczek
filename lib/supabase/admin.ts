@@ -337,3 +337,57 @@ export async function deleteMedia(id: string) {
 
   return true;
 }
+
+// STORAGE ADMIN FUNCTIONS
+
+/**
+ * Upload a profile image to Supabase Storage
+ * @param file - The file to upload (as FormData)
+ * @param userId - The user ID for organizing files
+ * @returns The public URL of the uploaded image
+ */
+export async function uploadProfileImage(formData: FormData) {
+  const supabase = createServerClient();
+
+  const file = formData.get('file') as File;
+  if (!file) {
+    throw new Error('No file provided');
+  }
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!validTypes.includes(file.type)) {
+    throw new Error('Invalid file type. Please upload an image (JPEG, PNG, WebP, or GIF)');
+  }
+
+  // Validate file size (max 5MB)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    throw new Error('File too large. Maximum size is 5MB');
+  }
+
+  // Generate unique filename
+  const fileExt = file.name.split('.').pop();
+  const fileName = `profile-${Date.now()}.${fileExt}`;
+  const filePath = `profiles/${fileName}`;
+
+  // Upload to Supabase Storage
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('media')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('Error uploading file:', uploadError);
+    throw new Error(`Failed to upload file: ${uploadError.message}`);
+  }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('media')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
