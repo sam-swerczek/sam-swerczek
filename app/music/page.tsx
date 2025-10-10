@@ -53,64 +53,29 @@ export default async function MusicPage() {
   ].filter(video => Boolean(video.id));
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-20 md:py-28 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-accent-blue/10 via-transparent to-transparent" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-accent-blue via-accent-teal to-accent-gold bg-clip-text text-transparent">
-              Music & Performance
-            </h1>
-            <p className="text-xl md:text-2xl text-text-secondary mb-8 leading-relaxed">
-              Singer-songwriter blending acoustic storytelling with contemporary sound.
-              <br className="hidden md:block" />
-              Experience the music, watch live performances, and connect.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="container mx-auto px-4 pb-20">
+      <div className="container mx-auto px-4 py-12 md:py-16 pb-20">
         <div className="max-w-6xl mx-auto space-y-16">
 
-          {/* Patreon CTA - Prominent placement */}
-          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-gold/20 via-accent-gold/10 to-transparent border border-accent-gold/30 p-8 md:p-12">
-            <div className="relative z-10 text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Support My Music</h2>
-              <p className="text-lg text-text-secondary mb-8">
-                Join my Patreon community for exclusive content, early releases, and behind-the-scenes access.
-                Your support helps me create more music and content for you to enjoy.
-              </p>
-              <Button
-                href={patreonUrl}
-                variant="accent"
-                size="lg"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Become a Patron
-              </Button>
-            </div>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent-gold/20 rounded-full blur-3xl -z-0" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-gold/10 rounded-full blur-3xl -z-0" />
-          </section>
-
-          {/* Spotify Section */}
+          {/* Spotify Section - Featured CTA */}
           {spotifyUrl && (
-            <section>
-              <div className="mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-3">Listen on Spotify</h2>
-                <p className="text-text-secondary text-lg">
-                  Stream my latest tracks and playlists
-                </p>
+            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-blue/20 via-accent-teal/10 to-transparent border border-accent-blue/30 p-8 md:p-12">
+              <div className="relative z-10">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl md:text-5xl font-bold mb-4">Listen Now on Spotify</h2>
+                  <p className="text-lg md:text-xl text-text-secondary">
+                    Stream my latest tracks, albums, and playlists
+                  </p>
+                </div>
+                <div className="bg-background-secondary/50 backdrop-blur-sm p-4 md:p-6 rounded-xl border border-text-secondary/10">
+                  <SpotifyEmbed
+                    url={spotifyUrl}
+                    type="artist"
+                    height="380"
+                  />
+                </div>
               </div>
-              <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
-                <SpotifyEmbed
-                  url={spotifyUrl}
-                  type="artist"
-                  height="380"
-                />
-              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/20 rounded-full blur-3xl -z-0" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
             </section>
           )}
 
@@ -136,25 +101,6 @@ export default async function MusicPage() {
             </section>
           )}
 
-          {/* Social Media Section */}
-          <section>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Connect With Me</h2>
-              <p className="text-text-secondary text-lg">
-                Follow for updates, new releases, and upcoming shows
-              </p>
-            </div>
-            <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
-              <SocialLinks
-                instagramUrl={instagramUrl}
-                facebookUrl={facebookUrl}
-                tiktokUrl={tiktokUrl}
-                patreonUrl={patreonUrl}
-                layout="grid"
-              />
-            </div>
-          </section>
-
           {/* Upcoming Shows Placeholder */}
           <section>
             <div className="mb-8">
@@ -174,6 +120,49 @@ export default async function MusicPage() {
                   Book a Show
                 </Button>
               </div>
+            </div>
+          </section>
+
+          {/* Patreon CTA */}
+          {patreonUrl && (
+            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-gold/20 via-accent-gold/10 to-transparent border border-accent-gold/30 p-8 md:p-12">
+              <div className="relative z-10 text-center max-w-3xl mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Support My Music</h2>
+                <p className="text-lg text-text-secondary mb-8">
+                  Join my Patreon community for exclusive content, early releases, and behind-the-scenes access.
+                  Your support helps me create more music and content for you to enjoy.
+                </p>
+                <Button
+                  href={patreonUrl}
+                  variant="accent"
+                  size="lg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Become a Patron
+                </Button>
+              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent-gold/20 rounded-full blur-3xl -z-0" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-gold/10 rounded-full blur-3xl -z-0" />
+            </section>
+          )}
+
+          {/* Social Media Section */}
+          <section>
+            <div className="mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">Connect With Me</h2>
+              <p className="text-text-secondary text-lg">
+                Follow for updates, new releases, and upcoming shows
+              </p>
+            </div>
+            <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
+              <SocialLinks
+                instagramUrl={instagramUrl}
+                facebookUrl={facebookUrl}
+                tiktokUrl={tiktokUrl}
+                patreonUrl={patreonUrl}
+                layout="grid"
+              />
             </div>
           </section>
 

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { SiteConfig } from '@/lib/types';
-import { updateSiteConfig, createSiteConfig } from '@/lib/supabase/admin';
+import { updateSiteConfig, createSiteConfig, getAllSiteConfig } from '@/lib/supabase/admin';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { Alert } from '@/components/ui/Alert';
 
@@ -47,6 +47,7 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   { key: 'contact_email', value: '', category: 'general', label: 'Contact Email', placeholder: 'hello@example.com' },
   { key: 'booking_email', value: '', category: 'general', label: 'Booking Email', placeholder: 'booking@example.com' },
   { key: 'profile_image_url', value: '', category: 'general', label: 'Profile Image URL', placeholder: 'https://example.com/image.jpg' },
+  { key: 'hero_image_url', value: '', category: 'general', label: 'Hero Image URL', placeholder: 'https://example.com/hero.jpg' },
 ];
 
 export default function SiteConfigClient({ initialConfig }: SiteConfigClientProps) {
@@ -93,6 +94,10 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
       }).filter(Boolean);
 
       await Promise.all(updates);
+
+      // Fetch updated config from database
+      const updatedConfig = await getAllSiteConfig();
+      setConfig(updatedConfig);
 
       setSuccess(true);
       setEditedValues({});
@@ -156,7 +161,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.key}>
-                {item.key === 'profile_image_url' ? (
+                {(item.key === 'profile_image_url' || item.key === 'hero_image_url') ? (
                   <ImageUpload
                     currentImageUrl={item.value}
                     onImageUploaded={(url) => handleValueChange(item.key, url)}

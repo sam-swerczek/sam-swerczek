@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPostBySlug, getPublishedPosts, getRelatedPosts } from '@/lib/supabase/queries';
+import { getPostBySlug, getPublishedPosts, getRelatedPosts, getSiteConfig } from '@/lib/supabase/queries';
 import PostContent from '@/components/blog/PostContent';
 import TagsList from '@/components/blog/TagsList';
 
@@ -61,8 +61,14 @@ export default async function BlogPostPage({ params }: PageProps) {
       })
     : '';
 
-  // Get related posts using Supabase query
-  const relatedPosts = await getRelatedPosts(post.id, post.tags || [], 3);
+  // Get related posts and social links using Supabase query
+  const [relatedPosts, siteConfig] = await Promise.all([
+    getRelatedPosts(post.id, post.tags || [], 3),
+    getSiteConfig(),
+  ]);
+
+  const linkedinUrl = siteConfig.find(c => c.key === 'linkedin_url')?.value;
+  const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value;
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -157,22 +163,26 @@ export default async function BlogPostPage({ params }: PageProps) {
               </p>
             </div>
             <div className="flex gap-4">
-              <a
-                href="https://linkedin.com/in/samswerczek"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-blue hover:text-accent-blue transition-colors duration-200"
-              >
-                LinkedIn
-              </a>
-              <a
-                href="https://github.com/samswerczek"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-teal hover:text-accent-teal transition-colors duration-200"
-              >
-                GitHub
-              </a>
+              {linkedinUrl && (
+                <a
+                  href={linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-blue hover:text-accent-blue transition-colors duration-200"
+                >
+                  LinkedIn
+                </a>
+              )}
+              {githubUrl && (
+                <a
+                  href={githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-teal hover:text-accent-teal transition-colors duration-200"
+                >
+                  GitHub
+                </a>
+              )}
             </div>
           </div>
         </div>

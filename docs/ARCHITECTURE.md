@@ -76,6 +76,7 @@ The decision to use the App Router (introduced in Next.js 13+) was deliberate:
 - `/app/blog/[slug]/page.tsx` - Individual blog posts
 - `/app/music/page.tsx` - Music page with embedded content
 - `/app/contact/page.tsx` - Contact form page structure
+- `components/home/HeroSection.tsx` - Server wrapper for hero (fetches config)
 
 **Why Server Components here?**
 - No interactive state needed at the top level
@@ -87,6 +88,7 @@ The decision to use the App Router (introduced in Next.js 13+) was deliberate:
 - `BlogClient.tsx` - Blog filtering and tag selection
 - `ManagePostsClient.tsx` - Admin post management with local state
 - `AuthProvider.tsx` - Authentication context for admin panel
+- `components/home/HeroClient.tsx` - Hero animations and mouse interactions
 - Form components - Input handling and validation
 - UI components with interactions (accordions, modals, filters)
 
@@ -95,6 +97,7 @@ The decision to use the App Router (introduced in Next.js 13+) was deliberate:
 - Need event handlers for user interactions
 - Manage local UI state (filters, form inputs, modals)
 - Subscribe to real-time updates (auth state changes)
+- Handle browser-specific features (mouse tracking, animations)
 
 ### File-Based Routing Structure
 
@@ -231,6 +234,16 @@ CREATE TABLE site_config (
 - Categories (e.g., 'music_social', 'engineering_social') for logical grouping
 - All values stored as text (parsed as needed)
 - Enables runtime configuration changes without code deploys
+
+**Key Configuration Fields** (as of October 2025):
+- **Music Social**: `spotify_url`, `youtube_music_url`, `instagram_music`, `facebook_music`, `tiktok_music`, `patreon_url`
+- **YouTube Videos**: `youtube_video_1` through `youtube_video_4` (with corresponding `_title` fields)
+- **Engineering Social**: `linkedin_url`, `github_url`, `twitter_url`
+- **General**: `contact_email`, `booking_email`, `profile_image_url`, `hero_image_url`
+
+**Recent Additions** (October 2025):
+- `hero_image_url`: Dynamic hero section background image, fetched server-side and passed to client component
+- YouTube video title fields: Enables custom titles for featured videos instead of relying on YouTube API
 
 **3. Media Table**
 ```sql
@@ -1332,6 +1345,58 @@ export default function BlogClient({ initialPosts }) {
 - Server Component fetches data (can't be done in Client Component)
 - Client Component handles interactivity (can't be done in Server Component)
 - Best of both worlds
+
+**4. Hero Section Pattern (Server/Client Split with Dynamic Config)**:
+
+This pattern was introduced in October 2025 to optimize the hero section with dynamic configuration.
+
+```typescript
+// components/home/HeroSection.tsx - Server Component
+import { getSiteConfig } from '@/lib/supabase/queries';
+import HeroClient from './HeroClient';
+
+export default async function HeroSection() {
+  const siteConfig = await getSiteConfig();
+  const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
+
+  return <HeroClient heroImageUrl={heroImageUrl} />;
+}
+
+// components/home/HeroClient.tsx - Client Component
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface HeroClientProps {
+  heroImageUrl?: string;
+}
+
+export default function HeroClient({ heroImageUrl }: HeroClientProps) {
+  const [mounted, setMounted] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+
+  // Handle animations, mouse tracking, etc.
+  return (
+    <div onMouseMove={handleMouseMove}>
+      {/* Interactive hero content */}
+    </div>
+  );
+}
+```
+
+**Why this pattern?**
+- **Server-side config fetching**: Hero image URL retrieved from database at build/request time
+- **Client-side interactivity**: Mouse tracking, animations, fade-ins handled in browser
+- **Zero client JavaScript for data**: Configuration data is fetched once on server
+- **Dynamic updates**: Changing hero image in admin panel reflects immediately
+- **Performance optimized**: Heavy animations only load after component mounts
+
+**Benefits of this approach**:
+1. Reduces client bundle size (no data fetching code in browser)
+2. Enables server-side caching of configuration
+3. Maintains interactive user experience
+4. Separates concerns: data fetching vs. presentation
+5. Easy to test each layer independently
 
 ### Testing Strategy
 

@@ -173,13 +173,46 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
 
 Files with complex interactivity are split into two files:
 
-1. **Server Component** (`page.tsx`) - Data fetching
+1. **Server Component** (`page.tsx` or component name) - Data fetching
 2. **Client Component** (`*Client.tsx`) - Interactivity
 
 **Pattern Examples**:
 - `/app/blog/page.tsx` → `/app/blog/BlogClient.tsx`
 - `/app/admin/posts/new/page.tsx` → `/app/admin/posts/new/CreatePostClient.tsx`
 - `/app/admin/posts/[id]/page.tsx` → `/app/admin/posts/[id]/EditPostClient.tsx`
+- `components/home/HeroSection.tsx` → `components/home/HeroClient.tsx`
+
+**New Pattern: Component-Level Split** (October 2025)
+
+Previously, this pattern was primarily used at the page level. As of October 2025, we've extended it to individual components that need both server-side data fetching and client-side interactivity:
+
+```typescript
+// Server Component - Fetches configuration
+// components/home/HeroSection.tsx
+import { getSiteConfig } from '@/lib/supabase/queries';
+import HeroClient from './HeroClient';
+
+export default async function HeroSection() {
+  const siteConfig = await getSiteConfig();
+  const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
+
+  return <HeroClient heroImageUrl={heroImageUrl} />;
+}
+
+// Client Component - Handles interactivity
+// components/home/HeroClient.tsx
+'use client';
+
+export default function HeroClient({ heroImageUrl }: Props) {
+  // Mouse tracking, animations, useState, useEffect, etc.
+}
+```
+
+**Why extend this pattern?**
+- Enables dynamic configuration for any component, not just pages
+- Keeps client bundle size minimal
+- Maintains server-side rendering benefits
+- Clear separation of data fetching from presentation logic
 
 ### When to Use 'use client' Directive
 

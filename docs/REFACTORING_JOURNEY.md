@@ -753,6 +753,223 @@ Good refactoring includes:
 
 Going from 1,068+ lines of duplicated code to a clean, maintainable codebase while keeping all tests passing is worth celebrating. Refactoring is iterative improvement, and each iteration makes the next one easier.
 
+## Phase 3: Server/Client Component Optimization (October 2025)
+
+**Impact: Improved performance and maintainability**
+
+### 3.1 Hero Section Refactoring
+
+**Date**: October 2025
+
+**Context**: The hero section initially combined data fetching and client-side interactivity in a single component, resulting in unnecessary client JavaScript for configuration management.
+
+**Before**: Monolithic client component with embedded configuration
+```typescript
+'use client';
+
+export default function HeroSection() {
+  const [config, setConfig] = useState(null);
+
+  useEffect(() => {
+    // Fetch configuration from database
+    fetchSiteConfig().then(setConfig);
+  }, []);
+
+  // Animation and interaction logic
+  // ...
+}
+```
+
+**After**: Server/Client split pattern
+```typescript
+// HeroSection.tsx - Server Component
+import { getSiteConfig } from '@/lib/supabase/queries';
+import HeroClient from './HeroClient';
+
+export default async function HeroSection() {
+  const siteConfig = await getSiteConfig();
+  const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
+
+  return <HeroClient heroImageUrl={heroImageUrl} />;
+}
+
+// HeroClient.tsx - Client Component
+'use client';
+
+export default function HeroClient({ heroImageUrl }: HeroClientProps) {
+  // Only client-side interactivity: mouse tracking, animations, etc.
+}
+```
+
+**Benefits**:
+- Configuration fetched server-side (zero client JavaScript for data)
+- Dynamic hero image URL from admin-configurable site config
+- Reduced client bundle size
+- Server-side caching of configuration data
+- Clear separation: data fetching vs. presentation
+
+**Decision Rationale**:
+- Hero section is on homepage (critical for first load performance)
+- Configuration rarely changes (perfect for server-side fetching)
+- Animations and mouse tracking require client-side JavaScript
+- This pattern balances performance with interactivity
+
+### 3.2 Site Config Enhancement
+
+**Date**: October 2025
+
+**Changes Made**:
+1. Added `hero_image_url` field to site config schema
+2. Enhanced image upload to support both profile and hero images
+3. Improved config refresh to fetch latest data after updates
+4. Added debugging logs for config mutations
+
+**New Configuration Fields**:
+- `hero_image_url`: Dynamic hero section background image
+- YouTube video title fields: Custom titles for featured videos
+
+**Admin UX Improvements**:
+```typescript
+// After save, fetch fresh config from database
+const updatedConfig = await getAllSiteConfig();
+setConfig(updatedConfig);
+router.refresh();
+```
+
+**Why This Matters**:
+- Admin can change hero image without code deployment
+- Configuration changes reflect immediately across site
+- Centralized configuration management
+- Type-safe schema with validation
+
+### 3.3 Music Page Reorganization
+
+**Date**: October 2025
+
+**Changes**:
+- Removed duplicate hero section (consolidated with home page)
+- Reordered content: Spotify → YouTube → Shows → Patreon → Social
+- Improved visual hierarchy and spacing
+
+**Before**: Music page had its own hero section
+```typescript
+// Music page with duplicate hero
+<HeroSection theme="music" />
+<SpotifySection />
+// ...
+```
+
+**After**: Streamlined single-purpose page
+```typescript
+// Music page focused on content
+<SpotifySection /> {/* Featured at top */}
+<YouTubeSection />
+<UpcomingShows />
+<PatreonSection />
+<SocialLinks />
+```
+
+**Rationale**:
+- Homepage hero serves both audiences (music and engineering)
+- Music page should focus on music content
+- Reduces redundancy and improves loading performance
+- Clearer user journey: homepage → choose audience → content
+
+### 3.4 Dynamic Configuration Adoption
+
+**Date**: October 2025
+
+**Shift**: Moving from hardcoded values to database-driven configuration
+
+**Components Updated**:
+- `app/blog/[slug]/page.tsx`: Social links now from site config
+- `components/layout/Footer.tsx`: Removed hardcoded fallback URLs
+- `components/home/HeroSection.tsx`: Dynamic hero image
+
+**Before**: Hardcoded values
+```typescript
+const linkedinUrl = 'https://linkedin.com/in/hardcoded';
+const githubUrl = 'https://github.com/hardcoded';
+```
+
+**After**: Configuration-driven
+```typescript
+const config = await getSiteConfig('engineering_social');
+const linkedinUrl = config.find(c => c.key === 'linkedin_url')?.value;
+const githubUrl = config.find(c => c.key === 'github_url')?.value;
+```
+
+**Benefits**:
+- No code changes needed to update URLs
+- Admin portal controls all external links
+- Conditional rendering when URLs not provided
+- Single source of truth for site configuration
+
+## Patterns That Emerged (Updated October 2025)
+
+### Server/Client Split at Component Level
+
+Previously, server/client splits were primarily at the page level. October 2025 changes demonstrated this pattern works equally well for individual components:
+
+**Use when component needs**:
+1. Server-side data fetching (database queries, config)
+2. Client-side interactivity (animations, mouse tracking, state)
+
+**Pattern**:
+```typescript
+// ServerComponent.tsx
+export default async function ServerComponent() {
+  const data = await fetchFromDatabase();
+  return <ClientComponent data={data} />;
+}
+
+// ClientComponent.tsx
+'use client';
+export default function ClientComponent({ data }) {
+  // Interactive logic here
+}
+```
+
+### Configuration-First Development
+
+The addition of dynamic configuration fields (hero_image_url, video titles) demonstrates a pattern:
+
+**When adding new visual content**:
+1. Add config field to schema
+2. Update admin UI to manage it
+3. Fetch server-side where possible
+4. Pass to client components as props
+
+**Avoid**:
+- Hardcoding URLs or content
+- Client-side configuration fetching
+- Multiple sources of truth
+
+## Lessons Learned (October 2025 Update)
+
+### 9. Server Components Are More Versatile Than Expected
+
+Initially, server/client splits were used primarily at page boundaries. The hero section refactoring showed this pattern works at any component level where you need both data fetching and interactivity.
+
+**Key Insight**: Don't assume client components are needed just because a component has animations. Split the component—server side for data, client side for interactions.
+
+### 10. Configuration Fields Should Match Use Cases
+
+Adding `hero_image_url` and YouTube video titles wasn't just about making things configurable—it reflected actual use cases:
+- Artist needs to update hero image for different seasons/albums
+- YouTube titles need customization for context (not just API defaults)
+
+**Key Insight**: Configuration schema should evolve based on admin panel usage patterns, not just technical possibilities.
+
+### 11. Remove Hardcoded Fallbacks Deliberately
+
+The removal of hardcoded fallback URLs in the footer was intentional:
+- Forces admin to configure all links
+- Makes missing configuration visible
+- Conditional rendering is better than incorrect defaults
+
+**Key Insight**: Fallbacks can hide configuration issues. Sometimes it's better to render nothing than render incorrect content.
+
 ## Next Steps
 
 The refactoring journey continues. Future opportunities include:
@@ -762,9 +979,13 @@ The refactoring journey continues. Future opportunities include:
 3. **Performance Optimization**: Code splitting, lazy loading, image optimization
 4. **State Management**: Consider a state management solution for admin portal
 5. **Component Documentation**: Add Storybook or similar for component library
+6. **Extend Configuration Pattern**: Apply server/client split to other configurable components
+7. **Configuration Versioning**: Track changes to site configuration over time
 
 ---
 
 **The key takeaway**: Great code is rarely written—it's refactored. Start with working code, add comprehensive tests, then improve iteratively. The journey from "working" to "excellent" is a series of small, confident steps.
 
-*Last updated: 2025-10-04*
+The October 2025 changes demonstrate that architectural patterns discovered early (server/client splits, configuration-driven design) continue to provide value when applied thoughtfully to new use cases.
+
+*Last updated: 2025-10-10*
