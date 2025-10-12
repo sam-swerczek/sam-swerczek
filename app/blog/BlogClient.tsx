@@ -30,8 +30,27 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
     : initialPosts;
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen relative">
+      {/* Subtle tech-themed background - right side only, fades to left and bottom */}
+      <div className="absolute top-0 left-0 right-0 h-screen -z-10 overflow-hidden pointer-events-none hidden md:block">
+        {/* Right side - Engineering */}
+        <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-15"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1920&q=80)',
+              filter: 'blur(3px) brightness(0.6)',
+            }}
+          />
+          {/* Gradient fade to left */}
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background-primary" />
+          {/* Gradient fade to bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-16 relative z-10">
+        <div className="max-w-4xl mx-auto">
         {/* Hero Section */}
         <div className="mb-16 text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 pb-2 bg-gradient-to-r from-text-primary via-accent-blue to-accent-teal bg-clip-text text-transparent">
@@ -139,6 +158,7 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

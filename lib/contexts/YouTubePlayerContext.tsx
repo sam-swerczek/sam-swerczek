@@ -1,0 +1,803 @@
+"use client";
+
+import React, { createContext, useEffect, useRef, useState, useCallback } from 'react';
+import type { Song } from '../types';
+
+// TypeScript declarations for YouTube IFrame API
+interface YTPlayer {
+  playVideo(): void;
+  pauseVideo(): void;
+  stopVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  setVolume(volume: number): void;
+  getVolume(): number;
+  getCurrentTime(): number;
+  getDuration(): number;
+  getPlayerState(): number;
+  loadVideoById(videoId: string): void;
+  destroy(): void;
+  getIframe(): HTMLIFrameElement;
+}
+
+interface YTPlayerEvent {
+  target: YTPlayer;
+  data: number;
+}
+
+interface YTPlayerOptions {
+  height?: string;
+  width?: string;
+  videoId?: string;
+  playerVars?: {
+    autoplay?: 0 | 1;
+    controls?: 0 | 1;
+    modestbranding?: 0 | 1;
+    rel?: 0 | 1;
+    showinfo?: 0 | 1;
+    fs?: 0 | 1;
+    playsinline?: 0 | 1;
+  };
+  events?: {
+    onReady?: (event: YTPlayerEvent) => void;
+    onStateChange?: (event: YTPlayerEvent) => void;
+    onError?: (event: YTPlayerEvent) => void;
+  };
+}
+
+// Player state constants
+const PlayerState = {
+  UNSTARTED: -1,
+  ENDED: 0,
+  PLAYING: 1,
+  PAUSED: 2,
+  BUFFERING: 3,
+  CUED: 5,
+} as const;
+
+declare global {
+  interface Window {
+    YT?: {
+      Player: new (element: HTMLElement, options: YTPlayerOptions) => YTPlayer;
+      PlayerState: typeof PlayerState;
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+// Track information interface
+export interface CurrentTrack {
+  id: string;
+  title: string;
+  artist: string;
+  albumCoverUrl: string | null;
+  youtubeVideoId: string;
+  // Enhanced metadata
+  durationSeconds?: number | null;
+  tags?: string[] | null;
+  releaseDate?: string | null;
+  description?: string | null;
+}
+
+// Player state interface
+export interface PlayerState {
+  videoId: string;
+  isPlaying: boolean;
+  isPaused: boolean;
+  volume: number;
+  currentTime: number;
+  duration: number;
+  isReady: boolean;
+  hasVisited: boolean;
+  currentTrack: CurrentTrack | null;
+  // Playlist management
+  playlist: CurrentTrack[];
+  currentIndex: number;
+}
+
+// Player controls interface
+export interface PlayerControls {
+  play: () => void;
+  pause: () => void;
+  setVolume: (volume: number) => void;
+  seekTo: (seconds: number) => void;
+  loadVideo: (videoId: string) => void;
+  loadTrack: (track: Song) => void;
+  // Playlist controls
+  next: () => void;
+  previous: () => void;
+  setPlaylist: (tracks: Song[]) => void;
+  jumpToTrack: (index: number) => void;
+}
+
+// Player preferences for localStorage
+interface PlayerPreferences {
+  volume: number;
+  lastPosition: number;
+  hasVisited: boolean;
+}
+
+// Context value interface
+export interface YouTubePlayerContextValue extends PlayerState, PlayerControls {
+  isLoading: boolean;
+  isScriptLoaded: boolean;
+  error: string | null;
+}
+
+// Create context
+export const YouTubePlayerContext = createContext<YouTubePlayerContextValue | null>(null);
+
+// Constants
+const DEFAULT_VIDEO_ID = "Qey4qv3KnYI";
+const DEFAULT_VOLUME = 0.3;
+const STORAGE_KEY = "youtube-player-prefs";
+const UPDATE_INTERVAL = 100; // ms
+
+// Provider component
+export function YouTubePlayerProvider({ children }: { children: React.ReactNode }) {
+  const playerRef = useRef<YTPlayer | null>(null);
+  const playerElementRef = useRef<HTMLDivElement | null>(null);
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitializingRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const retryCountRef = useRef(0);
+  const currentVideoIdRef = useRef<string>(DEFAULT_VIDEO_ID);
+
+  // State
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [playerState, setPlayerState] = useState<PlayerState>(() => {
+    // Initialize with defaults, will load from localStorage in useEffect
+    return {
+      videoId: DEFAULT_VIDEO_ID,
+      isPlaying: false,
+      isPaused: true,
+      volume: DEFAULT_VOLUME,
+      currentTime: 0,
+      duration: 0,
+      isReady: false,
+      hasVisited: false,
+      currentTrack: null,
+      playlist: [],
+      currentIndex: -1,
+    };
+  });
+
+  // Load preferences from localStorage
+  const loadPreferences = useCallback((): PlayerPreferences => {
+    if (typeof window === 'undefined') {
+      return {
+        volume: DEFAULT_VOLUME,
+        lastPosition: 0,
+        hasVisited: false,
+      };
+    }
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const prefs = JSON.parse(stored);
+        return {
+          volume: typeof prefs.volume === 'number' ? prefs.volume : DEFAULT_VOLUME,
+          lastPosition: typeof prefs.lastPosition === 'number' ? prefs.lastPosition : 0,
+          hasVisited: prefs.hasVisited === true,
+        };
+      }
+    } catch (err) {
+      console.error('Failed to load player preferences:', err);
+    }
+
+    return {
+      volume: DEFAULT_VOLUME,
+      lastPosition: 0,
+      hasVisited: false,
+    };
+  }, []);
+
+  // Save preferences to localStorage
+  const savePreferences = useCallback((prefs: Partial<PlayerPreferences>) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const current = loadPreferences();
+      const updated = { ...current, ...prefs };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error('Failed to save player preferences:', err);
+    }
+  }, [loadPreferences]);
+
+  // Update current time periodically
+  const startTimeUpdates = useCallback(() => {
+    if (updateTimerRef.current) {
+      clearInterval(updateTimerRef.current);
+    }
+
+    updateTimerRef.current = setInterval(() => {
+      if (playerRef.current) {
+        try {
+          const currentTime = playerRef.current.getCurrentTime();
+          setPlayerState(prev => ({ ...prev, currentTime }));
+
+          // Save position periodically
+          savePreferences({ lastPosition: currentTime });
+        } catch (err) {
+          console.error('Failed to get current time:', err);
+        }
+      }
+    }, UPDATE_INTERVAL);
+  }, [savePreferences]);
+
+  const stopTimeUpdates = useCallback(() => {
+    if (updateTimerRef.current) {
+      clearInterval(updateTimerRef.current);
+      updateTimerRef.current = null;
+    }
+  }, []);
+
+  // Player event handlers
+  const handleReady = useCallback((event: YTPlayerEvent) => {
+    console.log('YouTube player ready');
+    const player = event.target;
+
+    try {
+      const duration = player.getDuration();
+      const prefs = loadPreferences();
+
+      setPlayerState(prev => ({
+        ...prev,
+        duration,
+        isReady: true,
+        volume: prefs.volume,
+        hasVisited: prefs.hasVisited,
+      }));
+
+      // Set initial volume
+      player.setVolume(prefs.volume * 100);
+
+      // Attempt autoplay for first-time visitors
+      if (!prefs.hasVisited) {
+        console.log('First visit detected, attempting autoplay');
+
+        // Mark as visited immediately
+        savePreferences({ hasVisited: true });
+        setPlayerState(prev => ({ ...prev, hasVisited: true }));
+
+        try {
+          player.playVideo();
+          setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+        } catch (err) {
+          console.warn('Autoplay blocked by browser:', err);
+          setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
+        }
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error in handleReady:', err);
+      setError('Failed to initialize player');
+      setIsLoading(false);
+    }
+  }, [loadPreferences, savePreferences]);
+
+  const handleStateChange = useCallback((event: YTPlayerEvent) => {
+    const state = event.data;
+
+    switch (state) {
+      case PlayerState.PLAYING:
+        setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+        startTimeUpdates();
+        break;
+      case PlayerState.PAUSED:
+        setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
+        stopTimeUpdates();
+        break;
+      case PlayerState.ENDED:
+        setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
+        stopTimeUpdates();
+        break;
+      case PlayerState.BUFFERING:
+        // Keep current state during buffering
+        break;
+      default:
+        break;
+    }
+  }, [startTimeUpdates, stopTimeUpdates]);
+
+  const handleError = useCallback((event: YTPlayerEvent) => {
+    console.error('YouTube player error:', event.data);
+
+    // Retry logic for recoverable errors
+    if (retryCountRef.current < 3 && playerRef.current && currentVideoIdRef.current) {
+      console.log(`Retrying playback (attempt ${retryCountRef.current + 1}/3)...`);
+      setTimeout(() => {
+        if (playerRef.current && isMountedRef.current) {
+          try {
+            playerRef.current.loadVideoById(currentVideoIdRef.current);
+            retryCountRef.current += 1;
+          } catch (err) {
+            console.error('Retry failed:', err);
+          }
+        }
+      }, 2000);
+    } else {
+      setError(`Player error: ${event.data} (failed after 3 retries)`);
+      retryCountRef.current = 0; // Reset for next track
+    }
+
+    setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
+  }, []);
+
+  // Initialize YouTube player
+  const initializePlayer = useCallback(() => {
+    if (!isScriptLoaded || isInitializingRef.current) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || !window.YT || !window.YT.Player) {
+      console.warn('YouTube API not ready');
+      return;
+    }
+
+    // Look for the player container element in the DOM
+    const containerElement = document.getElementById('youtube-player-container') as HTMLDivElement | null;
+    if (!containerElement) {
+      console.log('⚠️ Player container not found in DOM yet, will retry...');
+      return;
+    }
+
+    // Store reference to the container
+    playerElementRef.current = containerElement;
+
+    // Clean up any existing player first
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy();
+      } catch (err) {
+        console.error('Error cleaning up existing player:', err);
+      }
+      playerRef.current = null;
+    }
+
+    // Clear the container of any leftover YouTube iframes
+    while (containerElement.firstChild) {
+      containerElement.removeChild(containerElement.firstChild);
+    }
+
+    isInitializingRef.current = true;
+
+    try {
+      const prefs = loadPreferences();
+
+      playerRef.current = new window.YT.Player(containerElement, {
+        height: '100%',
+        width: '100%',
+        videoId: DEFAULT_VIDEO_ID,
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0,
+          fs: 1,
+          playsinline: 1,
+        },
+        events: {
+          onReady: handleReady,
+          onStateChange: handleStateChange,
+          onError: handleError,
+        },
+      });
+
+      console.log('YouTube player initialized in container');
+
+      // Mark initialization as complete after player is created
+      isInitializingRef.current = false;
+    } catch (err) {
+      console.error('Failed to initialize player:', err);
+      setError('Failed to initialize player');
+      setIsLoading(false);
+      isInitializingRef.current = false;
+    }
+  }, [isScriptLoaded, loadPreferences, handleReady, handleStateChange, handleError]);
+
+  // Wait for hydration to complete before initializing player
+  useEffect(() => {
+    // Use multiple async boundaries to ensure hydration is complete
+    // This defers YouTube API initialization until after React finishes hydrating
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setIsHydrated(true);
+        }, 0);
+      });
+    });
+  }, []);
+
+  // Load YouTube IFrame API script - only after hydration is complete
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isHydrated) return;
+
+    // Check if script already exists
+    if (window.YT && window.YT.Player) {
+      console.log('YouTube API already loaded');
+      setIsScriptLoaded(true);
+      return;
+    }
+
+    // Check if script is already in DOM
+    const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+    if (existingScript) {
+      console.log('YouTube API script already in DOM, waiting for load');
+
+      // Set up callback for when it loads
+      window.onYouTubeIframeAPIReady = () => {
+        console.log('YouTube API ready (existing script)');
+        setIsScriptLoaded(true);
+      };
+
+      // Check if it's already loaded
+      if (window.YT && window.YT.Player) {
+        setIsScriptLoaded(true);
+      }
+
+      return;
+    }
+
+    console.log('Loading YouTube API script');
+
+    // Inject script
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+
+    // Set up callback
+    window.onYouTubeIframeAPIReady = () => {
+      console.log('YouTube API ready (new script)');
+      setIsScriptLoaded(true);
+    };
+
+    script.onerror = () => {
+      console.error('Failed to load YouTube API script');
+      setError('Failed to load YouTube player');
+      setIsLoading(false);
+    };
+
+    document.body.appendChild(script);
+
+    return () => {
+      // Don't remove script on cleanup as it may be used by other components
+      // Just clean up the callback
+      window.onYouTubeIframeAPIReady = undefined;
+    };
+  }, [isHydrated]);
+
+  // Initialize player when script is loaded
+  useEffect(() => {
+    if (!isScriptLoaded || !isHydrated) return;
+
+    // Small delay to ensure YT object and DOM are fully ready
+    const timer = setTimeout(() => {
+      initializePlayer();
+    }, 100);
+
+    // Retry logic in case container isn't mounted yet
+    const retryTimer = setInterval(() => {
+      if (!playerRef.current && document.getElementById('youtube-player-container')) {
+        console.log('Retrying player initialization...');
+        initializePlayer();
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(retryTimer);
+    };
+  }, [isScriptLoaded, isHydrated, initializePlayer]);
+
+  // Load preferences on mount - only after hydration to avoid SSR/client mismatch
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const prefs = loadPreferences();
+    setPlayerState(prev => ({
+      ...prev,
+      volume: prefs.volume,
+      hasVisited: prefs.hasVisited,
+    }));
+  }, [isHydrated, loadPreferences]);
+
+  // Listen for storage changes from other tabs/windows
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const prefs = JSON.parse(e.newValue) as PlayerPreferences;
+
+          // Sync volume across tabs
+          if (typeof prefs.volume === 'number' && playerRef.current) {
+            playerRef.current.setVolume(prefs.volume * 100);
+            setPlayerState(prev => ({ ...prev, volume: prefs.volume }));
+          }
+        } catch (err) {
+          console.error('Failed to sync preferences from storage event:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('YouTubePlayerProvider unmounting, cleaning up...');
+
+      // Mark as unmounted to prevent stale updates
+      isMountedRef.current = false;
+
+      // Stop any running timers
+      stopTimeUpdates();
+
+      // Destroy the YouTube player instance
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+          playerRef.current = null;
+        } catch (err) {
+          console.error('Error destroying player:', err);
+        }
+      }
+
+      // Clear reference to container (React will clean up the DOM)
+      playerElementRef.current = null;
+
+      // Reset initialization flag
+      isInitializingRef.current = false;
+    };
+  }, [stopTimeUpdates]);
+
+  // Control methods
+  const play = useCallback(() => {
+    if (!playerRef.current || !playerState.isReady) return;
+
+    try {
+      playerRef.current.playVideo();
+    } catch (err) {
+      console.error('Failed to play:', err);
+      setError('Failed to play video');
+    }
+  }, [playerState.isReady]);
+
+  const pause = useCallback(() => {
+    if (!playerRef.current || !playerState.isReady) return;
+
+    try {
+      playerRef.current.pauseVideo();
+    } catch (err) {
+      console.error('Failed to pause:', err);
+      setError('Failed to pause video');
+    }
+  }, [playerState.isReady]);
+
+  const setVolume = useCallback((volume: number) => {
+    if (!playerRef.current || !playerState.isReady) return;
+
+    const clampedVolume = Math.max(0, Math.min(1, volume));
+
+    try {
+      playerRef.current.setVolume(clampedVolume * 100);
+      setPlayerState(prev => ({ ...prev, volume: clampedVolume }));
+      savePreferences({ volume: clampedVolume });
+    } catch (err) {
+      console.error('Failed to set volume:', err);
+      setError('Failed to set volume');
+    }
+  }, [playerState.isReady, savePreferences]);
+
+  const seekTo = useCallback((seconds: number) => {
+    if (!playerRef.current || !playerState.isReady) return;
+
+    try {
+      playerRef.current.seekTo(seconds, true);
+      setPlayerState(prev => ({ ...prev, currentTime: seconds }));
+      savePreferences({ lastPosition: seconds });
+    } catch (err) {
+      console.error('Failed to seek:', err);
+      setError('Failed to seek');
+    }
+  }, [playerState.isReady, savePreferences]);
+
+  const loadVideo = useCallback((videoId: string) => {
+    if (!playerRef.current || !playerState.isReady) return;
+
+    try {
+      playerRef.current.loadVideoById(videoId);
+      setPlayerState(prev => ({
+        ...prev,
+        videoId,
+        currentTime: 0,
+        isPlaying: false,
+        isPaused: true,
+      }));
+
+      // Update duration after video loads
+      setTimeout(() => {
+        if (playerRef.current) {
+          try {
+            const duration = playerRef.current.getDuration();
+            setPlayerState(prev => ({ ...prev, duration }));
+          } catch (err) {
+            console.error('Failed to get duration:', err);
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      console.error('Failed to load video:', err);
+      setError('Failed to load video');
+    }
+  }, [playerState.isReady]);
+
+  const loadTrack = useCallback((track: Song) => {
+    if (!playerRef.current || !playerState.isReady) {
+      console.log('⚠️ Cannot load track - player not ready:', {
+        hasPlayer: !!playerRef.current,
+        isReady: playerState.isReady
+      });
+      return;
+    }
+
+    console.log('▶️ Loading track:', {
+      title: track.title,
+      videoId: track.youtube_video_id
+    });
+
+    try {
+      // Reset retry counter for new track
+      retryCountRef.current = 0;
+
+      // Update the ref so handleError has access to current video ID
+      currentVideoIdRef.current = track.youtube_video_id;
+
+      playerRef.current.loadVideoById(track.youtube_video_id);
+      setPlayerState(prev => ({
+        ...prev,
+        videoId: track.youtube_video_id,
+        currentTrack: {
+          id: track.id,
+          title: track.title,
+          artist: track.artist,
+          albumCoverUrl: track.album_cover_url,
+          youtubeVideoId: track.youtube_video_id,
+          // Enhanced metadata
+          durationSeconds: track.duration_seconds,
+          tags: track.tags,
+          releaseDate: track.release_date,
+          description: track.description,
+        },
+        currentTime: 0,
+        isPlaying: false,
+        isPaused: true,
+      }));
+
+      // Update duration after video loads
+      setTimeout(() => {
+        if (playerRef.current && isMountedRef.current) {
+          try {
+            const duration = playerRef.current.getDuration();
+            setPlayerState(prev => ({ ...prev, duration }));
+          } catch (err) {
+            console.error('Failed to get duration:', err);
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      console.error('Failed to load track:', err);
+      setError('Failed to load track');
+    }
+  }, [playerState.isReady]);
+
+
+  // Playlist control methods
+  const setPlaylist = useCallback((tracks: Song[]) => {
+    const playlist: CurrentTrack[] = tracks.map(track => ({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      albumCoverUrl: track.album_cover_url,
+      youtubeVideoId: track.youtube_video_id,
+      durationSeconds: track.duration_seconds,
+      tags: track.tags,
+      releaseDate: track.release_date,
+      description: track.description,
+    }));
+
+    setPlayerState(prev => ({
+      ...prev,
+      playlist,
+      currentIndex: prev.currentTrack && playlist.length > 0
+        ? playlist.findIndex(t => t.id === prev.currentTrack?.id)
+        : -1,
+    }));
+  }, []);
+
+  const jumpToTrack = useCallback((index: number) => {
+    if (index < 0 || index >= playerState.playlist.length) {
+      console.warn('Invalid track index:', index);
+      return;
+    }
+
+    const track = playerState.playlist[index];
+    if (!track) return;
+
+    // Convert CurrentTrack back to Song format for loadTrack
+    const song: Song = {
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      album_cover_url: track.albumCoverUrl,
+      content_type: 'video', // All tracks treated as video now
+      youtube_video_id: track.youtubeVideoId,
+      duration_seconds: track.durationSeconds ?? null,
+      tags: track.tags ?? null,
+      release_date: track.releaseDate ?? null,
+      description: track.description ?? null,
+      // Required Song fields with defaults
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      display_order: index,
+      is_featured: false,
+      is_active: true,
+      spotify_url: null,
+      apple_music_url: null,
+    };
+
+    loadTrack(song);
+    setPlayerState(prev => ({ ...prev, currentIndex: index }));
+  }, [playerState.playlist, loadTrack]);
+
+  const next = useCallback(() => {
+    if (playerState.playlist.length === 0) return;
+
+    const nextIndex = (playerState.currentIndex + 1) % playerState.playlist.length;
+    jumpToTrack(nextIndex);
+  }, [playerState.playlist.length, playerState.currentIndex, jumpToTrack]);
+
+  const previous = useCallback(() => {
+    if (playerState.playlist.length === 0) return;
+
+    const prevIndex = playerState.currentIndex <= 0
+      ? playerState.playlist.length - 1
+      : playerState.currentIndex - 1;
+    jumpToTrack(prevIndex);
+  }, [playerState.playlist.length, playerState.currentIndex, jumpToTrack]);
+
+  const contextValue: YouTubePlayerContextValue = {
+    ...playerState,
+    play,
+    pause,
+    setVolume,
+    seekTo,
+    loadVideo,
+    loadTrack,
+    next,
+    previous,
+    setPlaylist,
+    jumpToTrack,
+    isLoading,
+    isScriptLoaded,
+    error,
+  };
+
+  return (
+    <YouTubePlayerContext.Provider value={contextValue}>
+      {/* Player container is now created directly in the DOM via useEffect, outside React's control */}
+      {children}
+    </YouTubePlayerContext.Provider>
+  );
+}

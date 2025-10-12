@@ -761,6 +761,92 @@ colors: {
 - `md:` - 768px and up (tablet)
 - No `sm:` breakpoint used (mobile-first base)
 
+### Background Image Pattern
+
+**Added:** October 2025
+
+**Purpose:** Maintain split-screen brand identity (music/left, engineering/right) across pages
+
+**Pattern:**
+
+```typescript
+// Music-related pages: Background on LEFT half
+<div className="absolute left-0 top-0 w-1/2 h-screen overflow-hidden hidden md:block">
+  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background-primary/50 via-60% to-background-primary">
+    <Image
+      src="/path/to/music-background.jpg"
+      alt=""
+      fill
+      className="object-cover"
+      style={{ opacity: 0.15, filter: 'blur(3px) brightness(0.6)' }}
+      priority={false}
+    />
+  </div>
+</div>
+
+// Engineering/Blog pages: Background on RIGHT half
+<div className="absolute right-0 top-0 w-1/2 h-screen overflow-hidden hidden md:block">
+  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background-primary/50 via-60% to-background-primary">
+    <Image
+      src="/path/to/code-background.jpg"
+      alt=""
+      fill
+      className="object-cover"
+      style={{ opacity: 0.15, filter: 'blur(3px) brightness(0.6)' }}
+      priority={false}
+    />
+  </div>
+</div>
+```
+
+**Design Specifications:**
+
+| Property | Value | Rationale |
+|----------|-------|-----------|
+| Position | `absolute` | Scrolls with content (not fixed) |
+| Width | `w-1/2` | Half screen (left or right) |
+| Height | `h-screen` | Viewport height only (not full page) |
+| Opacity | `0.15` | Very subtle, doesn't overwhelm content |
+| Blur | `blur(3px)` | Softens image, reduces distraction |
+| Brightness | `brightness(0.6)` | Darkens image to blend with dark theme |
+| Responsive | `hidden md:block` | Desktop only, hidden on mobile |
+| Gradient Direction | `to-r` (left) or `to-l` (right) | Fades toward center |
+| Gradient Stops | `via-60% to-background-primary` | Smooth transition to solid background |
+
+**Usage Rules:**
+
+1. **Music-related pages** → Use LEFT background with music/guitar imagery
+2. **Engineering/Blog pages** → Use RIGHT background with code/tech imagery
+3. **Homepage/Hybrid pages** → Can use BOTH backgrounds with bottom fade gradient
+4. **Mobile** → Always hide backgrounds (`hidden md:block`)
+5. **Z-Index** → Backgrounds should be behind content (default z-index)
+
+**Example (Music Page):**
+```typescript
+export default function MusicPage() {
+  return (
+    <main className="relative">
+      {/* Music Background - LEFT */}
+      <div className="absolute left-0 top-0 w-1/2 h-screen overflow-hidden hidden md:block">
+        {/* ... gradient and image ... */}
+      </div>
+
+      {/* Page Content */}
+      <div className="relative z-10 container mx-auto px-4">
+        {/* Your content here */}
+      </div>
+    </main>
+  );
+}
+```
+
+**Why This Pattern:**
+- Reinforces split-screen brand identity (music/left, engineering/right)
+- Maintains visual consistency across site
+- Subtle enough to not distract from content
+- Responsive (hidden on mobile for performance)
+- Scrolls naturally with content
+
 ---
 
 ## 6. TypeScript Usage
@@ -1139,6 +1225,313 @@ export default function BlogClient({ initialPosts }) {
 
 ---
 
+## 9. Advanced Patterns
+
+### React Hooks with Stable Callbacks
+
+**Problem**: Callback dependencies that change frequently cause entire components to reinitialize.
+
+**Example from YouTube Player Context**:
+
+```typescript
+// ANTI-PATTERN: Callback depends on state that changes frequently
+const handleError = useCallback((event: YTPlayerEvent) => {
+  if (retryCountRef.current < 3) {
+    playerRef.current.loadVideoById(playerState.videoId); // ❌ State dependency
+  }
+}, [playerState.videoId]); // ❌ Recreates callback every track change
+
+// This causes:
+// 1. handleError callback recreates
+// 2. initializePlayer (depends on handleError) recreates
+// 3. useEffect (watches initializePlayer) triggers
+// 4. Entire player reinitializes unnecessarily
+```
+
+**SOLUTION: Use refs to break dependency chain**
+
+```typescript
+// Use ref to hold current value without triggering recreations
+const currentVideoIdRef = useRef<string>(DEFAULT_VIDEO_ID);
+
+const handleError = useCallback((event: YTPlayerEvent) => {
+  if (retryCountRef.current < 3) {
+    playerRef.current.loadVideoById(currentVideoIdRef.current); // ✅ Ref access
+  }
+}, []); // ✅ Empty dependency array - never recreates
+
+// Update ref when video changes (doesn't trigger callback recreation)
+const loadTrack = useCallback((track: Song) => {
+  currentVideoIdRef.current = track.youtube_video_id; // Update ref
+  playerRef.current.loadVideoById(track.youtube_video_id);
+}, []);
+```
+
+**When to use this pattern**:
+- Callbacks that need access to frequently-changing values
+- Event handlers in intervals/timers
+- Third-party API integrations with callbacks
+- Any situation where callback recreation causes performance issues
+
+**Benefits**:
+- Stable callback references prevent unnecessary reinitializations
+- Maintains access to current values
+- Cleaner dependency arrays
+- Better performance
+
+### Integrating Third-Party DOM-Manipulating Libraries
+
+**Problem**: Libraries like YouTube IFrame API, Google Maps, etc. directly manipulate the DOM, causing React hydration errors.
+
+**Error Example**:
+```
+Failed to execute 'insertBefore' on 'Node': The node before which
+the new node is to be inserted is not a child of this node
+```
+
+**Root Cause**:
+- YouTube API injects iframes into the DOM during React's hydration phase
+- Server renders empty container, client expects empty container
+- YouTube API adds children before React finishes hydration
+- React reconciliation fails when it finds unexpected DOM nodes
+
+**SOLUTION: Create container outside React's control**
+
+```typescript
+// In YouTubePlayerContext (or similar wrapper)
+useEffect(() => {
+  // 1. Create container using vanilla DOM APIs
+  const playerContainer = document.createElement('div');
+  playerContainer.id = 'youtube-player-container';
+  playerContainer.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+
+  // 2. Append directly to document.body (outside React's tree)
+  document.body.appendChild(playerContainer);
+
+  // 3. Initialize third-party library on the external container
+  const player = new YT.Player('youtube-player-container', {
+    videoId: DEFAULT_VIDEO_ID,
+    events: {
+      onReady: handleReady,
+      onStateChange: handleStateChange,
+    },
+  });
+
+  // 4. Cleanup on unmount
+  return () => {
+    player.destroy();
+    playerContainer.remove();
+  };
+}, []);
+```
+
+**Why This Works**:
+- Container exists completely outside React's virtual DOM
+- React never tries to reconcile changes made by third-party library
+- No hydration errors because React never manages this element
+- Library can manipulate DOM freely without conflicts
+
+**When to use this pattern**:
+- YouTube IFrame API
+- Google Maps
+- Canvas-based libraries
+- Any library that directly manipulates the DOM
+- Chart libraries that render to specific DOM nodes
+
+**Industry Standard**:
+This is the recommended approach by React and library maintainers for integrating DOM-manipulating third-party libraries.
+
+### requestAnimationFrame for Smooth UI Updates
+
+**Problem**: Direct event handlers on scroll/resize can cause janky UI updates and missed frames.
+
+**Example from YouTube Player Positioning**:
+
+```typescript
+// BAD: Direct scroll handler causes jitter
+const updatePosition = () => {
+  const rect = videoContainerRef.current.getBoundingClientRect();
+  playerContainer.style.left = `${rect.left}px`;
+  playerContainer.style.top = `${rect.top}px`;
+};
+
+window.addEventListener('scroll', updatePosition); // ❌ Runs on every scroll event
+```
+
+**SOLUTION: Use requestAnimationFrame to batch updates**
+
+```typescript
+const videoContainerRef = useRef<HTMLDivElement>(null);
+let rafId: number | null = null;
+
+const updatePosition = () => {
+  if (!videoContainerRef.current) return;
+
+  const rect = videoContainerRef.current.getBoundingClientRect();
+
+  // Round to prevent sub-pixel rendering issues
+  const left = Math.round(rect.left);
+  const top = Math.round(rect.top);
+  const width = Math.round(rect.width);
+  const height = Math.round(rect.height);
+
+  playerContainer.style.position = 'fixed';
+  playerContainer.style.left = `${left}px`;
+  playerContainer.style.top = `${top}px`;
+  playerContainer.style.width = `${width}px`;
+  playerContainer.style.height = `${height}px`;
+};
+
+const handleScroll = () => {
+  // Cancel any pending frame
+  if (rafId) cancelAnimationFrame(rafId);
+
+  // Schedule update for next frame
+  rafId = requestAnimationFrame(updatePosition);
+};
+
+window.addEventListener('scroll', handleScroll, { passive: true }); // ✅ Batched updates
+
+// Cleanup
+return () => {
+  if (rafId) cancelAnimationFrame(rafId);
+  window.removeEventListener('scroll', handleScroll);
+};
+```
+
+**Why This Works**:
+- `requestAnimationFrame` batches updates to browser's refresh rate (~60fps)
+- Prevents multiple calculations per frame
+- Smooth tracking in all scroll directions
+- `{ passive: true }` allows browser to optimize scroll performance
+
+**When to use this pattern**:
+- Scroll event handlers
+- Resize event handlers
+- Mouse move tracking
+- Any high-frequency UI update
+- Animation loops
+
+**Additional Optimizations**:
+- **Math.round()**: Prevents sub-pixel rendering artifacts
+- **Passive listeners**: Allows browser to optimize without waiting for event handler
+- **Cleanup**: Always cancel pending frames to prevent memory leaks
+
+### Dynamic Positioning with getBoundingClientRect
+
+**Problem**: Need to overlay an element that persists across pages over different display areas.
+
+**Use Case**: YouTube player that shows on `/music` page but continues playing on other pages.
+
+**SOLUTION: Use fixed positioning + getBoundingClientRect()**
+
+```typescript
+const videoContainerRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  const playerContainer = document.getElementById('youtube-player-container');
+
+  const updatePosition = () => {
+    if (!videoContainerRef.current) return;
+
+    // Get exact coordinates relative to viewport
+    const rect = videoContainerRef.current.getBoundingClientRect();
+
+    // Fixed positioning matches getBoundingClientRect coordinates
+    playerContainer.style.position = 'fixed';
+    playerContainer.style.left = `${Math.round(rect.left)}px`;
+    playerContainer.style.top = `${Math.round(rect.top)}px`;
+    playerContainer.style.width = `${Math.round(rect.width)}px`;
+    playerContainer.style.height = `${Math.round(rect.height)}px`;
+    playerContainer.style.pointerEvents = 'auto';
+    playerContainer.style.zIndex = '10';
+  };
+
+  updatePosition();
+
+  window.addEventListener('resize', updatePosition);
+  window.addEventListener('scroll', handleScroll);
+
+  // Cleanup: hide when navigating away
+  return () => {
+    playerContainer.style.left = '-9999px'; // Hide off-screen
+    playerContainer.style.pointerEvents = 'none';
+  };
+}, []);
+```
+
+**Why fixed positioning?**
+- `getBoundingClientRect()` returns coordinates relative to viewport
+- `position: fixed` is also relative to viewport
+- No complex offset calculations needed
+- Works correctly with scrolling
+
+**Why getBoundingClientRect?**
+- Gives exact pixel coordinates
+- Accounts for transforms, margins, padding
+- Always accurate regardless of parent positioning
+- Updates with page layout changes
+
+**When to use this pattern**:
+- Overlaying persistent elements
+- Picture-in-picture video
+- Floating toolbars
+- Sticky elements that need precise positioning
+- Cross-page UI elements
+
+### Preventing SSR/CSR Mismatches with Mounted State
+
+**Problem**: Client-only features cause hydration mismatches when rendered during SSR.
+
+**Example from PlayerBar**:
+
+```typescript
+'use client';
+
+export default function PlayerBar() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render until client-side mounted
+  if (!mounted) return null;
+
+  return (
+    <div className="border-b border-gray-800">
+      <div className="container mx-auto px-4">
+        <YouTubePlayerMini />
+      </div>
+    </div>
+  );
+}
+```
+
+**Why This Works**:
+- Server renders `null` (no content)
+- Client mounts and immediately renders `null` (matches server)
+- After hydration completes, `useEffect` runs and sets `mounted = true`
+- Component renders actual content
+- No mismatch because both server and initial client render return `null`
+
+**When to use this pattern**:
+- Components that access browser-only APIs
+- Components that depend on localStorage/sessionStorage
+- Components that use window/document directly
+- Any client-only feature that could cause hydration errors
+
+**Alternative patterns**:
+```typescript
+// Using dynamic import with ssr: false
+import dynamic from 'next/dynamic';
+
+const PlayerBar = dynamic(() => import('./PlayerBar'), {
+  ssr: false,
+  loading: () => <div>Loading...</div>
+});
+```
+
 ## Key Takeaways
 
 1. **Clear Separation**: Server components fetch data, client components handle interactivity
@@ -1147,5 +1540,11 @@ export default function BlogClient({ initialPosts }) {
 4. **Consistency**: Shared style utilities for buttons, forms, and colors
 5. **Organization**: Feature-based component structure, centralized types and utilities
 6. **Patterns**: Server/Client split, composable components, centralized data fetching
+7. **Advanced Patterns**:
+   - Use refs to break callback dependency chains
+   - Create containers outside React for third-party DOM libraries
+   - Use requestAnimationFrame for smooth high-frequency updates
+   - Use getBoundingClientRect + fixed positioning for precise overlays
+   - Use mounted state to prevent SSR/CSR mismatches
 
 This structure scales well and makes it easy to find, update, and extend code.

@@ -100,6 +100,12 @@ export default async function AdminDashboard() {
             icon="📄"
           />
           <ActionCard
+            href="/admin/songs"
+            title="Manage Songs"
+            description="Add and organize your music"
+            icon="🎵"
+          />
+          <ActionCard
             href="/admin/config"
             title="Site Configuration"
             description="Update social links and settings"

@@ -1,0 +1,310 @@
+SONGS ADMIN SYSTEM ARCHITECTURE
+================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         USER ACCESS FLOW                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+    Browser Request: /admin/songs
+           ↓
+    ┌──────────────────────┐
+    │   Middleware         │ ← Authentication Check
+    │  (middleware.ts)     │
+    └──────────────────────┘
+           ↓ (authenticated)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  Server Component: app/admin/songs/page.tsx                  │
+    │  - Fetches initial songs using getAllSongs()                 │
+    │  - Server-side rendering with Supabase service role key      │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (passes initialSongs as props)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  Client Component: SongsAdminClient.tsx                      │
+    │  - Manages local state (songs, filters, view mode)           │
+    │  - Handles user interactions                                 │
+    │  - Filters and sorts songs                                   │
+    │  - Calls API routes for mutations                            │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (renders based on viewMode)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  View: List or Form                                          │
+    │                                                              │
+    │  LIST VIEW:                    FORM VIEW:                   │
+    │  - Table with all songs        - SongForm.tsx               │
+    │  - Filters by type/status      - Create/Edit form           │
+    │  - Actions (Edit, Delete)      - YouTube integration        │
+    │  - Move up/down buttons        - Real-time validation       │
+    │  - Set featured button         - Image previews             │
+    └──────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DATA FLOW                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+    Client Component Action (create, update, delete, reorder)
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  API Routes: app/api/songs/route.ts                          │
+    │  - GET    /api/songs          (list all)                     │
+    │  - POST   /api/songs          (create)                       │
+    │  - PUT    /api/songs          (update)                       │
+    │  - DELETE /api/songs?id=...   (soft delete)                  │
+    │  - PATCH  /api/songs          (reorder/set featured)         │
+    │                                                              │
+    │  All routes verify authentication before processing          │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (calls mutation functions)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  Mutations: lib/supabase/mutations.ts                        │
+    │  - createSong()                                              │
+    │  - updateSong()                                              │
+    │  - deleteSong()                                              │
+    │  - reorderSongs()                                            │
+    │  - setFeaturedSong()                                         │
+    │  - toggleSongActive()                                        │
+    │                                                              │
+    │  Uses server-side Supabase client (service role key)        │
+    └──────────────────────────────────────────────────────────────┘
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  Supabase Database                                           │
+    │  Table: songs                                                │
+    │  - Stores all song data                                      │
+    │  - Handles data persistence                                  │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (returns updated data)
+    API Response → Client Component → UI Update
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    YOUTUBE INTEGRATION FLOW                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+    User pastes YouTube URL in form
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  YouTube Utils: lib/utils/youtube.ts                         │
+    │  - extractYouTubeVideoId()    ← Parse URL to get video ID   │
+    │  - isValidYouTubeVideoId()    ← Validate format              │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (valid video ID extracted)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  fetchYouTubeMetadata()                                      │
+    │  - Calls YouTube oEmbed API (no key required)                │
+    │  - Returns: title, author_name, thumbnail_url                │
+    └──────────────────────────────────────────────────────────────┘
+           ↓ (metadata fetched)
+    ┌──────────────────────────────────────────────────────────────┐
+    │  SongForm auto-fills:                                        │
+    │  - Title (if empty)                                          │
+    │  - Artist (if empty)                                         │
+    │  - Album Cover URL (if empty)                                │
+    │  - Shows video thumbnail preview                             │
+    └──────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      COMPONENT HIERARCHY                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+app/admin/songs/page.tsx (Server Component)
+└── SongsAdminClient.tsx (Client Component)
+    ├── Alert (Success/Error messages)
+    ├── Filter Buttons (All, Active, Audio, etc.)
+    ├── Add New Song Button
+    │
+    ├── LIST VIEW
+    │   └── Table
+    │       └── Row for each song
+    │           ├── Order + Move Up/Down buttons
+    │           ├── Thumbnail (album cover or YouTube)
+    │           ├── Title / Artist
+    │           ├── Content Type badge
+    │           ├── Duration
+    │           ├── Status badges (Active, Featured)
+    │           └── Actions (Feature, Edit, Delete)
+    │
+    └── FORM VIEW
+        └── SongForm.tsx
+            ├── YouTube Video section
+            │   ├── URL/ID input
+            │   └── Video preview
+            ├── Basic Info (Title, Artist)
+            ├── Settings (Type, Order, Duration)
+            ├── Album Cover
+            ├── Release Date
+            ├── Description
+            ├── Tags
+            ├── Streaming Links (Spotify, Apple)
+            ├── Status Checkboxes (Active, Featured)
+            └── Action Buttons (Cancel, Save)
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     FILE DEPENDENCIES                                │
+└─────────────────────────────────────────────────────────────────────┘
+
+lib/types/index.ts
+└── Defines: Song, CreateSongData, UpdateSongData
+
+lib/supabase/server.ts
+└── Creates server-side Supabase client (service role)
+
+lib/supabase/mutations.ts
+├── Imports: createServerClient from server.ts
+├── Imports: Song, CreateSongData, UpdateSongData from types
+└── Used by: API routes
+
+lib/utils/youtube.ts
+└── Used by: SongForm, SongsAdminClient, API routes
+
+app/api/songs/route.ts
+├── Imports: mutations from lib/supabase/mutations.ts
+├── Imports: youtube utils from lib/utils/youtube.ts
+└── Exports: GET, POST, PUT, DELETE, PATCH handlers
+
+app/admin/songs/page.tsx
+├── Imports: getAllSongs from lib/supabase/mutations.ts
+└── Renders: SongsAdminClient
+
+app/admin/songs/SongsAdminClient.tsx
+├── Imports: Song from lib/types
+├── Imports: Alert from components/ui/Alert
+├── Imports: youtube utils from lib/utils/youtube.ts
+├── Imports: SongForm from components/admin/SongForm.tsx
+└── Makes API calls to: /api/songs
+
+components/admin/SongForm.tsx
+├── Imports: Song from lib/types
+├── Imports: Alert from components/ui/Alert
+├── Imports: youtube utils from lib/utils/youtube.ts
+└── Makes API calls to: /api/songs
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AUTHENTICATION FLOW                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+    Request to /admin/songs
+           ↓
+    Middleware (lib/supabase/middleware.ts)
+    ├── If NOT authenticated → Redirect to /admin/login
+    └── If authenticated → Allow access
+           ↓
+    Server Component loads with user context
+           ↓
+    Client Component makes API calls with session cookies
+           ↓
+    API Routes verify authentication
+    ├── Get user from session
+    ├── If NO user → Return 401 Unauthorized
+    └── If authenticated → Process request
+           ↓
+    Mutations execute with service role key
+           ↓
+    Database operation completes
+           ↓
+    Response returns to client
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                   FEATURED SONG LOGIC                                │
+└─────────────────────────────────────────────────────────────────────┘
+
+    User sets song as featured
+           ↓
+    API: PATCH /api/songs (action: set_featured, id: song_id)
+           ↓
+    Mutation: setFeaturedSong(id)
+    ├── 1. Unfeature ALL songs (UPDATE songs SET is_featured = false)
+    └── 2. Feature selected song (UPDATE songs SET is_featured = true WHERE id = ...)
+           ↓
+    Result: Only one song is featured at any time
+    
+    Note: This logic is enforced at the database mutation level,
+    preventing any inconsistencies.
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                  REORDERING LOGIC                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+    User clicks "Move Up" on song at position N
+           ↓
+    1. Find song at position N-1 (previous song)
+    2. Swap display_order values:
+       - Song N gets display_order of N-1
+       - Song N-1 gets display_order of N
+           ↓
+    API: PATCH /api/songs (action: reorder, orders: [...])
+           ↓
+    Mutation: reorderSongs([{id: songN, display_order: N-1}, {id: songN-1, display_order: N}])
+           ↓
+    Database updates both rows
+           ↓
+    UI refreshes and shows new order
+
+    Note: Same logic applies for "Move Down" but with N+1 instead.
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                   STATE MANAGEMENT                                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+SongsAdminClient State:
+├── songs: Song[]                    (local copy of all songs)
+├── viewMode: 'list' | 'form'        (current view)
+├── editingSong: Song | null         (song being edited, null for new)
+├── filter: FilterType               (current filter applied)
+├── isDeleting: string | null        (ID of song being deleted)
+├── error: string | null             (error message)
+└── success: string | null           (success message)
+
+SongForm State:
+├── formData: FormData object        (all form fields)
+├── isLoading: boolean               (saving in progress)
+├── isFetchingMetadata: boolean      (fetching YouTube data)
+├── error: string | null             (form error)
+├── validationErrors: Record         (field-specific errors)
+└── videoPreview: string | null      (video ID for preview)
+
+Flow:
+1. Server component passes initialSongs to client
+2. Client maintains local state for UI responsiveness
+3. API calls update database
+4. After successful mutation, client refetches data
+5. State updates trigger re-render
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ERROR HANDLING                                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+API Route Level:
+├── Try-catch around all operations
+├── Validate authentication first
+├── Validate required fields
+├── Return appropriate HTTP status codes (200, 201, 400, 401, 500)
+└── Return structured error messages
+
+Mutation Level:
+├── Try-catch around database operations
+├── Log errors to console
+├── Throw descriptive errors
+└── Use revalidatePath to clear cache
+
+Client Level:
+├── Try-catch around API calls
+├── Display user-friendly error messages in Alert component
+├── Auto-hide success messages after 3 seconds
+├── Keep error messages visible for 5 seconds
+├── Show loading states during operations
+└── Disable actions during loading
+
+Form Level:
+├── Real-time validation on blur
+├── Validation before submission
+├── Clear field errors on input change
+├── Show field-specific validation errors
+└── Prevent submission if validation fails

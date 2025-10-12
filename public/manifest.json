@@ -1,0 +1,17 @@
+{
+  "name": "Sam Swerczek - Singer-Songwriter & Software Engineer",
+  "short_name": "Sam Swerczek",
+  "description": "Personal website showcasing music, engineering projects, and blog posts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#4a9eff",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

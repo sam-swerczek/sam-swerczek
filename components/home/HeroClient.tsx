@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Button from '@/components/ui/Button';
+import Link from 'next/link';
+import { MusicIcon, CodeIcon } from '@/components/ui/icons';
 
 interface HeroClientProps {
   heroImageUrl?: string;
@@ -50,6 +51,8 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background-primary/40" />
+          {/* Gradient fade to bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
         </div>
 
         {/* Right side - Tech */}
@@ -68,6 +71,8 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background-primary/40" />
+          {/* Gradient fade to bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
         </div>
 
         {/* Center divider line - subtle */}
@@ -120,7 +125,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
               {/* Tagline with delayed animation */}
               <div className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                 <p className="text-xl md:text-2xl lg:text-3xl text-text-secondary mb-4 font-light">
-                  Crafting melodies & code
+                  Crafting melodies & products
                 </p>
                 <div className="flex items-center justify-center gap-3 mb-12">
                   <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent-blue to-transparent"></div>
@@ -133,30 +138,36 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
 
               {/* CTAs with staggered animation */}
               <div className={`transition-all duration-1000 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
                     href="/music"
-                    variant="primary"
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[200px]"
+                    className="group w-full sm:w-auto sm:min-w-[160px] px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
                   >
-                    Explore Music
-                  </Button>
-                  <Button
+                    <span className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-full bg-background-secondary/50 border border-accent-blue/30 group-hover:border-accent-blue/50 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
+                        <MusicIcon className="w-4 h-4 text-accent-blue/70 group-hover:text-accent-blue transition-colors duration-300" />
+                      </span>
+                      <span className="font-medium">Explore Music</span>
+                    </span>
+                  </Link>
+                  <Link
                     href="/blog"
-                    variant="secondary"
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[200px]"
+                    className="group w-full sm:w-auto sm:min-w-[160px] px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
                   >
-                    Engineering & Blog
-                  </Button>
+                    <span className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-full bg-background-secondary/50 border border-accent-teal/30 group-hover:border-accent-teal/50 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
+                        <CodeIcon className="w-4 h-4 text-accent-teal/70 group-hover:text-accent-teal transition-colors duration-300" />
+                      </span>
+                      <span className="font-medium">Engineering & Blog</span>
+                    </span>
+                  </Link>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Scroll indicator */}
-          <div className={`mt-20 transition-all duration-1000 delay-700 text-center ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Scroll indicator - hidden on large screens */}
+          <div className={`mt-20 transition-all duration-1000 delay-700 text-center lg:hidden ${mounted ? 'opacity-100' : 'opacity-0'}`}>
             <a
               href="#about"
               className="inline-flex flex-col items-center gap-2 text-text-secondary/50 hover:text-text-secondary/80 transition-colors"

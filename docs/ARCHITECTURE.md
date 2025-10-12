@@ -236,14 +236,47 @@ CREATE TABLE site_config (
 - Enables runtime configuration changes without code deploys
 
 **Key Configuration Fields** (as of October 2025):
-- **Music Social**: `spotify_url`, `youtube_music_url`, `instagram_music`, `facebook_music`, `tiktok_music`, `patreon_url`
-- **YouTube Videos**: `youtube_video_1` through `youtube_video_4` (with corresponding `_title` fields)
-- **Engineering Social**: `linkedin_url`, `github_url`, `twitter_url`
-- **General**: `contact_email`, `booking_email`, `profile_image_url`, `hero_image_url`
+
+**1. General Settings** (top priority):
+- `profile_image_url`: Profile/avatar image
+- `hero_image_url`: Hero section background image (dynamic, fetched server-side)
+- `contact_email`: General contact email
+- `booking_email`: Music booking inquiries
+
+**2. Streaming Music Platforms**:
+- `spotify_url`: Spotify artist/album profile
+- `apple_music_url`: Apple Music artist profile
+- `itunes_url`: iTunes store link
+- `youtube_music_url`: YouTube Music artist channel
+
+**3. Social Media**:
+- `instagram_music`: Instagram handle for music content
+- `facebook_music`: Facebook page for music
+- `tiktok_music`: TikTok profile (future)
+- `twitter_url`: Twitter/X profile
+- `patreon_url`: Patreon support page
+
+**4. Professional Links**:
+- `linkedin_url`: LinkedIn profile
+- `github_url`: GitHub profile
+
+**5. Featured Videos**:
+- `youtube_video_1` through `youtube_video_4`: YouTube video IDs
+- `youtube_video_1_title` through `youtube_video_4_title`: Video titles
+
+**Admin Config Organization** (October 2025):
+The admin site config interface is organized into these logical sections with clear visual separation. This structure:
+- Improves discoverability of configuration options
+- Groups related settings together
+- Provides clear mental model for admins
+- Scales well as new config options are added
+- See `docs/DESIGN_DECISIONS.md` for detailed rationale
 
 **Recent Additions** (October 2025):
 - `hero_image_url`: Dynamic hero section background image, fetched server-side and passed to client component
 - YouTube video title fields: Enables custom titles for featured videos instead of relying on YouTube API
+- Streaming platform reorganization: Separated streaming (Spotify, Apple Music, etc.) from social media for clarity
+- Featured Videos Quick Add: Admin can paste YouTube URL to auto-extract ID and fetch title
 
 **3. Media Table**
 ```sql
@@ -1250,13 +1283,17 @@ components/
 │
 ├── layout/         # Shared layout components
 │   ├── Header.tsx
+│   ├── HeaderNav.tsx
 │   ├── Footer.tsx
-│   └── Navigation.tsx
+│   └── PlayerBar.tsx  # Mini-player wrapper
 │
 ├── music/          # Music page components
-│   ├── SpotifyEmbed.tsx
-│   ├── YouTubeEmbed.tsx
-│   └── SocialLinks.tsx
+│   ├── YouTubePlayerContainer.tsx  # Persistent player container
+│   ├── YouTubePlayerFull.tsx       # Full player for /music page
+│   ├── YouTubePlayerMini.tsx       # Mini player for header
+│   ├── StreamingLinks.tsx          # Multi-platform links
+│   └── hooks/
+│       └── useYouTubePlayer.ts     # Player state hook
 │
 ├── providers/      # Context providers
 │   └── AuthProvider.tsx
@@ -1268,6 +1305,10 @@ components/
     └── icons/      # Icon components
         ├── CheckCircleIcon.tsx
         ├── ArrowRightIcon.tsx
+        ├── PlayIcon.tsx
+        ├── PauseIcon.tsx
+        ├── VolumeIcon.tsx
+        ├── ExpandIcon.tsx
         └── ...
 ```
 
@@ -1513,6 +1554,447 @@ export default function PostForm({ initialData }: { initialData: Post }) {
 - IntelliSense in editor
 - Refactoring confidence
 - Self-documenting code
+
+---
+
+## YouTube Player Architecture
+
+**Last Updated:** October 11, 2025
+
+### Overview
+
+The YouTube player system provides continuous music playback across all pages with a video-first architecture. Video is displayed on the `/music` page while audio continues playing on all other pages. The system never unmounts or reinitializes the YouTube iframe, ensuring seamless playback during navigation.
+
+### Core Architectural Principles
+
+1. **Single Persistent Container**: The YouTube iframe container (`#youtube-player-container`) lives in the root layout and never unmounts during normal navigation
+2. **CSS-Only Positioning**: Video is shown/hidden using CSS positioning, never conditional rendering
+3. **Video-First**: All tracks are treated as video content (no audio/video distinction)
+4. **Dynamic Overlay**: On `/music` page, the container is positioned over the display area using `getBoundingClientRect()`
+5. **Never Move the Iframe**: The iframe is never moved in the DOM; positioning is handled purely through CSS
+
+### Component Hierarchy
+
+```
+app/layout.tsx
+├── YouTubePlayerProvider (Context)
+│   └── Creates player outside React DOM
+├── Header
+├── PlayerBar
+│   └── YouTubePlayerMini
+└── page content
+    └── YouTubePlayerFull (on /music page only)
+        └── Positions global container via CSS
+
+#youtube-player-container (created via document.createElement)
+└── YouTube IFrame (injected by YouTube API)
+```
+
+### Key Components
+
+#### 1. YouTubePlayerContext (`lib/contexts/YouTubePlayerContext.tsx`)
+
+**Purpose**: Global state management for the YouTube player
+
+**Critical Implementation Detail - Player Container Outside React**:
+
+```typescript
+// The player container is created OUTSIDE React's DOM control
+// This prevents React hydration errors with YouTube's iframe manipulation
+
+useEffect(() => {
+  // Create container using vanilla DOM APIs
+  const playerContainer = document.createElement('div');
+  playerContainer.id = 'youtube-player-container';
+  playerContainer.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+  document.body.appendChild(playerContainer);
+
+  // Initialize YouTube player
+  const player = new YT.Player('youtube-player-container', {
+    videoId: DEFAULT_VIDEO_ID,
+    playerVars: { /* ... */ },
+    events: {
+      onReady: handleReady,
+      onStateChange: handleStateChange,
+      onError: handleError,
+    },
+  });
+
+  // Cleanup
+  return () => {
+    player.destroy();
+    playerContainer.remove();
+  };
+}, []);
+```
+
+**Why This Approach?**
+- YouTube IFrame API directly manipulates the DOM by injecting iframes
+- If the container is managed by React, this causes hydration errors during SSR
+- Creating the container outside React's virtual DOM prevents reconciliation conflicts
+- This is the industry-standard pattern for integrating DOM-manipulating third-party libraries
+
+**State Managed**:
+- Current video/track information
+- Playback state (playing, paused, buffering)
+- Volume and current time
+- Playlist and current track index
+- First-visit flag and user preferences
+
+**Critical Fix - Callback Dependencies**:
+
+Previously, the player would reinitialize on every track change due to callback dependencies:
+
+```typescript
+// BEFORE (caused reinitialization):
+const handleError = useCallback((event: YTPlayerEvent) => {
+  // Depended on playerState.videoId
+  if (retryCountRef.current < 3) {
+    playerRef.current.loadVideoById(playerState.videoId); // ❌ Dependency
+  }
+}, [playerState.videoId]); // ❌ Changes on every track
+
+// AFTER (stable callback):
+const currentVideoIdRef = useRef<string>(DEFAULT_VIDEO_ID);
+
+const handleError = useCallback((event: YTPlayerEvent) => {
+  // Uses ref instead of state
+  if (retryCountRef.current < 3) {
+    playerRef.current.loadVideoById(currentVideoIdRef.current); // ✅ Ref
+  }
+}, []); // ✅ Empty deps - never recreates
+```
+
+**Why This Fix Works**:
+1. `handleError` depends on `playerState.videoId` → callback recreates on videoId change
+2. `initializePlayer` depends on `handleError` → recreates when callback changes
+3. `useEffect` watches `initializePlayer` → triggers on recreation
+4. Player reinitializes unnecessarily
+
+Using `currentVideoIdRef.current` breaks this dependency chain without losing access to the current video ID.
+
+**Methods Provided**:
+- `play()`, `pause()`, `setVolume()`, `seekTo()`
+- `loadTrack(track: Song)` - Load and display track metadata
+- `next()`, `previous()` - Playlist navigation
+- `setPlaylist(tracks: Song[])` - Initialize playlist
+- `jumpToTrack(index: number)` - Jump to specific track
+
+#### 2. YouTubePlayerContainer (`components/music/YouTubePlayerContainer.tsx`)
+
+**Purpose**: Provides the stable DOM container where YouTube IFrame API initializes the player
+
+**Implementation**:
+```typescript
+export default function YouTubePlayerContainer() {
+  return (
+    <div
+      id="youtube-player-container"
+      className="fixed left-[-9999px] top-0 w-[640px] h-[360px] pointer-events-none"
+      aria-hidden="true"
+    />
+  );
+}
+```
+
+**Note**: As of the latest refactor, this container is no longer rendered by React. It's created directly in the DOM by `YouTubePlayerContext` using `document.createElement()`. This component file may be deprecated.
+
+**Key Points**:
+- Never conditionally rendered (always in DOM)
+- Positioning controlled dynamically by `YouTubePlayerFull` component
+- Hidden off-screen when not on `/music` page (`left: -9999px`)
+- Overlays video display area when on `/music` page
+- `pointer-events-none` by default, enabled when visible
+
+#### 3. YouTubePlayerFull (`components/music/YouTubePlayerFull.tsx`)
+
+**Purpose**: Main player UI on `/music` page. Controls the positioning of the global container.
+
+**Critical Implementation - Dynamic Positioning**:
+
+```typescript
+const videoContainerRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  const playerContainer = document.getElementById('youtube-player-container');
+
+  if (!playerContainer || !videoContainerRef.current) return;
+
+  let rafId: number | null = null;
+
+  // Position the container to overlay the video display area
+  const updatePosition = () => {
+    if (!videoContainerRef.current) return;
+
+    const rect = videoContainerRef.current.getBoundingClientRect();
+
+    // Round values to prevent sub-pixel rendering issues
+    const left = Math.round(rect.left);
+    const top = Math.round(rect.top);
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+
+    playerContainer.style.position = 'fixed';
+    playerContainer.style.left = `${left}px`;
+    playerContainer.style.top = `${top}px`;
+    playerContainer.style.width = `${width}px`;
+    playerContainer.style.height = `${height}px`;
+    playerContainer.style.pointerEvents = 'auto';
+    playerContainer.style.zIndex = '10';
+  };
+
+  // Use requestAnimationFrame for smooth scroll tracking
+  const handleScroll = () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(updatePosition);
+  };
+
+  updatePosition();
+
+  window.addEventListener('resize', updatePosition);
+  window.addEventListener('scroll', handleScroll, { passive: true });
+
+  // Cleanup: hide container when leaving /music page
+  return () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    window.removeEventListener('resize', updatePosition);
+    window.removeEventListener('scroll', handleScroll);
+
+    playerContainer.style.left = '-9999px';
+    playerContainer.style.pointerEvents = 'none';
+  };
+}, []);
+```
+
+**Why This Approach**:
+
+1. **getBoundingClientRect()** gives exact pixel coordinates relative to viewport
+2. **Math.round()** prevents sub-pixel rendering artifacts
+3. **requestAnimationFrame** batches updates for smooth 60fps scrolling
+4. **Fixed positioning** allows overlay without DOM manipulation
+5. **Cleanup function** hides container when component unmounts (navigation away)
+
+**Technical Decisions**:
+
+| Decision | Rationale |
+|----------|-----------|
+| **Never move iframe with appendChild()** | YouTube API's internal event handlers break, causing cross-origin errors |
+| **requestAnimationFrame for scroll** | Prevents jitter, handles rapid scroll changes smoothly |
+| **Fixed positioning vs absolute** | Fixed is always relative to viewport, matching getBoundingClientRect coordinates |
+| **Round pixel values** | Prevents sub-pixel rendering issues and unnecessary layout recalculations |
+
+#### 4. YouTubePlayerMini (`components/music/YouTubePlayerMini.tsx`)
+
+**Purpose**: Persistent mini-player in header area across all pages
+
+**Features**:
+- Album cover thumbnail display
+- Play/pause button
+- Volume control slider
+- Progress bar
+- Next/previous buttons for playlist navigation
+- Expand button to navigate to `/music` page
+
+**Enhancements** (October 2025):
+- Added `next()` and `previous()` buttons using context methods
+- Removed video badge display (no longer needed with video-first architecture)
+- Enhanced with expand button for better navigation UX
+
+#### 5. PlayerBar (`components/layout/PlayerBar.tsx`)
+
+**Purpose**: Wrapper component for the mini-player
+
+**Implementation**:
+```typescript
+'use client';
+
+export default function PlayerBar() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <div className="border-b border-gray-800">
+      <div className="container mx-auto px-4">
+        <YouTubePlayerMini />
+      </div>
+    </div>
+  );
+}
+```
+
+**Why Client Component with Mounted Check**:
+- Prevents SSR/CSR mismatch
+- Ensures player only renders in browser
+- Uses same container styling as Header for alignment
+
+### Data Flow
+
+```
+User Action (e.g., click play on /music page)
+    ↓
+YouTubePlayerFull calls context.play()
+    ↓
+YouTubePlayerContext updates state and calls playerRef.current.playVideo()
+    ↓
+YouTube IFrame API plays video
+    ↓
+YouTube API fires onStateChange event
+    ↓
+YouTubePlayerContext.handleStateChange updates state
+    ↓
+All components using useYouTubePlayer() hook receive updated state
+    ↓
+UI updates across all pages (mini-player shows playing state)
+```
+
+### User Flow Examples
+
+#### Scenario 1: Playing Music While Browsing
+
+1. User visits `/music` page
+2. Selects a song from playlist
+3. Video displays in full player with controls
+4. User navigates to `/blog` page
+5. `YouTubePlayerFull` cleanup function runs
+6. Video container moves off-screen (`left: -9999px`)
+7. Audio continues playing seamlessly (same YouTube player instance)
+8. Mini-player in header shows current track info and controls
+9. User clicks expand button in mini-player
+10. Navigates back to `/music` page
+11. `YouTubePlayerFull` mounts and repositions container
+12. Video reappears in exact same playback position
+
+#### Scenario 2: Using Mini-Player Controls
+
+1. User on homepage, music playing (mini-player visible in header)
+2. Clicks next button in mini-player
+3. Context loads next track in playlist using `next()` method
+4. YouTube player loads new video ID (hidden off-screen)
+5. Mini-player updates to show new track info
+6. User clicks previous button
+7. Returns to previous track using `previous()` method
+8. All without visiting `/music` page
+
+### Performance Considerations
+
+1. **Scroll Performance**:
+   - Used `{ passive: true }` on scroll listener for better browser optimization
+   - Prevents scroll blocking
+
+2. **Memory Management**:
+   - Properly cancels `requestAnimationFrame` calls on cleanup
+   - Clears intervals when player pauses
+
+3. **Reflow Prevention**:
+   - Rounding coordinates prevents unnecessary layout recalculations
+   - Fixed positioning avoids reflow triggers
+
+4. **Overflow Clipping**:
+   - Added `overflow-hidden` to prevent render layer issues
+
+### Testing Checklist
+
+When testing or modifying this system, verify:
+
+- [ ] Video displays on `/music` page within container bounds
+- [ ] Playback continues when navigating to other pages
+- [ ] Audio continues playing on all pages
+- [ ] Video reappears when returning to `/music` page
+- [ ] No playback interruption during navigation
+- [ ] Scroll tracking is smooth in both directions
+- [ ] Resize handling works correctly
+- [ ] Next/previous buttons work from mini-player
+- [ ] Volume persists across navigation
+- [ ] Progress bar shows correct position
+- [ ] Loading states display properly
+- [ ] No React hydration errors in console
+
+### Database Schema
+
+**Songs Table** (tracks stored in Supabase):
+
+```sql
+CREATE TABLE songs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  title TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  album_cover_url TEXT,
+  youtube_video_id TEXT NOT NULL,
+  content_type TEXT, -- 'video' (legacy field, ignored in frontend)
+  duration_seconds INTEGER,
+  tags TEXT[],
+  release_date DATE,
+  description TEXT,
+  display_order INTEGER DEFAULT 0,
+  is_featured BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  spotify_url TEXT,
+  apple_music_url TEXT
+);
+```
+
+**Key Notes**:
+- `content_type` field still exists for backward compatibility but is ignored in the frontend
+- All tracks are treated as video content in the new architecture
+- Can be removed in a future database migration
+
+### Files Modified in This Architecture
+
+1. `/lib/contexts/YouTubePlayerContext.tsx` - Core state management and player initialization
+2. `/components/music/YouTubePlayerContainer.tsx` - Persistent container (may be deprecated)
+3. `/components/music/YouTubePlayerFull.tsx` - Full player UI and positioning logic
+4. `/components/music/YouTubePlayerMini.tsx` - Mini player enhancements
+5. `/components/layout/PlayerBar.tsx` - Layout wrapper with mounted check
+6. `/app/layout.tsx` - Added `YouTubePlayerProvider` and `YouTubePlayerContainer`
+7. `/components/ui/icons/*` - Added `PlayIcon`, `PauseIcon`, `VolumeIcon`, `ExpandIcon`
+
+**Files Deleted**:
+- `/components/music/YouTubePlayerEmbed.tsx` - No longer needed with new architecture
+
+### Known Limitations
+
+1. **Browser Autoplay Policies**: First-visit autoplay may be blocked by browser policies
+2. **Single Player Instance**: Cannot have multiple independent YouTube players on the same page
+3. **No Multi-Track Queue**: Current implementation plays one track at a time (playlist is managed but not auto-advanced)
+4. **Progress Bar Scrubbing**: Currently display-only in mini-player (full player has scrubbing)
+
+### Future Enhancements
+
+Potential improvements that could be built on this architecture:
+
+1. **Picture-in-Picture Mode**: Use browser PiP API to float video while browsing
+2. **Keyboard Shortcuts**: Space for play/pause, arrow keys for next/prev
+3. **Auto-Advance**: Automatically play next track when current ends
+4. **Video Quality Selector**: Allow users to choose resolution
+5. **Playlist Shuffle**: Randomize playback order
+6. **Queue System**: Allow adding tracks to play next
+7. **Playback History**: Track what user has listened to
+8. **Lyrics Integration**: Display synchronized lyrics
+
+### Troubleshooting
+
+**Problem**: React hydration error `insertBefore` node error
+
+**Solution**: Ensure YouTube player container is created outside React's DOM using `document.createElement()` as shown in the YouTubePlayerContext implementation above.
+
+**Problem**: Video not appearing on `/music` page
+
+**Solution**: Check that `YouTubePlayerFull`'s positioning logic is running and `videoContainerRef` is properly attached to the display area div.
+
+**Problem**: Playback stops when navigating between pages
+
+**Solution**: Verify that the YouTube player container is never unmounted and that the context provider wraps the entire application in the root layout.
+
+**Problem**: Volume or playback position not persisting
+
+**Solution**: Check localStorage for `youtube-player-prefs` and ensure `savePreferences()` is being called in the context.
 
 ---
 

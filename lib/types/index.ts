@@ -50,6 +50,29 @@ export interface Media {
   uploaded_by: string | null;
 }
 
+/**
+ * Music track with YouTube integration
+ */
+export interface Song {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  artist: string;
+  youtube_video_id: string;
+  content_type: 'audio' | 'video';
+  album_cover_url: string | null;
+  display_order: number;
+  is_featured: boolean;
+  is_active: boolean;
+  duration_seconds: number | null;
+  release_date: string | null;
+  description: string | null;
+  tags: string[] | null;
+  spotify_url: string | null;
+  apple_music_url: string | null;
+}
+
 // =============================================
 // FORM TYPES (for creating/updating records)
 // =============================================
@@ -73,6 +96,16 @@ export type CreateMediaData = Omit<Media, 'id' | 'created_at'>;
  * Data required to create site config
  */
 export type CreateSiteConfigData = Omit<SiteConfig, 'id' | 'updated_at'>;
+
+/**
+ * Data required to create a new song
+ */
+export type CreateSongData = Omit<Song, 'id' | 'created_at' | 'updated_at'>;
+
+/**
+ * Data that can be updated on a song
+ */
+export type UpdateSongData = Partial<Omit<Song, 'id' | 'created_at' | 'updated_at'>>;
 
 // =============================================
 // API RESPONSE TYPES

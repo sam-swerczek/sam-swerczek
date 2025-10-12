@@ -8,7 +8,6 @@ export default async function Footer() {
 
   const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value;
   const linkedinUrl = siteConfig.find(c => c.key === 'linkedin_url')?.value;
-  const instagramUrl = siteConfig.find(c => c.key === 'instagram_music')?.value;
 
   return (
     <footer className="border-t border-background-secondary mt-auto">
@@ -37,16 +36,6 @@ export default async function Footer() {
                 className="text-text-secondary hover:text-accent-blue transition-colors"
               >
                 LinkedIn
-              </a>
-            )}
-            {instagramUrl && (
-              <a
-                href={instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-secondary hover:text-accent-blue transition-colors"
-              >
-                Instagram
               </a>
             )}
           </div>

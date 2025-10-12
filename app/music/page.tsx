@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import SpotifyEmbed from "@/components/music/SpotifyEmbed";
 import YouTubeEmbed from "@/components/music/YouTubeEmbed";
+import YouTubePlayerFull from "@/components/music/YouTubePlayerFull";
 import SocialLinks from "@/components/music/SocialLinks";
+import StreamingLinks from "@/components/music/StreamingLinks";
 import Button from "@/components/ui/Button";
-import { getSiteConfig } from "@/lib/supabase/queries";
+import { getSiteConfig, getSongs } from "@/lib/supabase/queries";
 import { CalendarIcon } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -21,63 +22,96 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function MusicPage() {
-  // Fetch site config from Supabase
-  const siteConfig = await getSiteConfig('music_social');
+  // Fetch site config and songs from Supabase
+  const [streamingConfig, socialsConfig, videosConfig, generalConfig, songs] = await Promise.all([
+    getSiteConfig('streaming'),
+    getSiteConfig('music_social'),
+    getSiteConfig('featured_videos'),
+    getSiteConfig('general'),
+    getSongs()
+  ]);
 
   // Extract URLs from config
-  const spotifyUrl = siteConfig.find(c => c.key === 'spotify_url')?.value;
-  const instagramUrl = siteConfig.find(c => c.key === 'instagram_music')?.value;
-  const facebookUrl = siteConfig.find(c => c.key === 'facebook_music')?.value;
-  const tiktokUrl = siteConfig.find(c => c.key === 'tiktok_music')?.value;
-  const patreonUrl = siteConfig.find(c => c.key === 'patreon_url')?.value;
-  const bookingEmail = siteConfig.find(c => c.key === 'booking_email')?.value;
+  const spotifyUrl = streamingConfig.find(c => c.key === 'spotify_url')?.value;
+  const appleMusicUrl = streamingConfig.find(c => c.key === 'apple_music_url')?.value;
+  const youtubePlaylistUrl = streamingConfig.find(c => c.key === 'youtube_music_url')?.value;
+
+  const instagramUrl = socialsConfig.find(c => c.key === 'instagram_handle')?.value;
+  const facebookUrl = socialsConfig.find(c => c.key === 'facebook_url')?.value;
+  const linkedinUrl = socialsConfig.find(c => c.key === 'linkedin_music')?.value;
+  const tiktokUrl = socialsConfig.find(c => c.key === 'tiktok_url')?.value;
+  const patreonUrl = socialsConfig.find(c => c.key === 'patreon_url')?.value;
+
+  const bookingEmail = generalConfig.find(c => c.key === 'booking_email')?.value;
+
+  // Get album cover (profile image)
+  const albumCoverUrl = generalConfig.find(c => c.key === 'profile_image_url')?.value;
 
   // Extract YouTube video IDs and titles
   const videos = [
     {
-      id: siteConfig.find(c => c.key === 'youtube_video_1')?.value,
-      title: siteConfig.find(c => c.key === 'youtube_video_1_title')?.value
+      id: videosConfig.find(c => c.key === 'youtube_video_1')?.value,
+      title: videosConfig.find(c => c.key === 'youtube_video_1_title')?.value
     },
     {
-      id: siteConfig.find(c => c.key === 'youtube_video_2')?.value,
-      title: siteConfig.find(c => c.key === 'youtube_video_2_title')?.value
+      id: videosConfig.find(c => c.key === 'youtube_video_2')?.value,
+      title: videosConfig.find(c => c.key === 'youtube_video_2_title')?.value
     },
     {
-      id: siteConfig.find(c => c.key === 'youtube_video_3')?.value,
-      title: siteConfig.find(c => c.key === 'youtube_video_3_title')?.value
+      id: videosConfig.find(c => c.key === 'youtube_video_3')?.value,
+      title: videosConfig.find(c => c.key === 'youtube_video_3_title')?.value
     },
     {
-      id: siteConfig.find(c => c.key === 'youtube_video_4')?.value,
-      title: siteConfig.find(c => c.key === 'youtube_video_4_title')?.value
+      id: videosConfig.find(c => c.key === 'youtube_video_4')?.value,
+      title: videosConfig.find(c => c.key === 'youtube_video_4_title')?.value
     },
   ].filter(video => Boolean(video.id));
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-12 md:py-16 pb-20">
+    <div className="min-h-screen relative">
+      {/* Subtle music-themed background - left side only, fades to right and bottom */}
+      <div className="absolute top-0 left-0 right-0 h-screen -z-10 overflow-hidden pointer-events-none hidden md:block">
+        {/* Left side - Music */}
+        <div className="absolute inset-y-0 left-0 w-1/2 overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-15"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1920&q=80)',
+              filter: 'blur(3px) brightness(0.6)',
+            }}
+          />
+          {/* Gradient fade to right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background-primary" />
+          {/* Gradient fade to bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12 md:py-16 pb-20 relative z-10">
         <div className="max-w-6xl mx-auto space-y-16">
 
-          {/* Spotify Section - Featured CTA */}
-          {spotifyUrl && (
-            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-blue/20 via-accent-teal/10 to-transparent border border-accent-blue/30 p-8 md:p-12">
-              <div className="relative z-10">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl md:text-5xl font-bold mb-4">Listen Now on Spotify</h2>
-                  <p className="text-lg md:text-xl text-text-secondary">
-                    Stream my latest tracks, albums, and playlists
-                  </p>
-                </div>
-                <div className="bg-background-secondary/50 backdrop-blur-sm p-4 md:p-6 rounded-xl border border-text-secondary/10">
-                  <SpotifyEmbed
-                    url={spotifyUrl}
-                    type="artist"
-                    height="380"
-                  />
-                </div>
+          {/* Featured Music Player */}
+          <section>
+            <YouTubePlayerFull songs={songs} />
+          </section>
+
+          {/* Streaming Platforms Section */}
+          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-blue/20 via-accent-teal/10 to-transparent border border-accent-blue/30 p-8 md:p-12">
+            <div className="relative z-10">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl md:text-5xl font-bold mb-4">Stream My Music</h2>
+                <p className="text-lg md:text-xl text-text-secondary">
+                  Listen on your favorite platform
+                </p>
               </div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/20 rounded-full blur-3xl -z-0" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
-            </section>
-          )}
+              <StreamingLinks
+                spotifyUrl={spotifyUrl}
+                appleMusicUrl={appleMusicUrl}
+                youtubePlaylistUrl={youtubePlaylistUrl}
+              />
+            </div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/20 rounded-full blur-3xl -z-0" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
+          </section>
 
           {/* YouTube Videos Section */}
           {videos.length > 0 && (
@@ -159,6 +193,7 @@ export default async function MusicPage() {
               <SocialLinks
                 instagramUrl={instagramUrl}
                 facebookUrl={facebookUrl}
+                linkedinUrl={linkedinUrl}
                 tiktokUrl={tiktokUrl}
                 patreonUrl={patreonUrl}
                 layout="grid"

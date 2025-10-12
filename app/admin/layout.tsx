@@ -68,6 +68,11 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
               label="Manage Posts"
               active={pathname.startsWith('/admin/posts')}
             />
+            <NavItem
+              href="/admin/songs"
+              label="Manage Songs"
+              active={pathname.startsWith('/admin/songs')}
+            />
             <NavItem href="/admin/config" label="Site Config" active={pathname === '/admin/config'} />
           </ul>
         </div>

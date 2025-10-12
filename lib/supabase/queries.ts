@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import { createServerClient } from './server';
-import type { Post, SiteConfig } from '../types';
+import type { Post, SiteConfig, Song } from '../types';
 
 // PUBLIC QUERIES (using anon key)
 
@@ -280,4 +280,67 @@ export async function isSlugAvailable(slug: string, excludePostId?: string): Pro
   }
 
   return data.length === 0;
+}
+
+// =============================================
+// SONG QUERIES
+// =============================================
+
+/**
+ * Get all active songs ordered by display order
+ * @returns Active songs in display order
+ */
+export async function getSongs(): Promise<Song[]> {
+  const { data, error } = await supabase
+    .from('songs')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching songs:', error);
+    return [];
+  }
+
+  return data as Song[];
+}
+
+/**
+ * Get the featured song
+ * @returns Featured song or null if none set
+ */
+export async function getFeaturedSong(): Promise<Song | null> {
+  const { data, error } = await supabase
+    .from('songs')
+    .select('*')
+    .eq('is_active', true)
+    .eq('is_featured', true)
+    .single();
+
+  if (error) {
+    console.error('Error fetching featured song:', error);
+    return null;
+  }
+
+  return data as Song;
+}
+
+/**
+ * Get a song by ID
+ * @param id - Song ID
+ * @returns Song or null if not found
+ */
+export async function getSongById(id: string): Promise<Song | null> {
+  const { data, error } = await supabase
+    .from('songs')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching song:', error);
+    return null;
+  }
+
+  return data as Song;
 }

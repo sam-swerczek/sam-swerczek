@@ -1,0 +1,4 @@
+- Always kill process running on 3000 when needed to run dev
+- Before committing changes, consult with the @agent-security-auditor to ensure the changes are secure
+- Before committing changes, consult with the @agent-lead-engineer to ensure code cohesion and best practices
+- For more complex tasks, delegate work to the @agent-lead-engineer to ensure best practices with our tech stack and minimize impact to your context window
