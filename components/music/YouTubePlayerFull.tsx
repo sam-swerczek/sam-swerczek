@@ -3,6 +3,7 @@
 import { useYouTubePlayer } from "./hooks/useYouTubePlayer";
 import { VolumeControl, PlaybackControls, ProgressBar, formatTime } from "./player";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import type { Song } from "@/lib/types";
 
 interface YouTubePlayerFullProps {
@@ -81,11 +82,15 @@ export default function YouTubePlayerFull({ songs }: YouTubePlayerFullProps) {
           {/* Album art centered */}
           <div className="relative z-10 text-center">
             {currentSong?.album_cover_url ? (
-              <img
-                src={currentSong.album_cover_url}
-                alt={currentSong.title}
-                className="w-48 h-48 md:w-64 md:h-64 object-cover rounded-lg shadow-2xl"
-              />
+              <div className="relative w-48 h-48 md:w-64 md:h-64">
+                <Image
+                  src={currentSong.album_cover_url}
+                  alt={currentSong.title}
+                  fill
+                  className="object-cover rounded-lg shadow-2xl"
+                  sizes="(max-width: 768px) 192px, 256px"
+                />
+              </div>
             ) : (
               <div className="w-48 h-48 md:w-64 md:h-64 bg-accent-blue/20 rounded-lg flex items-center justify-center">
                 <svg className="w-24 h-24 text-accent-blue/40" fill="currentColor" viewBox="0 0 20 20">

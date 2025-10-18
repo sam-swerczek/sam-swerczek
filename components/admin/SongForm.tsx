@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Song } from '@/lib/types';
 import { Alert } from '@/components/ui/Alert';
 import {
@@ -240,11 +241,13 @@ export default function SongForm({ song, onSuccess, onCancel }: SongFormProps) {
           {videoPreview && (
             <div>
               <p className="text-sm text-text-secondary mb-2">Preview:</p>
-              <div className="aspect-video bg-background-primary rounded-lg overflow-hidden">
-                <img
+              <div className="relative aspect-video bg-background-primary rounded-lg overflow-hidden">
+                <Image
                   src={getYouTubeThumbnailUrl(videoPreview, 'high')}
                   alt="Video preview"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
             </div>
@@ -353,14 +356,13 @@ export default function SongForm({ song, onSuccess, onCancel }: SongFormProps) {
             className="w-full px-4 py-2 bg-background-primary border border-gray-700 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
           />
           {formData.album_cover_url && (
-            <div className="mt-2">
-              <img
+            <div className="mt-2 relative w-32 h-32">
+              <Image
                 src={formData.album_cover_url}
                 alt="Album cover preview"
-                className="w-32 h-32 object-cover rounded-lg"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
+                fill
+                className="object-cover rounded-lg"
+                sizes="128px"
               />
             </div>
           )}

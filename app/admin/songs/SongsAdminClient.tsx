@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { Song } from '@/lib/types';
 import { Alert } from '@/components/ui/Alert';
 import SongForm from '@/components/admin/SongForm';
@@ -343,20 +344,16 @@ export default function SongsAdminClient({ initialSongs }: SongsAdminClientProps
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="w-16 h-16 bg-background-primary rounded overflow-hidden">
-                        <img
+                      <div className="relative w-16 h-16 bg-background-primary rounded overflow-hidden">
+                        <Image
                           src={
                             song.album_cover_url ||
                             getYouTubeThumbnailUrl(song.youtube_video_id, 'default')
                           }
                           alt={song.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = getYouTubeThumbnailUrl(
-                              song.youtube_video_id,
-                              'default'
-                            );
-                          }}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
                         />
                       </div>
                     </td>
