@@ -717,14 +717,37 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       description: track.description,
     }));
 
+    // Determine the current index
+    let newIndex = -1;
+    if (playlist.length > 0) {
+      if (playerState.currentTrack) {
+        // If there's already a current track, try to find it in the new playlist
+        newIndex = playlist.findIndex(t => t.id === playerState.currentTrack?.id);
+        if (newIndex === -1) {
+          // Current track not in new playlist, default to first track
+          newIndex = 0;
+        }
+      } else {
+        // No current track, default to first track
+        newIndex = 0;
+      }
+    }
+
     setPlayerState(prev => ({
       ...prev,
       playlist,
-      currentIndex: prev.currentTrack && playlist.length > 0
-        ? playlist.findIndex(t => t.id === prev.currentTrack?.id)
-        : -1,
+      currentIndex: newIndex,
+      // Auto-load first track if no current track is set
+      currentTrack: prev.currentTrack || (playlist.length > 0 ? playlist[0] : null),
+      videoId: prev.currentTrack?.youtubeVideoId || (playlist.length > 0 ? playlist[0].youtubeVideoId : prev.videoId),
     }));
-  }, []);
+
+    // If player is ready and there's no current track, load the first track
+    if (!playerState.currentTrack && tracks.length > 0 && playerRef.current && playerState.isReady) {
+      console.log('Auto-loading first track:', tracks[0].title);
+      loadTrack(tracks[0]);
+    }
+  }, [playerState.currentTrack, playerState.isReady, loadTrack]);
 
   const jumpToTrack = useCallback((index: number) => {
     if (index < 0 || index >= playerState.playlist.length) {
@@ -776,6 +799,38 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       : playerState.currentIndex - 1;
     jumpToTrack(prevIndex);
   }, [playerState.playlist.length, playerState.currentIndex, jumpToTrack]);
+
+  // Auto-load first track when player becomes ready if playlist exists but no track is loaded
+  useEffect(() => {
+    if (playerState.isReady && playerState.playlist.length > 0 && !playerState.currentTrack && playerRef.current) {
+      console.log('Player ready with playlist but no track loaded, auto-loading first track');
+      const firstTrack = playerState.playlist[0];
+
+      // Convert CurrentTrack to Song format for loadTrack
+      const song: Song = {
+        id: firstTrack.id,
+        title: firstTrack.title,
+        artist: firstTrack.artist,
+        album_cover_url: firstTrack.albumCoverUrl,
+        content_type: 'video',
+        youtube_video_id: firstTrack.youtubeVideoId,
+        duration_seconds: firstTrack.durationSeconds ?? null,
+        tags: firstTrack.tags ?? null,
+        release_date: firstTrack.releaseDate ?? null,
+        description: firstTrack.description ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        display_order: 0,
+        is_featured: false,
+        is_active: true,
+        spotify_url: null,
+        apple_music_url: null,
+      };
+
+      loadTrack(song);
+      setPlayerState(prev => ({ ...prev, currentIndex: 0 }));
+    }
+  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack]);
 
   const contextValue: YouTubePlayerContextValue = {
     ...playerState,

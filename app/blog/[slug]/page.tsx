@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPostBySlug, getPublishedPosts, getRelatedPosts, getSiteConfig } from '@/lib/supabase/queries';
+import { getPostBySlug, getPublishedPosts, getRelatedPosts } from '@/lib/supabase/queries';
+import { getConfigObject, type EngineeringSocialConfig } from '@/lib/supabase/config-helpers';
 import PostContent from '@/components/blog/PostContent';
 import TagsList from '@/components/blog/TagsList';
 
@@ -61,14 +62,11 @@ export default async function BlogPostPage({ params }: PageProps) {
       })
     : '';
 
-  // Get related posts and social links using Supabase query
-  const [relatedPosts, siteConfig] = await Promise.all([
+  // Get related posts and social links
+  const [relatedPosts, social] = await Promise.all([
     getRelatedPosts(post.id, post.tags || [], 3),
-    getSiteConfig(),
+    getConfigObject<EngineeringSocialConfig>(),
   ]);
-
-  const linkedinUrl = siteConfig.find(c => c.key === 'linkedin_url')?.value;
-  const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value;
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -163,9 +161,9 @@ export default async function BlogPostPage({ params }: PageProps) {
               </p>
             </div>
             <div className="flex gap-4">
-              {linkedinUrl && (
+              {social.linkedin_url && (
                 <a
-                  href={linkedinUrl}
+                  href={social.linkedin_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-blue hover:text-accent-blue transition-colors duration-200"
@@ -173,9 +171,9 @@ export default async function BlogPostPage({ params }: PageProps) {
                   LinkedIn
                 </a>
               )}
-              {githubUrl && (
+              {social.github_url && (
                 <a
-                  href={githubUrl}
+                  href={social.github_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-2 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-teal hover:text-accent-teal transition-colors duration-200"

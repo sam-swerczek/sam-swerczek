@@ -4,14 +4,16 @@ import { useState } from 'react';
 import type { Post } from '@/lib/types';
 import PostCard from '@/components/blog/PostCard';
 import TagFilter from '@/components/blog/TagFilter';
-import { FilterIcon, StarIcon, BookIcon, TagIcon } from '@/components/ui/icons';
+import { FilterIcon, StarIcon } from '@/components/ui/icons';
+import { EngineeringSocialConfig } from '@/lib/supabase/config-helpers';
 
 interface BlogClientProps {
   initialPosts: Post[];
   allTags: string[];
+  social: EngineeringSocialConfig;
 }
 
-export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
+export default function BlogClient({ initialPosts, allTags, social }: BlogClientProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -51,35 +53,102 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
 
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="max-w-4xl mx-auto">
-        {/* Hero Section */}
-        <div className="mb-16 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 pb-2 bg-gradient-to-r from-text-primary via-accent-blue to-accent-teal bg-clip-text text-transparent">
-            Meta-Engineering
-          </h1>
-          <p className="text-xl md:text-2xl text-text-secondary leading-relaxed max-w-3xl mx-auto mb-8">
-            Exploring abstractions, diving into the unknown, and discovering what&apos;s possible when we rethink how we build.
-          </p>
-          <div className="flex items-center justify-center gap-3 text-text-secondary/60">
-            <div className="flex items-center gap-2">
-              <BookIcon className="w-5 h-5" />
-              <span className="text-sm">{initialPosts.length} {initialPosts.length === 1 ? 'Article' : 'Articles'}</span>
-            </div>
-            <span className="text-text-secondary/40">•</span>
-            <div className="flex items-center gap-2">
-              <TagIcon className="w-5 h-5" />
-              <span className="text-sm">{allTags.length} {allTags.length === 1 ? 'Topic' : 'Topics'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Post - First Post */}
+        {/* Featured Post - Spotlight Card */}
         {posts.length > 0 && (
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-4">
-              <StarIcon className="w-5 h-5 text-accent-gold" />
-              <h2 className="text-xl font-bold text-text-primary">Featured Article</h2>
+          <div className="mb-20">
+            <div className="relative">
+              {/* Featured badge - top right */}
+              <div className="absolute -top-3 right-6 z-20">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-gold to-accent-gold/80 rounded-full shadow-lg">
+                  <StarIcon className="w-4 h-4 text-background-primary" />
+                  <span className="text-sm font-bold text-background-primary uppercase tracking-wide">
+                    Featured
+                  </span>
+                </div>
+              </div>
+
+              {/* Spotlight card */}
+              <a
+                href={`/blog/${posts[0].slug}`}
+                className="block group"
+                aria-label="Featured article"
+              >
+                <div className="relative rounded-2xl border-[3px] border-accent-gold overflow-hidden shadow-2xl shadow-accent-gold/20 hover:shadow-accent-gold/40 transition-all duration-500 hover:-translate-y-1">
+                  {/* Background with gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-background-secondary to-background-primary" />
+
+                  {/* Subtle pattern overlay */}
+                  <div
+                    className="absolute inset-0 opacity-5"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(74, 158, 255, 0.3) 1px, transparent 0)',
+                      backgroundSize: '32px 32px',
+                    }}
+                  />
+
+                  {/* Content */}
+                  <div className="relative p-8 md:p-12">
+                    {/* Category/Topic label */}
+                    {posts[0].tags && posts[0].tags.length > 0 && (
+                      <div className="inline-block px-3 py-1 bg-accent-blue/20 border border-accent-blue/40 rounded-full mb-6">
+                        <span className="text-xs font-semibold text-accent-blue uppercase tracking-wider">
+                          {posts[0].tags[0]}
+                        </span>
+                      </div>
+                    )}
+
+                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 group-hover:text-accent-gold transition-colors duration-300 leading-tight">
+                      {posts[0].title}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-4 h-4 text-accent-teal">📅</span>
+                        <time className="text-text-primary/80">
+                          {posts[0].published_at
+                            ? new Date(posts[0].published_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })
+                            : ''}
+                        </time>
+                      </div>
+                      <div className="w-1 h-1 bg-accent-teal rounded-full" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-4 h-4 text-accent-teal">⏱️</span>
+                        <span className="text-text-primary/80">5 min read</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xl text-text-primary/90 leading-relaxed mb-10 line-clamp-4 max-w-4xl">
+                      {posts[0].excerpt}
+                    </p>
+
+                    {/* CTA with strong visual */}
+                    <div className="flex items-center justify-between pt-6 border-t border-gray-700">
+                      <div className="inline-flex items-center gap-3 text-accent-gold group-hover:text-accent-teal transition-colors duration-300 font-bold text-lg">
+                        <span>Dive into the article</span>
+                        <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
+                      </div>
+
+                      {posts[0].tags && posts[0].tags.length > 1 && (
+                        <div className="hidden md:flex gap-2">
+                          {posts[0].tags.slice(1, 4).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-3 py-1 text-xs font-medium bg-background-primary/50 text-text-secondary border border-gray-700 rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </a>
             </div>
-            <PostCard post={posts[0]} />
           </div>
         )}
 
@@ -138,22 +207,26 @@ export default function BlogClient({ initialPosts, allTags }: BlogClientProps) {
               <p className="text-text-secondary">Find me on LinkedIn or check out my projects on GitHub.</p>
             </div>
             <div className="flex gap-4">
-              <a
-                href="https://linkedin.com/in/samswerczek"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors duration-200"
-              >
-                LinkedIn
-              </a>
-              <a
-                href="https://github.com/samswerczek"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-teal hover:text-accent-teal transition-colors duration-200"
-              >
-                GitHub
-              </a>
+              {social.linkedin_url && (
+                <a
+                  href={social.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors duration-200"
+                >
+                  LinkedIn
+                </a>
+              )}
+              {social.github_url && (
+                <a
+                  href={social.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 border border-gray-700 text-text-primary rounded-lg font-medium hover:border-accent-teal hover:text-accent-teal transition-colors duration-200"
+                >
+                  GitHub
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -7,13 +7,48 @@ import { FormField } from '@/components/ui/FormField';
 import { inputClassName, selectClassName, textareaClassName } from '@/lib/utils/formStyles';
 import { SpinnerIcon, ArrowRightIcon } from '@/components/ui/icons';
 
-export default function ContactForm() {
+export type IntentType = 'music' | 'code' | 'connect';
+
+interface ContactFormProps {
+  intent?: IntentType;
+}
+
+// Contextual configurations based on intent
+const INTENT_CONFIG = {
+  music: {
+    categoryValue: 'music',
+    messagePlaceholder: 'Tell me about your project, event, or collaboration idea. Include details like dates, location, or type of work you need...',
+    submitButtonText: 'Send Music Inquiry',
+    showProjectType: true,
+    showProjectBudget: false,
+  },
+  code: {
+    categoryValue: 'engineering',
+    messagePlaceholder: 'Describe your project, technical challenges, or what you need help building. Include any relevant tech stack or timeline details...',
+    submitButtonText: 'Send Project Inquiry',
+    showProjectType: false,
+    showProjectBudget: true,
+  },
+  connect: {
+    categoryValue: 'general',
+    messagePlaceholder: 'What\'s on your mind? I\'m all ears...',
+    submitButtonText: 'Send Message',
+    showProjectType: false,
+    showProjectBudget: false,
+  },
+};
+
+export default function ContactForm({ intent = 'connect' }: ContactFormProps) {
+  const config = INTENT_CONFIG[intent];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    category: 'general',
+    category: config.categoryValue,
     message: '',
+    projectType: '',
+    projectBudget: '',
   });
 
   const { handleSubmit, isLoading, error, success } = useFormSubmit({
@@ -34,7 +69,7 @@ export default function ContactForm() {
         throw new Error('Failed to send message');
       }
 
-      setFormData({ name: '', email: '', subject: '', category: 'general', message: '' });
+      setFormData({ name: '', email: '', subject: '', category: config.categoryValue, message: '', projectType: '', projectBudget: '' });
     });
   };
 
@@ -43,8 +78,7 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="bg-background-secondary/50 backdrop-blur-sm p-8 md:p-12 rounded-2xl border border-gray-800">
-      <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6">
         {/* Name */}
         <FormField id="name" label="Name" required>
           <input
@@ -73,23 +107,47 @@ export default function ContactForm() {
           />
         </FormField>
 
-        {/* Category */}
-        <FormField id="category" label="What is this regarding?" required>
-          <select
-            id="category"
-            name="category"
-            required
-            value={formData.category}
-            onChange={handleChange}
-            className={selectClassName()}
-          >
-            <option value="general">General Inquiry</option>
-            <option value="music">Music / Performance Booking</option>
-            <option value="collaboration">Music Collaboration</option>
-            <option value="engineering">Software Engineering / Consulting</option>
-            <option value="other">Other</option>
-          </select>
-        </FormField>
+        {/* Hidden category field - auto-set based on intent */}
+        <input type="hidden" name="category" value={formData.category} />
+
+        {/* Contextual Field: Project Type (Music only) */}
+        {config.showProjectType && (
+          <FormField id="projectType" label="Project Type">
+            <select
+              id="projectType"
+              name="projectType"
+              value={formData.projectType}
+              onChange={handleChange}
+              className={selectClassName()}
+            >
+              <option value="">Select a project type</option>
+              <option value="booking">Booking / Performance</option>
+              <option value="feature">Feature / Collaboration</option>
+              <option value="production">Production / Studio Work</option>
+              <option value="other">Other</option>
+            </select>
+          </FormField>
+        )}
+
+        {/* Contextual Field: Project Budget (Code only) */}
+        {config.showProjectBudget && (
+          <FormField id="projectBudget" label="Project Budget">
+            <select
+              id="projectBudget"
+              name="projectBudget"
+              value={formData.projectBudget}
+              onChange={handleChange}
+              className={selectClassName()}
+            >
+              <option value="">Select a budget range</option>
+              <option value="consulting">Consulting (Hourly)</option>
+              <option value="fixed-small">Fixed Project ($5k-$15k)</option>
+              <option value="fixed-medium">Fixed Project ($15k-$50k)</option>
+              <option value="fixed-large">Fixed Project ($50k+)</option>
+              <option value="discuss">Let&apos;s Discuss</option>
+            </select>
+          </FormField>
+        )}
 
         {/* Subject */}
         <FormField id="subject" label="Subject" required>
@@ -115,7 +173,7 @@ export default function ContactForm() {
             onChange={handleChange}
             rows={6}
             className={textareaClassName()}
-            placeholder="Tell me more about your inquiry..."
+            placeholder={config.messagePlaceholder}
           />
         </FormField>
 
@@ -148,12 +206,11 @@ export default function ContactForm() {
             </>
           ) : (
             <>
-              Send Message
+              {config.submitButtonText}
               <ArrowRightIcon className="w-5 h-5" />
             </>
           )}
         </button>
       </form>
-    </div>
   );
 }

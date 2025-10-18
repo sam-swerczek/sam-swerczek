@@ -4,7 +4,16 @@ import YouTubePlayerFull from "@/components/music/YouTubePlayerFull";
 import SocialLinks from "@/components/music/SocialLinks";
 import StreamingLinks from "@/components/music/StreamingLinks";
 import Button from "@/components/ui/Button";
-import { getSiteConfig, getSongs } from "@/lib/supabase/queries";
+import SectionHeader from "@/components/ui/SectionHeader";
+import { getSongs } from "@/lib/supabase/queries";
+import {
+  getConfigObject,
+  extractVideosFromConfig,
+  type StreamingConfig,
+  type MusicSocialConfig,
+  type FeaturedVideosConfig,
+  type GeneralConfig,
+} from "@/lib/supabase/config-helpers";
 import { CalendarIcon } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -22,50 +31,17 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function MusicPage() {
-  // Fetch site config and songs from Supabase
-  const [streamingConfig, socialsConfig, videosConfig, generalConfig, songs] = await Promise.all([
-    getSiteConfig('streaming'),
-    getSiteConfig('music_social'),
-    getSiteConfig('featured_videos'),
-    getSiteConfig('general'),
+  // Fetch all required data in parallel
+  const [streaming, social, videosRaw, general, songs] = await Promise.all([
+    getConfigObject<StreamingConfig>('streaming'),
+    getConfigObject<MusicSocialConfig>('music_social'),
+    getConfigObject<FeaturedVideosConfig>('featured_videos'),
+    getConfigObject<GeneralConfig>('general'),
     getSongs()
   ]);
 
-  // Extract URLs from config
-  const spotifyUrl = streamingConfig.find(c => c.key === 'spotify_url')?.value;
-  const appleMusicUrl = streamingConfig.find(c => c.key === 'apple_music_url')?.value;
-  const youtubePlaylistUrl = streamingConfig.find(c => c.key === 'youtube_music_url')?.value;
-
-  const instagramUrl = socialsConfig.find(c => c.key === 'instagram_handle')?.value;
-  const facebookUrl = socialsConfig.find(c => c.key === 'facebook_url')?.value;
-  const linkedinUrl = socialsConfig.find(c => c.key === 'linkedin_music')?.value;
-  const tiktokUrl = socialsConfig.find(c => c.key === 'tiktok_url')?.value;
-  const patreonUrl = socialsConfig.find(c => c.key === 'patreon_url')?.value;
-
-  const bookingEmail = generalConfig.find(c => c.key === 'booking_email')?.value;
-
-  // Get album cover (profile image)
-  const albumCoverUrl = generalConfig.find(c => c.key === 'profile_image_url')?.value;
-
-  // Extract YouTube video IDs and titles
-  const videos = [
-    {
-      id: videosConfig.find(c => c.key === 'youtube_video_1')?.value,
-      title: videosConfig.find(c => c.key === 'youtube_video_1_title')?.value
-    },
-    {
-      id: videosConfig.find(c => c.key === 'youtube_video_2')?.value,
-      title: videosConfig.find(c => c.key === 'youtube_video_2_title')?.value
-    },
-    {
-      id: videosConfig.find(c => c.key === 'youtube_video_3')?.value,
-      title: videosConfig.find(c => c.key === 'youtube_video_3_title')?.value
-    },
-    {
-      id: videosConfig.find(c => c.key === 'youtube_video_4')?.value,
-      title: videosConfig.find(c => c.key === 'youtube_video_4_title')?.value
-    },
-  ].filter(video => Boolean(video.id));
+  // Extract videos from config
+  const videos = extractVideosFromConfig(videosRaw);
   return (
     <div className="min-h-screen relative">
       {/* Subtle music-themed background - left side only, fades to right and bottom */}
@@ -97,16 +73,15 @@ export default async function MusicPage() {
           {/* Streaming Platforms Section */}
           <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-blue/20 via-accent-teal/10 to-transparent border border-accent-blue/30 p-8 md:p-12">
             <div className="relative z-10">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-5xl font-bold mb-4">Stream My Music</h2>
-                <p className="text-lg md:text-xl text-text-secondary">
-                  Listen on your favorite platform
-                </p>
-              </div>
+              <SectionHeader
+                title="Stream My Music"
+                subtitle="Listen on your favorite platform"
+                className="text-center"
+              />
               <StreamingLinks
-                spotifyUrl={spotifyUrl}
-                appleMusicUrl={appleMusicUrl}
-                youtubePlaylistUrl={youtubePlaylistUrl}
+                spotifyUrl={streaming.spotify_url}
+                appleMusicUrl={streaming.apple_music_url}
+                youtubePlaylistUrl={streaming.youtube_music_url}
               />
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/20 rounded-full blur-3xl -z-0" />
@@ -116,12 +91,11 @@ export default async function MusicPage() {
           {/* YouTube Videos Section */}
           {videos.length > 0 && (
             <section>
-              <div className="mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-3">Featured Performances</h2>
-                <p className="text-text-secondary text-lg">
-                  Watch live sessions and music videos
-                </p>
-              </div>
+              <SectionHeader
+                title="Featured Performances"
+                subtitle="Watch live sessions and music videos"
+                className="text-center"
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {videos.map((video) => (
                   <div key={video.id} className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
@@ -137,12 +111,11 @@ export default async function MusicPage() {
 
           {/* Upcoming Shows Placeholder */}
           <section>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Upcoming Shows</h2>
-              <p className="text-text-secondary text-lg">
-                Check back for upcoming performance dates
-              </p>
-            </div>
+            <SectionHeader
+              title="Upcoming Shows"
+              subtitle="Check back for upcoming performance dates"
+              className="text-center"
+            />
             <div className="bg-background-secondary/50 backdrop-blur-sm p-8 md:p-12 rounded-2xl border border-text-secondary/10 text-center">
               <div className="max-w-md mx-auto">
                 <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-accent-blue/40" />
@@ -150,7 +123,7 @@ export default async function MusicPage() {
                 <p className="text-text-secondary mb-6">
                   Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!
                 </p>
-                <Button href={bookingEmail ? `mailto:${bookingEmail}` : '#'} variant="secondary" size="md">
+                <Button href={general.booking_email ? `mailto:${general.booking_email}` : '#'} variant="secondary" size="md">
                   Book a Show
                 </Button>
               </div>
@@ -158,16 +131,16 @@ export default async function MusicPage() {
           </section>
 
           {/* Patreon CTA */}
-          {patreonUrl && (
+          {social.patreon_url && (
             <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-gold/20 via-accent-gold/10 to-transparent border border-accent-gold/30 p-8 md:p-12">
               <div className="relative z-10 text-center max-w-3xl mx-auto">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Support My Music</h2>
-                <p className="text-lg text-text-secondary mb-8">
-                  Join my Patreon community for exclusive content, early releases, and behind-the-scenes access.
-                  Your support helps me create more music and content for you to enjoy.
-                </p>
+                <SectionHeader
+                  title="Support My Music"
+                  subtitle="Join my Patreon community for exclusive content, early releases, and behind-the-scenes access. Your support helps me create more music and content for you to enjoy."
+                  className="text-center"
+                />
                 <Button
-                  href={patreonUrl}
+                  href={social.patreon_url}
                   variant="accent"
                   size="lg"
                   target="_blank"
@@ -183,19 +156,18 @@ export default async function MusicPage() {
 
           {/* Social Media Section */}
           <section>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Connect With Me</h2>
-              <p className="text-text-secondary text-lg">
-                Follow for updates, new releases, and upcoming shows
-              </p>
-            </div>
+            <SectionHeader
+              title="Connect With Me"
+              subtitle="Follow for updates, new releases, and upcoming shows"
+              className="text-center"
+            />
             <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
               <SocialLinks
-                instagramUrl={instagramUrl}
-                facebookUrl={facebookUrl}
-                linkedinUrl={linkedinUrl}
-                tiktokUrl={tiktokUrl}
-                patreonUrl={patreonUrl}
+                instagramUrl={social.instagram_handle}
+                facebookUrl={social.facebook_url}
+                linkedinUrl={social.linkedin_music}
+                tiktokUrl={social.tiktok_url}
+                patreonUrl={social.patreon_url}
                 layout="grid"
               />
             </div>

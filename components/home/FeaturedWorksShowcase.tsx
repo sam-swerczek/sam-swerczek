@@ -1,8 +1,8 @@
-import { getFeaturedSong, getSiteConfigByKey } from '@/lib/supabase/queries';
 import Link from 'next/link';
 import Image from 'next/image';
-import { GithubIcon, ExternalLinkIcon } from '@/components/ui/icons';
+import { Song } from '@/lib/types';
 import FeaturedSongCard from '@/components/home/FeaturedSongCard';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface FeaturedProject {
   title: string;
@@ -13,14 +13,12 @@ interface FeaturedProject {
   liveUrl: string;
 }
 
-export default async function FeaturedWorksShowcase() {
-  // Fetch featured song from database
-  const featuredSong = await getFeaturedSong();
+interface FeaturedWorksShowcaseProps {
+  featuredSong: Song | null;
+  githubUrl: string;
+}
 
-  // Fetch GitHub URL from site config
-  const githubConfig = await getSiteConfigByKey('github_url');
-  const githubUrl = githubConfig?.value || 'https://github.com';
-
+export default function FeaturedWorksShowcase({ featuredSong, githubUrl }: FeaturedWorksShowcaseProps) {
   // Music tags - use song tags if available, otherwise default
   const musicTags = featuredSong?.tags || ["Singer-Songwriter", "Acoustic", "Indie Folk", "Live Session"];
 
@@ -41,14 +39,11 @@ export default async function FeaturedWorksShowcase() {
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Section heading */}
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary font-montserrat mb-3">
-              Featured Works
-            </h2>
-            <p className="text-base text-text-secondary max-w-2xl mx-auto">
-              A glimpse into my creative and technical pursuits
-            </p>
-          </div>
+          <SectionHeader
+            title="Featured Works"
+            subtitle="A glimpse into my creative and technical pursuits"
+            className="text-center"
+          />
 
           {/* Split-screen showcase */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 relative lg:items-stretch">

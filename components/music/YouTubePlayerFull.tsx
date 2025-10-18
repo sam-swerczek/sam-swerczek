@@ -1,10 +1,8 @@
 "use client";
 
 import { useYouTubePlayer } from "./hooks/useYouTubePlayer";
-import PlayIcon from "@/components/ui/icons/PlayIcon";
-import PauseIcon from "@/components/ui/icons/PauseIcon";
-import VolumeIcon from "@/components/ui/icons/VolumeIcon";
-import { useState, useEffect } from "react";
+import { VolumeControl, PlaybackControls, ProgressBar, formatTime } from "./player";
+import { useEffect, useState } from "react";
 import type { Song } from "@/lib/types";
 
 interface YouTubePlayerFullProps {
@@ -30,7 +28,6 @@ export default function YouTubePlayerFull({ songs }: YouTubePlayerFullProps) {
     setPlaylist,
   } = useYouTubePlayer();
 
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Set playlist when songs change
@@ -62,55 +59,9 @@ export default function YouTubePlayerFull({ songs }: YouTubePlayerFullProps) {
     ? songs.find(s => s.id === currentTrack.id) || songs[currentIndex]
     : songs[currentIndex];
 
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Calculate progress percentage
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percent = x / rect.width;
-    const newTime = percent * duration;
-    seekTo(newTime);
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-  };
-
-  const togglePlay = () => {
-    if (isPlaying) {
-      pause();
-    } else {
-      play();
-    }
-  };
-
   const handleTrackSelect = (song: Song, index: number) => {
-    console.log('🎵 Track selected:', {
-      title: song.title,
-      videoId: song.youtube_video_id,
-      index,
-      currentTrackId: currentTrack?.id,
-      newSongId: song.id
-    });
     loadTrack(song);
     setCurrentIndex(index);
-  };
-
-  const handleNext = () => {
-    next();
-  };
-
-  const handlePrevious = () => {
-    previous();
   };
 
   return (
@@ -165,111 +116,35 @@ export default function YouTubePlayerFull({ songs }: YouTubePlayerFullProps) {
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-3">
-            <div
-              className="w-full h-2 bg-background-secondary rounded-full cursor-pointer group"
-              onClick={handleProgressClick}
-            >
-              <div
-                className="h-full bg-accent-blue rounded-full transition-all group-hover:bg-accent-teal relative"
-                style={{ width: `${progressPercent}%` }}
-              >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-accent-blue rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </div>
-            <div className="flex justify-between mt-1.5 text-xs text-text-secondary">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
+          <ProgressBar
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={seekTo}
+            variant="full"
+          />
 
           {/* Playback Controls */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrevious}
-                disabled={!isReady || songs.length <= 1}
-                className="w-9 h-9 bg-background-secondary hover:bg-accent-blue/20 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label="Previous track"
-              >
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
-                </svg>
-              </button>
-
-              {/* Play/Pause Button */}
-              <button
-                onClick={togglePlay}
-                disabled={!isReady}
-                className="w-12 h-12 bg-accent-blue hover:bg-accent-teal rounded-full flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? (
-                  <PauseIcon className="w-5 h-5 text-white" />
-                ) : (
-                  <PlayIcon className="w-5 h-5 text-white ml-0.5" />
-                )}
-              </button>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={!isReady || songs.length <= 1}
-                className="w-9 h-9 bg-background-secondary hover:bg-accent-blue/20 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label="Next track"
-              >
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798l-5.445-3.63z" />
-                </svg>
-              </button>
-
-              {/* Time Display */}
-              <div className="hidden md:block text-xs text-text-secondary ml-1">
-                <span className="font-mono">{formatTime(currentTime)}</span>
-                <span className="mx-1.5">/</span>
-                <span className="font-mono">{formatTime(duration)}</span>
-              </div>
-            </div>
+            <PlaybackControls
+              isPlaying={isPlaying}
+              isReady={isReady}
+              canNavigate={songs.length > 1}
+              onPlay={play}
+              onPause={pause}
+              onNext={next}
+              onPrevious={previous}
+              variant="full"
+              showTimeDisplay={true}
+              currentTime={currentTime}
+              duration={duration}
+            />
 
             {/* Volume Control */}
-            <div className="relative">
-              <button
-                onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-                onMouseEnter={() => setShowVolumeSlider(true)}
-                onMouseLeave={() => setShowVolumeSlider(false)}
-                className="w-9 h-9 flex items-center justify-center text-text-secondary hover:text-accent-blue transition-colors"
-                aria-label="Volume control"
-              >
-                <VolumeIcon className="w-5 h-5" level={volume === 0 ? "muted" : volume < 0.33 ? "low" : volume < 0.66 ? "medium" : "high"} />
-              </button>
-
-              {/* Volume Slider */}
-              {showVolumeSlider && (
-                <div
-                  className="absolute bottom-full right-0 mb-2 bg-background-secondary border border-text-secondary/20 rounded-lg p-2.5 shadow-lg"
-                  onMouseEnter={() => setShowVolumeSlider(true)}
-                  onMouseLeave={() => setShowVolumeSlider(false)}
-                >
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="w-20 h-2 bg-background-secondary rounded-lg appearance-none cursor-pointer accent-accent-blue"
-                    style={{
-                      background: `linear-gradient(to right, #4a9eff 0%, #4a9eff ${volume * 100}%, rgb(31, 41, 55) ${volume * 100}%, rgb(31, 41, 55) 100%)`
-                    }}
-                    aria-label="Volume slider"
-                  />
-                  <div className="text-center mt-1.5 text-xs text-text-secondary">
-                    {Math.round(volume * 100)}%
-                  </div>
-                </div>
-              )}
-            </div>
+            <VolumeControl
+              volume={volume}
+              onVolumeChange={setVolume}
+              variant="full"
+            />
           </div>
         </div>
       </div>

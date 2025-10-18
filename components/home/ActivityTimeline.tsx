@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MusicIcon, CodeIcon, ArrowRightIcon } from '@/components/ui/icons';
-import { getPublishedPosts } from '@/lib/supabase/queries';
+import { Post } from '@/lib/types';
 
 interface MusicRelease {
   type: 'music';
@@ -30,9 +30,11 @@ function formatDate(dateString: string): string {
   });
 }
 
-export default async function ActivityTimeline() {
-  // Fetch blog posts
-  const blogPosts = await getPublishedPosts({ limit: 3 });
+interface ActivityTimelineProps {
+  blogPosts: Post[];
+}
+
+export default function ActivityTimeline({ blogPosts }: ActivityTimelineProps) {
 
   // Placeholder music releases - will be made dynamic later
   const musicReleases: MusicRelease[] = [
