@@ -130,7 +130,10 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
                 <div className="flex items-center justify-center gap-3 mb-12">
                   <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent-blue to-transparent"></div>
                   <p className="text-sm md:text-base text-text-secondary/80 uppercase tracking-widest">
-                    Singer-Songwriter • Software Engineer
+                    <span className="whitespace-nowrap">Singer-Songwriter</span>
+                    <br className="md:hidden" />
+                    <span className="hidden md:inline"> • </span>
+                    <span className="whitespace-nowrap">Software Engineer</span>
                   </p>
                   <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent-gold to-transparent"></div>
                 </div>

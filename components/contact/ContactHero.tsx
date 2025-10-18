@@ -4,10 +4,13 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 interface ContactHeroProps {
+  contactImageUrl?: string;
   profileImageUrl?: string;
 }
 
-export default function ContactHero({ profileImageUrl }: ContactHeroProps) {
+export default function ContactHero({ contactImageUrl, profileImageUrl }: ContactHeroProps) {
+  // Prefer contact image, fall back to profile image
+  const displayImageUrl = contactImageUrl || profileImageUrl;
   return (
     <div className="relative py-16 md:py-24 px-4 overflow-hidden">
       {/* Floating orbs background - reusing pattern from HeroSection */}
@@ -17,7 +20,7 @@ export default function ContactHero({ profileImageUrl }: ContactHeroProps) {
       <div className="container mx-auto max-w-4xl relative z-10">
         <div className="flex flex-col items-center text-center">
           {/* Personal Photo with Glow Effect */}
-          {profileImageUrl && (
+          {displayImageUrl && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -31,7 +34,7 @@ export default function ContactHero({ profileImageUrl }: ContactHeroProps) {
                 {/* Image container */}
                 <div className="relative w-[200px] h-[200px] md:w-[240px] md:h-[240px] rounded-full overflow-hidden border-4 border-accent-blue/30 shadow-2xl bg-background-secondary">
                   <Image
-                    src={profileImageUrl}
+                    src={displayImageUrl}
                     alt="Sam Swerczek"
                     fill
                     className="object-cover"

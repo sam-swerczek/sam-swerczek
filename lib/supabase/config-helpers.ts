@@ -4,6 +4,7 @@
 
 import { getSiteConfig } from './queries';
 import type { SiteConfig } from '../types';
+import { sanitizeUrl, sanitizeEmail } from '../utils/url-validation';
 
 /**
  * Convert an array of SiteConfig objects to a typed object for easier access
@@ -20,7 +21,7 @@ export function configArrayToObject<T extends Record<string, string | undefined>
 }
 
 /**
- * Fetch site config by category and return as typed object
+ * Fetch site config by category and return as typed object with sanitized values
  * @param category - Config category to fetch
  * @returns Config object with keys as properties
  */
@@ -28,7 +29,60 @@ export async function getConfigObject<T extends Record<string, string | undefine
   category?: string
 ): Promise<T> {
   const configs = await getSiteConfig(category);
-  return configArrayToObject<T>(configs);
+  const configObj = configArrayToObject<T>(configs);
+
+  // Apply sanitization based on category
+  if (category === 'music_social' || category === 'engineering_social') {
+    Object.keys(configObj).forEach(key => {
+      if (key.includes('url') || key.includes('handle')) {
+        const value = configObj[key];
+        if (value) {
+          configObj[key] = sanitizeUrl(value) as any;
+        }
+      }
+    });
+  }
+
+  if (category === 'general') {
+    if (configObj['booking_email']) {
+      configObj['booking_email'] = sanitizeEmail(configObj['booking_email']) as any;
+    }
+    // Image URLs and other URLs should also be validated
+    ['profile_image_url', 'hero_image_url', 'contact_image_url'].forEach(key => {
+      if (configObj[key]) {
+        configObj[key] = sanitizeUrl(configObj[key]) as any;
+      }
+    });
+  }
+
+  if (category === 'streaming') {
+    Object.keys(configObj).forEach(key => {
+      if (key.includes('url')) {
+        const value = configObj[key];
+        if (value) {
+          configObj[key] = sanitizeUrl(value) as any;
+        }
+      }
+    });
+  }
+
+  if (category === 'featured_videos') {
+    Object.keys(configObj).forEach(key => {
+      if (key.includes('youtube_video_') && !key.includes('_title')) {
+        const value = configObj[key];
+        if (value) {
+          // YouTube video IDs can be just the ID or a full URL
+          // If it's a URL, validate it
+          if (value.includes('http://') || value.includes('https://')) {
+            configObj[key] = sanitizeUrl(value) as any;
+          }
+          // If it's just an ID, leave it as is
+        }
+      }
+    });
+  }
+
+  return configObj;
 }
 
 /**
@@ -86,6 +140,8 @@ export interface FeaturedVideosConfig extends Record<string, string | undefined>
 export interface GeneralConfig extends Record<string, string | undefined> {
   booking_email?: string;
   profile_image_url?: string;
+  hero_image_url?: string;
+  contact_image_url?: string;
 }
 
 /**

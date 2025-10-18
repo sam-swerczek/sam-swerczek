@@ -104,12 +104,12 @@ export default function IntentCards({ onSelectIntent }: IntentCardsProps) {
           </p>
         </motion.div>
 
-        {/* Intent Cards Grid */}
+        {/* Intent Cards Stack */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="flex flex-col gap-6 max-w-3xl mx-auto"
         >
           {INTENT_CARDS.map((card) => (
             <motion.button
@@ -130,22 +130,22 @@ export default function IntentCards({ onSelectIntent }: IntentCardsProps) {
 
               {/* Card Content */}
               <div className="relative">
-                {/* Badge */}
-                <div className="mb-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${card.bgColor} ${card.accentColor}`}>
+                {/* Icon + Title + Badge inline */}
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center ${card.accentColor} group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                      <div className="w-5 h-5">
+                        {card.icon}
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-text-primary group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-accent-blue group-hover:to-accent-teal transition-all duration-300 leading-tight whitespace-nowrap">
+                      {card.title}
+                    </h3>
+                  </div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${card.bgColor} ${card.accentColor} whitespace-nowrap flex-shrink-0`}>
                     {card.badge}
                   </span>
                 </div>
-
-                {/* Icon */}
-                <div className={`w-12 h-12 mb-4 rounded-xl ${card.bgColor} flex items-center justify-center ${card.accentColor} group-hover:scale-110 transition-transform duration-300`}>
-                  {card.icon}
-                </div>
-
-                {/* Title */}
-                <h3 className="text-xl font-bold text-text-primary mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-accent-blue group-hover:to-accent-teal transition-all duration-300">
-                  {card.title}
-                </h3>
 
                 {/* Description */}
                 <p className="text-sm text-text-secondary leading-relaxed mb-4">

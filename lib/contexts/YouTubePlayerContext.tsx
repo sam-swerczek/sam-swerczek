@@ -141,6 +141,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   const isMountedRef = useRef(true);
   const retryCountRef = useRef(0);
   const currentVideoIdRef = useRef<string>(DEFAULT_VIDEO_ID);
+  const shouldAutoplayRef = useRef(false);
 
   // State
   const [isHydrated, setIsHydrated] = useState(false);
@@ -237,6 +238,29 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  // Utility function to convert CurrentTrack to Song format
+  const currentTrackToSong = useCallback((track: CurrentTrack, index: number = 0): Song => {
+    return {
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      album_cover_url: track.albumCoverUrl,
+      content_type: 'video',
+      youtube_video_id: track.youtubeVideoId,
+      duration_seconds: track.durationSeconds ?? null,
+      tags: track.tags ?? null,
+      release_date: track.releaseDate ?? null,
+      description: track.description ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      display_order: index,
+      is_featured: false,
+      is_active: true,
+      spotify_url: null,
+      apple_music_url: null,
+    };
+  }, []);
+
   // Player event handlers
   const handleReady = useCallback((event: YTPlayerEvent) => {
     console.log('YouTube player ready');
@@ -297,6 +321,56 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       case PlayerState.ENDED:
         setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
         stopTimeUpdates();
+
+        // Trigger autoplay if there's a playlist
+        shouldAutoplayRef.current = true;
+        // Use setTimeout to break out of event handler and trigger next track
+        setTimeout(() => {
+          setPlayerState(current => {
+            if (current.playlist.length === 0 || !isMountedRef.current) {
+              shouldAutoplayRef.current = false;
+              return current;
+            }
+
+            const nextIndex = (current.currentIndex + 1) % current.playlist.length;
+            const nextTrack = current.playlist[nextIndex];
+
+            if (nextTrack && playerRef.current) {
+              const song = currentTrackToSong(nextTrack, nextIndex);
+
+              try {
+                retryCountRef.current = 0;
+                currentVideoIdRef.current = song.youtube_video_id;
+                playerRef.current.loadVideoById(song.youtube_video_id);
+
+                return {
+                  ...current,
+                  videoId: song.youtube_video_id,
+                  currentTrack: nextTrack,
+                  currentIndex: nextIndex,
+                  currentTime: 0,
+                };
+              } catch (err) {
+                console.error('Failed to autoplay next track:', err);
+                shouldAutoplayRef.current = false;
+              }
+            }
+
+            shouldAutoplayRef.current = false;
+            return current;
+          });
+        }, 300);
+        break;
+      case PlayerState.CUED:
+        // When next track is cued and ready, autoplay if flag is set
+        if (shouldAutoplayRef.current && playerRef.current) {
+          shouldAutoplayRef.current = false;
+          setTimeout(() => {
+            if (playerRef.current && isMountedRef.current) {
+              playerRef.current.playVideo();
+            }
+          }, 100);
+        }
         break;
       case PlayerState.BUFFERING:
         // Keep current state during buffering
@@ -304,7 +378,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       default:
         break;
     }
-  }, [startTimeUpdates, stopTimeUpdates]);
+  }, [startTimeUpdates, stopTimeUpdates, currentTrackToSong]);
 
   const handleError = useCallback((event: YTPlayerEvent) => {
     console.error('YouTube player error:', event.data);
@@ -758,31 +832,10 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     const track = playerState.playlist[index];
     if (!track) return;
 
-    // Convert CurrentTrack back to Song format for loadTrack
-    const song: Song = {
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      album_cover_url: track.albumCoverUrl,
-      content_type: 'video', // All tracks treated as video now
-      youtube_video_id: track.youtubeVideoId,
-      duration_seconds: track.durationSeconds ?? null,
-      tags: track.tags ?? null,
-      release_date: track.releaseDate ?? null,
-      description: track.description ?? null,
-      // Required Song fields with defaults
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      display_order: index,
-      is_featured: false,
-      is_active: true,
-      spotify_url: null,
-      apple_music_url: null,
-    };
-
+    const song = currentTrackToSong(track, index);
     loadTrack(song);
     setPlayerState(prev => ({ ...prev, currentIndex: index }));
-  }, [playerState.playlist, loadTrack]);
+  }, [playerState.playlist, loadTrack, currentTrackToSong]);
 
   const next = useCallback(() => {
     if (playerState.playlist.length === 0) return;
@@ -805,32 +858,12 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     if (playerState.isReady && playerState.playlist.length > 0 && !playerState.currentTrack && playerRef.current) {
       console.log('Player ready with playlist but no track loaded, auto-loading first track');
       const firstTrack = playerState.playlist[0];
-
-      // Convert CurrentTrack to Song format for loadTrack
-      const song: Song = {
-        id: firstTrack.id,
-        title: firstTrack.title,
-        artist: firstTrack.artist,
-        album_cover_url: firstTrack.albumCoverUrl,
-        content_type: 'video',
-        youtube_video_id: firstTrack.youtubeVideoId,
-        duration_seconds: firstTrack.durationSeconds ?? null,
-        tags: firstTrack.tags ?? null,
-        release_date: firstTrack.releaseDate ?? null,
-        description: firstTrack.description ?? null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        display_order: 0,
-        is_featured: false,
-        is_active: true,
-        spotify_url: null,
-        apple_music_url: null,
-      };
+      const song = currentTrackToSong(firstTrack, 0);
 
       loadTrack(song);
       setPlayerState(prev => ({ ...prev, currentIndex: 0 }));
     }
-  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack]);
+  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack, currentTrackToSong]);
 
   const contextValue: YouTubePlayerContextValue = {
     ...playerState,

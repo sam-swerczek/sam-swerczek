@@ -6,8 +6,7 @@ import { useFormSubmit } from '@/lib/hooks/useFormSubmit';
 import { FormField } from '@/components/ui/FormField';
 import { inputClassName, selectClassName, textareaClassName } from '@/lib/utils/formStyles';
 import { SpinnerIcon, ArrowRightIcon } from '@/components/ui/icons';
-
-export type IntentType = 'music' | 'code' | 'connect';
+import type { IntentType } from './IntentCards';
 
 interface ContactFormProps {
   intent?: IntentType;

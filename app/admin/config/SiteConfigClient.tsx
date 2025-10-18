@@ -26,6 +26,7 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   // General Settings
   { key: 'profile_image_url', value: '', category: 'general', label: 'Profile Image URL', placeholder: 'https://example.com/image.jpg' },
   { key: 'hero_image_url', value: '', category: 'general', label: 'Hero Image URL', placeholder: 'https://example.com/hero.jpg' },
+  { key: 'contact_image_url', value: '', category: 'general', label: 'Contact Page Image URL', placeholder: 'https://example.com/contact.jpg' },
   { key: 'contact_email', value: '', category: 'general', label: 'Contact Email', placeholder: 'hello@example.com' },
   { key: 'booking_email', value: '', category: 'general', label: 'Booking Email', placeholder: 'booking@example.com' },
 
@@ -317,7 +318,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
               // Regular fields for other categories
               items.map((item) => (
                 <div key={item.key}>
-                  {(item.key === 'profile_image_url' || item.key === 'hero_image_url') ? (
+                  {(item.key === 'profile_image_url' || item.key === 'hero_image_url' || item.key === 'contact_image_url') ? (
                     <ImageUpload
                       currentImageUrl={item.value}
                       onImageUploaded={(url) => handleValueChange(item.key, url)}

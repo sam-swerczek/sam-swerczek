@@ -18,6 +18,7 @@ export default async function ContactPage() {
   return (
     <ContactPageClient
       profileImageUrl={general.profile_image_url}
+      contactImageUrl={general.contact_image_url}
       bookingEmail={general.booking_email}
       instagramUrl={musicSocial.instagram_handle}
       facebookUrl={musicSocial.facebook_url}

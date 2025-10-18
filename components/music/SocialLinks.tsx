@@ -1,4 +1,5 @@
 import { ReactElement } from "react";
+import { sanitizeUrl, sanitizeInstagramHandle } from "@/lib/utils/url-validation";
 
 interface SocialLink {
   name: string;
@@ -27,7 +28,7 @@ export default function SocialLinks({
   const allLinks: SocialLink[] = [
     {
       name: "Instagram",
-      url: instagramUrl || "",
+      url: sanitizeInstagramHandle(instagramUrl) || "",
       color: "hover:bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -37,7 +38,7 @@ export default function SocialLinks({
     },
     {
       name: "Facebook",
-      url: facebookUrl || "",
+      url: sanitizeUrl(facebookUrl) || "",
       color: "hover:bg-blue-600",
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -47,7 +48,7 @@ export default function SocialLinks({
     },
     {
       name: "LinkedIn",
-      url: linkedinUrl || "",
+      url: sanitizeUrl(linkedinUrl) || "",
       color: "hover:bg-blue-700",
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -57,7 +58,7 @@ export default function SocialLinks({
     },
     {
       name: "TikTok",
-      url: tiktokUrl || "",
+      url: sanitizeUrl(tiktokUrl) || "",
       color: "hover:bg-black",
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -67,7 +68,7 @@ export default function SocialLinks({
     },
     {
       name: "Patreon",
-      url: patreonUrl || "",
+      url: sanitizeUrl(patreonUrl) || "",
       color: "hover:bg-gradient-to-r from-orange-500 to-red-600",
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -80,9 +81,18 @@ export default function SocialLinks({
   // Filter out links without URLs
   const socialLinks = allLinks.filter(link => link.url);
 
+  // Require exactly 4 links for display
+  if (socialLinks.length !== 4) {
+    return (
+      <div className="text-center text-text-secondary">
+        Please configure exactly 4 social media links to display the Connect section.
+      </div>
+    );
+  }
+
   const layoutClasses = layout === "grid"
     ? "grid grid-cols-2 sm:grid-cols-4 gap-4"
-    : "flex flex-wrap justify-center gap-4";
+    : "grid grid-cols-2 lg:grid-cols-4 gap-4";
 
   return (
     <div className={layoutClasses}>
@@ -98,8 +108,9 @@ export default function SocialLinks({
             rounded-lg transition-all duration-300
             hover:border-transparent hover:scale-105 hover:shadow-lg
             ${link.color}
+            w-full
           `}
-          aria-label={link.name}
+          aria-label={`Visit ${link.name} profile`}
         >
           <span className="transition-transform duration-300 group-hover:scale-110">
             {link.icon}
