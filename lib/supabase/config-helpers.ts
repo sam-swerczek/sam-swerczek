@@ -31,50 +31,53 @@ export async function getConfigObject<T extends Record<string, string | undefine
   const configs = await getSiteConfig(category);
   const configObj = configArrayToObject<T>(configs);
 
+  // Work with a mutable copy for sanitization
+  const mutableConfig: Record<string, string | undefined> = { ...configObj };
+
   // Apply sanitization based on category
   if (category === 'music_social' || category === 'engineering_social') {
-    Object.keys(configObj).forEach(key => {
+    Object.keys(mutableConfig).forEach(key => {
       if (key.includes('url') || key.includes('handle')) {
-        const value = configObj[key];
+        const value = mutableConfig[key];
         if (value) {
-          configObj[key] = sanitizeUrl(value) as any;
+          mutableConfig[key] = sanitizeUrl(value);
         }
       }
     });
   }
 
   if (category === 'general') {
-    if (configObj['booking_email']) {
-      configObj['booking_email'] = sanitizeEmail(configObj['booking_email']) as any;
+    if (mutableConfig['booking_email']) {
+      mutableConfig['booking_email'] = sanitizeEmail(mutableConfig['booking_email']);
     }
     // Image URLs and other URLs should also be validated
     ['profile_image_url', 'hero_image_url', 'contact_image_url'].forEach(key => {
-      if (configObj[key]) {
-        configObj[key] = sanitizeUrl(configObj[key]) as any;
+      if (mutableConfig[key]) {
+        mutableConfig[key] = sanitizeUrl(mutableConfig[key]);
       }
     });
   }
 
   if (category === 'streaming') {
-    Object.keys(configObj).forEach(key => {
+    Object.keys(mutableConfig).forEach(key => {
       if (key.includes('url')) {
-        const value = configObj[key];
+        const value = mutableConfig[key];
         if (value) {
-          configObj[key] = sanitizeUrl(value) as any;
+          mutableConfig[key] = sanitizeUrl(value);
         }
       }
     });
   }
 
   if (category === 'featured_videos') {
-    Object.keys(configObj).forEach(key => {
+    Object.keys(mutableConfig).forEach(key => {
       if (key.includes('youtube_video_') && !key.includes('_title')) {
-        const value = configObj[key];
+        const value = mutableConfig[key];
         if (value) {
           // YouTube video IDs can be just the ID or a full URL
           // If it's a URL, validate it
           if (value.includes('http://') || value.includes('https://')) {
-            configObj[key] = sanitizeUrl(value) as any;
+            mutableConfig[key] = sanitizeUrl(value);
           }
           // If it's just an ID, leave it as is
         }
@@ -82,7 +85,7 @@ export async function getConfigObject<T extends Record<string, string | undefine
     });
   }
 
-  return configObj;
+  return mutableConfig as T;
 }
 
 /**
