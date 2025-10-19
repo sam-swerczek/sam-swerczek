@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import { createServerClient } from './server';
-import type { Post, SiteConfig, Song } from '../types';
+import type { Post, SiteConfig, Song, Comment } from '../types';
 
 // PUBLIC QUERIES (using anon key)
 
@@ -343,4 +343,78 @@ export async function getSongById(id: string): Promise<Song | null> {
   }
 
   return data as Song;
+}
+
+// =============================================
+// COMMENT QUERIES
+// =============================================
+
+/**
+ * Get all visible comments for a post
+ * @param postId - Post ID
+ * @returns Comments for the post, ordered by creation date (oldest first)
+ */
+export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('post_id', postId)
+    .eq('is_visible', true)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching comments:', error);
+    return [];
+  }
+
+  return data as Comment[];
+}
+
+/**
+ * Get comment count for a single post
+ * @param postId - Post ID
+ * @returns Number of visible comments
+ */
+export async function getCommentCount(postId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+    .eq('is_visible', true);
+
+  if (error) {
+    console.error('Error counting comments:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+/**
+ * Get comment counts for multiple posts (efficient batch query)
+ * @param postIds - Array of post IDs
+ * @returns Record mapping post IDs to comment counts
+ */
+export async function getCommentCounts(postIds: string[]): Promise<Record<string, number>> {
+  if (postIds.length === 0) {
+    return {};
+  }
+
+  const { data, error } = await supabase
+    .from('post_comment_counts')
+    .select('post_id, comment_count')
+    .in('post_id', postIds);
+
+  if (error) {
+    console.error('Error fetching comment counts:', error);
+    return {};
+  }
+
+  // Convert array to record
+  const counts: Record<string, number> = {};
+  data.forEach((row: { post_id: string; comment_count: number }) => {
+    counts[row.post_id] = row.comment_count;
+  });
+
+  return counts;
 }

@@ -39,6 +39,7 @@ const config: Config = {
         'slide-in-from-right': 'slide-in-from-right 300ms ease-out',
         'slide-in-from-top-2': 'slide-in-from-top-2 300ms ease-out',
         'theater-reveal': 'theater-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'discover': 'discover-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'subtle-pulse': 'subtle-pulse 4s ease-in-out infinite',
         'ping-slow': 'ping-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'subtle-flash': 'subtle-flash 1.5s ease-out',
@@ -132,6 +133,16 @@ const config: Config = {
           '50%': {
             opacity: '1',
             boxShadow: '0 0 20px rgba(74, 158, 255, 0.4), 0 0 40px rgba(74, 158, 255, 0.2)',
+          },
+        },
+        'discover-fade-up': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(40px) scale(0.98)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0) scale(1)',
           },
         },
       },

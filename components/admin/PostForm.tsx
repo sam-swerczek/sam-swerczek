@@ -22,6 +22,7 @@ interface PostFormProps {
 }
 
 export default function PostForm({ post, onSubmit, isLoading = false, initialData }: PostFormProps) {
+  const [shortTitle, setShortTitle] = useState(post?.short_title || '');
   const [title, setTitle] = useState(post?.title || initialData?.title || '');
   const [slug, setSlug] = useState(post?.slug || initialData?.slug || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || initialData?.excerpt || '');
@@ -31,6 +32,7 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
   const [metaDescription, setMetaDescription] = useState(post?.meta_description || initialData?.metaDescription || '');
   const [published, setPublished] = useState(post?.published || false);
   const [autoSlug, setAutoSlug] = useState(!post);
+  const [autoShortTitle, setAutoShortTitle] = useState(!post?.short_title);
 
   // Update form when initialData changes (from AI draft)
   useEffect(() => {
@@ -51,6 +53,14 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
       setSlug(generateSlug(title));
     }
   }, [title, autoSlug]);
+
+  // Auto-generate short title from title (truncate to 30 chars)
+  useEffect(() => {
+    if (autoShortTitle && title) {
+      const truncated = title.length > 30 ? title.substring(0, 27) + '...' : title;
+      setShortTitle(truncated);
+    }
+  }, [title, autoShortTitle]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -104,6 +114,8 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
       published: shouldPublish,
       published_at: shouldPublish ? new Date().toISOString() : null,
       author_id: post?.author_id || '', // Will be set by parent component
+      short_title: shortTitle.trim() || null,
+      type: post?.type || 'blog post', // Default type
     };
 
     await onSubmit(postData);
@@ -111,6 +123,42 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
 
   return (
     <form className="space-y-6">
+      {/* Short Title */}
+      <FormField
+        id="shortTitle"
+        label="Short Title"
+        helperText="2-4 word title for activity timeline (auto-generated from title)"
+      >
+        <div className="flex items-start gap-2">
+          <input
+            type="text"
+            id="shortTitle"
+            value={shortTitle}
+            onChange={(e) => {
+              setShortTitle(e.target.value);
+              setAutoShortTitle(false);
+            }}
+            maxLength={50}
+            className={inputClassName()}
+            placeholder="Brief title"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setAutoShortTitle(true);
+              const truncated = title.length > 30 ? title.substring(0, 27) + '...' : title;
+              setShortTitle(truncated);
+            }}
+            className="px-4 py-2 bg-background-secondary border border-gray-700 rounded-lg text-text-secondary hover:text-text-primary transition-colors whitespace-nowrap"
+          >
+            Auto-generate
+          </button>
+        </div>
+        <p className="text-xs text-text-secondary mt-1">
+          {shortTitle.length}/50 characters
+        </p>
+      </FormField>
+
       {/* Title */}
       <FormField id="title" label="Title" required error={errors.title}>
         <input

@@ -1,8 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServerClient } from './server';
-import type { Song, CreateSongData, UpdateSongData } from '../types';
+import { supabase } from './client';
+import type { Song, CreateSongData, UpdateSongData, Comment, CreateCommentData } from '../types';
 
 /**
  * SONG MUTATIONS
@@ -268,4 +270,75 @@ export async function toggleSongActive(id: string, currentStatus: boolean): Prom
   revalidatePath('/music');
 
   return data as Song;
+}
+
+// =============================================
+// COMMENT MUTATIONS
+// =============================================
+// Note: These are NOT server actions - they're used from API routes
+// which handle their own authentication and validation
+// They accept a supabase client as parameter to use the authenticated route client
+
+/**
+ * Create a new comment (called from API route with authenticated client)
+ * @param supabaseClient - Authenticated Supabase client from route
+ * @param data - Comment data (post_id, author_id, content, is_visible)
+ * @returns Created comment or null on error
+ */
+export async function createComment(supabaseClient: SupabaseClient, data: CreateCommentData): Promise<Comment | null> {
+  const { data: comment, error } = await supabaseClient
+    .from('comments')
+    .insert([data])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating comment:', error);
+    return null;
+  }
+
+  return comment as Comment;
+}
+
+/**
+ * Update a comment's content (called from API route with authenticated client)
+ * @param supabaseClient - Authenticated Supabase client from route
+ * @param id - Comment ID
+ * @param content - New content
+ * @returns Updated comment or null on error
+ */
+export async function updateComment(supabaseClient: SupabaseClient, id: string, content: string): Promise<Comment | null> {
+  const { data: comment, error } = await supabaseClient
+    .from('comments')
+    .update({ content })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating comment:', error);
+    return null;
+  }
+
+  return comment as Comment;
+}
+
+/**
+ * Delete a comment (called from API route with authenticated client)
+ * @param supabaseClient - Authenticated Supabase client from route
+ * @param id - Comment ID
+ * @returns True on success, false on error
+ */
+export async function deleteComment(supabaseClient: SupabaseClient, id: string): Promise<boolean> {
+  const { error } = await supabaseClient
+    .from('comments')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting comment:', error);
+    return false;
+  }
+
+  return true;
 }

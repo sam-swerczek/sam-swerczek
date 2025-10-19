@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { Post } from '@/lib/types';
 import Card, { CardContent, CardFooter } from '@/components/ui/Card';
 import TagsList from './TagsList';
-import { CalendarIcon, ClockIcon, ArrowRightIcon } from '@/components/ui/icons';
+import { CalendarIcon, ClockIcon, ArrowRightIcon, MessageIcon } from '@/components/ui/icons';
 
 interface PostCardProps {
   post: Post;
+  commentCount?: number;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, commentCount }: PostCardProps) {
   const publishedDate = post.published_at
     ? new Date(post.published_at).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -51,9 +52,21 @@ export default function PostCard({ post }: PostCardProps) {
               Read Article
               <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
             </span>
-            <div className="flex items-center gap-1.5 text-text-secondary/60 text-xs">
-              <ClockIcon className="w-4 h-4" />
-              <span>5 min read</span>
+            <div className="flex items-center gap-3">
+              {/* Comment count badge */}
+              {commentCount !== undefined && commentCount > 0 && (
+                <div
+                  className="flex items-center gap-1.5 bg-accent-blue/20 border border-accent-blue/40 rounded-full px-2.5 py-1 text-xs text-accent-blue"
+                  aria-label={`${commentCount} comment${commentCount === 1 ? '' : 's'}`}
+                >
+                  <MessageIcon className="w-3.5 h-3.5" />
+                  <span className="font-medium">{commentCount}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-text-secondary/60 text-xs">
+                <ClockIcon className="w-4 h-4" />
+                <span>5 min read</span>
+              </div>
             </div>
           </div>
         </CardContent>

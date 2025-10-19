@@ -52,7 +52,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background-primary/40" />
           {/* Gradient fade to bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/70 via-75% to-background-primary" />
         </div>
 
         {/* Right side - Tech */}
@@ -72,7 +72,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-l from-transparent to-background-primary/40" />
           {/* Gradient fade to bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/50 via-60% to-background-primary" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-primary/70 via-75% to-background-primary" />
         </div>
 
         {/* Center divider line - subtle */}

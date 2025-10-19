@@ -5,6 +5,7 @@ import { getPostBySlug, getPublishedPosts, getRelatedPosts } from '@/lib/supabas
 import { getConfigObject, type EngineeringSocialConfig } from '@/lib/supabase/config-helpers';
 import PostContent from '@/components/blog/PostContent';
 import TagsList from '@/components/blog/TagsList';
+import CommentSection from '@/components/blog/CommentSection';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -121,6 +122,9 @@ export default async function BlogPostPage({ params }: PageProps) {
           {/* Article Content */}
           <PostContent content={post.content} />
         </article>
+
+        {/* Comments Section */}
+        <CommentSection postId={post.id} />
 
         {/* Related Posts Section */}
         {relatedPosts.length > 0 && (

@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Song } from '@/lib/types';
@@ -19,6 +22,28 @@ interface FeaturedWorksShowcaseProps {
 }
 
 export default function FeaturedWorksShowcase({ featuredSong, githubUrl }: FeaturedWorksShowcaseProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for scroll-triggered animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Only animate once
+        }
+      },
+      { threshold: 0.2 } // Trigger when 20% visible
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   // Music tags - use song tags if available, otherwise default
   const musicTags = featuredSong?.tags || ["Singer-Songwriter", "Acoustic", "Indie Folk", "Live Session"];
 
@@ -32,7 +57,7 @@ export default function FeaturedWorksShowcase({ featuredSong, githubUrl }: Featu
   };
 
   return (
-    <section className="relative py-12 md:py-16 bg-background-primary overflow-hidden">
+    <section ref={sectionRef} className="relative py-12 md:py-16 bg-background-primary overflow-hidden">
       {/* Background subtle gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background-navy/50 to-background-primary" />
 
@@ -46,7 +71,7 @@ export default function FeaturedWorksShowcase({ featuredSong, githubUrl }: Featu
           />
 
           {/* Split-screen showcase */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 relative lg:items-stretch">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 relative lg:items-stretch opacity-0 ${isVisible ? 'animate-discover' : ''}`}>
             {/* Center divider line - desktop only */}
             <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-accent-blue/20 to-transparent transform -translate-x-1/2" />
 

@@ -26,7 +26,7 @@ export default async function Home() {
       />
 
       {/* Activity Timeline - Recent releases and blog posts */}
-      <ActivityTimeline blogPosts={data.blogPosts} />
+      <ActivityTimeline blogPosts={data.blogPosts} commentCounts={data.commentCounts} />
 
       {/* Connect Section - Social media links */}
       <ConnectSection social={data.social} />

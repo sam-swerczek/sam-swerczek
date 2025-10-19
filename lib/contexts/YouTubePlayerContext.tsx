@@ -675,8 +675,8 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         try {
           const prefs = JSON.parse(e.newValue) as PlayerPreferences;
 
-          // Sync volume across tabs
-          if (typeof prefs.volume === 'number' && playerRef.current) {
+          // Sync volume across tabs - check player is ready and setVolume exists
+          if (typeof prefs.volume === 'number' && playerRef.current && typeof playerRef.current.setVolume === 'function') {
             playerRef.current.setVolume(prefs.volume * 100);
             setPlayerState(prev => ({ ...prev, volume: prefs.volume }));
           }

@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useYouTubePlayer } from '@/components/music/hooks/useYouTubePlayer';
 import type { Song } from '@/lib/types';
 
 interface FeaturedSongCardProps {
@@ -12,12 +11,8 @@ interface FeaturedSongCardProps {
 
 export default function FeaturedSongCard({ song, tags }: FeaturedSongCardProps) {
   const router = useRouter();
-  const { loadTrack } = useYouTubePlayer();
 
   const handleLearnMore = () => {
-    // Load the featured song into the player
-    loadTrack(song);
-
     // Navigate to the music page
     router.push('/music');
   };

@@ -21,6 +21,8 @@ export interface Post {
   tags: string[];
   featured_image_url: string | null;
   meta_description: string | null;
+  short_title: string | null;
+  type: string;
 }
 
 /**
@@ -73,6 +75,19 @@ export interface Song {
   apple_music_url: string | null;
 }
 
+/**
+ * Comment on a blog post
+ */
+export interface Comment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  is_visible: boolean;
+}
+
 // =============================================
 // FORM TYPES (for creating/updating records)
 // =============================================
@@ -106,6 +121,11 @@ export type CreateSongData = Omit<Song, 'id' | 'created_at' | 'updated_at'>;
  * Data that can be updated on a song
  */
 export type UpdateSongData = Partial<Omit<Song, 'id' | 'created_at' | 'updated_at'>>;
+
+/**
+ * Data required to create a new comment
+ */
+export type CreateCommentData = Omit<Comment, 'id' | 'created_at' | 'updated_at'>;
 
 // =============================================
 // API RESPONSE TYPES

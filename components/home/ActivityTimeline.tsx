@@ -1,25 +1,18 @@
 import Link from 'next/link';
-import { MusicIcon, CodeIcon, ArrowRightIcon } from '@/components/ui/icons';
+import { CodeIcon, ArrowRightIcon, MessageIcon } from '@/components/ui/icons';
 import { Post } from '@/lib/types';
-
-interface MusicRelease {
-  type: 'music';
-  title: string;
-  date: string;
-  releaseType: 'single' | 'EP' | 'album';
-  streamingUrl?: string;
-}
 
 interface BlogPost {
   type: 'blog';
   id: string;
   title: string;
+  shortTitle: string;
+  activityType: string;
   excerpt: string;
   published_at: string;
   slug: string;
+  commentCount: number;
 }
-
-type TimelineItem = MusicRelease | BlogPost;
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -32,47 +25,32 @@ function formatDate(dateString: string): string {
 
 interface ActivityTimelineProps {
   blogPosts: Post[];
+  commentCounts: Record<string, number>;
 }
 
-export default function ActivityTimeline({ blogPosts }: ActivityTimelineProps) {
-
-  // Placeholder music releases - will be made dynamic later
-  const musicReleases: MusicRelease[] = [
-    {
-      type: 'music',
-      title: "Auburn Maine - Single",
-      date: "2024-12-15",
-      releaseType: "single",
-      streamingUrl: "#"
-    },
-    {
-      type: 'music',
-      title: "Winter Reflections - EP",
-      date: "2024-11-01",
-      releaseType: "EP",
-      streamingUrl: "#"
-    }
-  ];
+export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityTimelineProps) {
 
   // Transform blog posts to timeline items
   const blogTimelineItems: BlogPost[] = blogPosts.map(post => ({
     type: 'blog',
     id: post.id,
     title: post.title,
+    shortTitle: post.short_title || post.title,
+    activityType: post.type || 'blog post',
     excerpt: post.excerpt || '',
     published_at: post.published_at || post.created_at,
-    slug: post.slug
+    slug: post.slug,
+    commentCount: commentCounts[post.id] || 0
   }));
 
-  // Combine and sort by date
-  const timelineItems: TimelineItem[] = [
-    ...musicReleases,
-    ...blogTimelineItems
-  ].sort((a, b) => {
-    const dateA = new Date(a.type === 'music' ? a.date : a.published_at);
-    const dateB = new Date(b.type === 'music' ? b.date : b.published_at);
-    return dateB.getTime() - dateA.getTime();
-  }).slice(0, 4); // Show only 4 most recent items
+  // Sort by date and limit to 4 most recent
+  const timelineItems = blogTimelineItems
+    .sort((a, b) => {
+      const dateA = new Date(a.published_at);
+      const dateB = new Date(b.published_at);
+      return dateB.getTime() - dateA.getTime();
+    })
+    .slice(0, 4);
 
   return (
     <section className="relative py-16 md:py-20 bg-background-primary">
@@ -95,93 +73,52 @@ export default function ActivityTimeline({ blogPosts }: ActivityTimelineProps) {
 
             {/* Timeline items */}
             <div className="space-y-8">
-              {timelineItems.map((item, index) => {
-                const isMusic = item.type === 'music';
-                const date = isMusic ? item.date : item.published_at;
+              {timelineItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="relative pl-14 md:pl-16 group"
+                >
+                  {/* Icon indicator - compact size */}
+                  <div className="absolute left-0 top-2 w-10 h-10 rounded-full bg-background-secondary border-2 border-accent-teal flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-accent-teal/30">
+                    <CodeIcon className="w-5 h-5 text-accent-teal" />
+                  </div>
 
-                return (
-                  <div
-                    key={index}
-                    className="relative pl-16 md:pl-20 group"
-                  >
-                    {/* Icon indicator */}
-                    <div className={`
-                      absolute left-0 top-3 w-12 h-12 md:w-16 md:h-16
-                      rounded-full
-                      bg-background-secondary
-                      ${isMusic ? 'border-2 border-accent-blue' : 'border-2 border-accent-teal'}
-                      flex items-center justify-center
-                      transition-all duration-300
-                      group-hover:scale-110 group-hover:shadow-lg
-                      ${isMusic ? 'group-hover:shadow-accent-blue/30' : 'group-hover:shadow-accent-teal/30'}
-                    `}>
-                      {isMusic ? (
-                        <MusicIcon className="w-6 h-6 md:w-8 md:h-8 text-accent-blue" />
-                      ) : (
-                        <CodeIcon className="w-6 h-6 md:w-8 md:h-8 text-accent-teal" />
-                      )}
+                  {/* Content card - compact design */}
+                  <div className="relative p-4 rounded-lg bg-background-secondary/30 backdrop-blur-sm border border-accent-teal/20 hover:border-accent-teal/40 hover:shadow-accent-teal/10 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    {/* Header: Type badge and date */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-accent-teal/10 text-accent-teal">
+                        {item.activityType}
+                      </span>
+                      <time className="text-xs text-text-secondary">
+                        {formatDate(item.published_at)}
+                      </time>
                     </div>
 
-                    {/* Content card */}
-                    <div className={`
-                      relative p-6
-                      rounded-xl
-                      bg-background-secondary/30
-                      backdrop-blur-sm
-                      ${isMusic ? 'border border-accent-blue/20 hover:border-accent-blue/40 hover:shadow-accent-blue/10' : 'border border-accent-teal/20 hover:border-accent-teal/40 hover:shadow-accent-teal/10'}
-                      transition-all duration-300
-                      hover:shadow-lg
-                      hover:-translate-y-1
-                    `}>
-                      {/* Type badge and date */}
-                      <div className="flex items-center justify-between mb-3">
-                        <span className={`
-                          px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
-                          ${isMusic ? 'bg-accent-blue/10 text-accent-blue border border-accent-blue/30' : 'bg-accent-teal/10 text-accent-teal border border-accent-teal/30'}
-                        `}>
-                          {isMusic ? item.releaseType : 'Blog Post'}
-                        </span>
-                        <time className="text-sm text-text-secondary">
-                          {formatDate(date)}
-                        </time>
+                    {/* Title */}
+                    <h3 className="text-lg font-bold text-text-primary mb-1 line-clamp-2 font-montserrat">
+                      {item.shortTitle}
+                    </h3>
+
+                    {/* Footer: Action link and comment count */}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-text-secondary/10">
+                      <Link
+                        href={`/blog/${item.slug}`}
+                        className="inline-flex items-center gap-1.5 text-sm text-accent-teal hover:text-accent-teal/80 font-medium transition-colors"
+                      >
+                        Read More
+                        <ArrowRightIcon className="w-3.5 h-3.5" />
+                      </Link>
+
+                      {/* Comment count badge - always show */}
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent-blue/20 border border-accent-blue/40 rounded-full text-xs font-medium text-accent-blue" aria-label={`${item.commentCount} ${item.commentCount === 1 ? 'comment' : 'comments'}`}>
+                        <MessageIcon className="w-3.5 h-3.5" />
+                        <span>{item.commentCount}</span>
                       </div>
-
-                      {/* Title */}
-                      <h3 className="text-xl md:text-2xl font-bold text-text-primary mb-2 font-montserrat">
-                        {item.title}
-                      </h3>
-
-                      {/* Description / Excerpt */}
-                      {!isMusic && item.excerpt && (
-                        <p className="text-text-secondary mb-4 line-clamp-2">
-                          {item.excerpt}
-                        </p>
-                      )}
-
-                      {/* Action link */}
-                      {isMusic ? (
-                        item.streamingUrl && (
-                          <Link
-                            href={item.streamingUrl}
-                            className="inline-flex items-center gap-2 text-accent-blue hover:text-accent-blue/80 font-medium transition-colors"
-                          >
-                            Listen Now
-                            <ArrowRightIcon className="w-4 h-4" />
-                          </Link>
-                        )
-                      ) : (
-                        <Link
-                          href={`/blog/${item.slug}`}
-                          className="inline-flex items-center gap-2 text-accent-teal hover:text-accent-teal/80 font-medium transition-colors"
-                        >
-                          Read More
-                          <ArrowRightIcon className="w-4 h-4" />
-                        </Link>
-                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
 

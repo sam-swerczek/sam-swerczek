@@ -11,9 +11,10 @@ interface BlogClientProps {
   initialPosts: Post[];
   allTags: string[];
   social: EngineeringSocialConfig;
+  commentCounts: Record<string, number>;
 }
 
-export default function BlogClient({ initialPosts, allTags, social }: BlogClientProps) {
+export default function BlogClient({ initialPosts, allTags, social, commentCounts }: BlogClientProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -32,7 +33,7 @@ export default function BlogClient({ initialPosts, allTags, social }: BlogClient
     : initialPosts;
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative animate-theater-reveal">
       {/* Subtle tech-themed background - right side only, fades to left and bottom */}
       <div className="absolute top-0 left-0 right-0 h-screen -z-10 overflow-hidden pointer-events-none hidden md:block">
         {/* Right side - Engineering */}
@@ -187,7 +188,11 @@ export default function BlogClient({ initialPosts, allTags, social }: BlogClient
         {posts.length > 1 && (
           <div className="flex flex-col gap-6">
             {posts.slice(1).map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard
+                key={post.id}
+                post={post}
+                commentCount={commentCounts[post.id] || 0}
+              />
             ))}
           </div>
         )}

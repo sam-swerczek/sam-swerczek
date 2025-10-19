@@ -2,6 +2,7 @@ import {
   getSiteConfig,
   getFeaturedSong,
   getPublishedPosts,
+  getCommentCounts,
 } from '@/lib/supabase/queries';
 import {
   getConfigObject,
@@ -24,6 +25,10 @@ export async function getHomepageData(): Promise<HomepageData> {
     getConfigObject<MusicSocialConfig>('music_social'),
   ]);
 
+  // Fetch comment counts for blog posts
+  const postIds = blogPosts.map(post => post.id);
+  const commentCounts = await getCommentCounts(postIds);
+
   // Extract specific config values
   const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
   const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value || 'https://github.com';
@@ -34,5 +39,6 @@ export async function getHomepageData(): Promise<HomepageData> {
     featuredSong,
     blogPosts,
     social,
+    commentCounts,
   };
 }

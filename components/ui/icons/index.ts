@@ -28,3 +28,5 @@ export { YoutubeIcon } from './YoutubeIcon';
 export { InstagramIcon } from './InstagramIcon';
 export { EmailIcon } from './EmailIcon';
 export { ExternalLinkIcon } from './ExternalLinkIcon';
+export { MessageIcon } from './MessageIcon';
+export { TrashIcon } from './TrashIcon';

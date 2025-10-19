@@ -11,6 +11,7 @@ export interface HomepageData {
   featuredSong: Song | null;
   blogPosts: Post[];
   social: MusicSocialConfig;
+  commentCounts: Record<string, number>;
 }
 
 /**
