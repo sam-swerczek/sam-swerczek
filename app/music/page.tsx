@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import YouTubeEmbed from "@/components/music/YouTubeEmbed";
-import YouTubePlayerFull from "@/components/music/YouTubePlayerFull";
+import VideoGallery from "@/components/music/video/VideoGallery";
 import SocialLinks from "@/components/music/SocialLinks";
 import StreamingLinks from "@/components/music/StreamingLinks";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
-import { getSongs } from "@/lib/supabase/queries";
 import {
   getConfigObject,
   extractVideosFromConfig,
@@ -13,6 +11,7 @@ import {
   type MusicSocialConfig,
   type FeaturedVideosConfig,
   type GeneralConfig,
+  type Video,
 } from "@/lib/supabase/config-helpers";
 import { CalendarIcon } from "@/components/ui/icons";
 
@@ -32,16 +31,16 @@ export const revalidate = 0;
 
 export default async function MusicPage() {
   // Fetch all required data in parallel
-  const [streaming, social, videosRaw, general, songs] = await Promise.all([
+  const [streaming, social, videosRaw, general] = await Promise.all([
     getConfigObject<StreamingConfig>('streaming'),
     getConfigObject<MusicSocialConfig>('music_social'),
     getConfigObject<FeaturedVideosConfig>('featured_videos'),
     getConfigObject<GeneralConfig>('general'),
-    getSongs()
   ]);
 
   // Extract videos from config
   const videos = extractVideosFromConfig(videosRaw);
+
   return (
     <div className="min-h-screen relative">
       {/* Subtle music-themed background - left side only, fades to right and bottom */}
@@ -62,12 +61,12 @@ export default async function MusicPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12 md:py-16 pb-20 relative z-10">
-        <div className="max-w-6xl mx-auto space-y-16">
+      <div className="container mx-auto px-4 py-12 md:py-20 pb-20 relative z-10">
+        <div className="max-w-6xl mx-auto space-y-20 md:space-y-28">
 
-          {/* Featured Music Player */}
-          <section>
-            <YouTubePlayerFull songs={songs} />
+          {/* Featured Videos Section */}
+          <section className="pt-4 md:pt-8">
+            <VideoGallery videos={videos} />
           </section>
 
           {/* Streaming Platforms Section */}
@@ -88,26 +87,6 @@ export default async function MusicPage() {
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
           </section>
 
-          {/* YouTube Videos Section */}
-          {videos.length > 0 && (
-            <section>
-              <SectionHeader
-                title="Featured Performances"
-                subtitle="Watch live sessions and music videos"
-                className="text-center"
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {videos.map((video) => (
-                  <div key={video.id} className="bg-background-secondary/50 backdrop-blur-sm p-4 rounded-2xl border border-text-secondary/10">
-                    <YouTubeEmbed
-                      videoId={video.id!}
-                      title={video.title || 'YouTube Video'}
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
 
           {/* Upcoming Shows Placeholder */}
           <section>

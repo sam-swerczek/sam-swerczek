@@ -2,7 +2,7 @@
  * Helper utilities for simplified site configuration access
  */
 
-import { getSiteConfig } from './queries';
+import { createServerClient } from './server';
 import type { SiteConfig } from '../types';
 import { sanitizeUrl, sanitizeEmail } from '../utils/url-validation';
 
@@ -28,7 +28,23 @@ export function configArrayToObject<T extends Record<string, string | undefined>
 export async function getConfigObject<T extends Record<string, string | undefined>>(
   category?: string
 ): Promise<T> {
-  const configs = await getSiteConfig(category);
+  // Use server client to bypass RLS policies for site config access
+  const supabase = createServerClient();
+
+  let query = supabase.from('site_config').select('*');
+
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching site config:', error);
+    return {} as T;
+  }
+
+  const configs = data as SiteConfig[];
   const configObj = configArrayToObject<T>(configs);
 
   // Work with a mutable copy for sanitization
@@ -94,10 +110,21 @@ export async function getConfigObject<T extends Record<string, string | undefine
 export async function getMultipleConfigs<
   T extends Record<string, Record<string, string | undefined>>
 >(categories: string[]): Promise<T> {
+  const supabase = createServerClient();
+
   const results = await Promise.all(
     categories.map(async (category) => {
-      const configs = await getSiteConfig(category);
-      return { category, data: configArrayToObject(configs) };
+      const { data, error } = await supabase
+        .from('site_config')
+        .select('*')
+        .eq('category', category);
+
+      if (error) {
+        console.error(`Error fetching site config for category ${category}:`, error);
+        return { category, data: {} };
+      }
+
+      return { category, data: configArrayToObject(data as SiteConfig[]) };
     })
   );
 
@@ -148,13 +175,57 @@ export interface GeneralConfig extends Record<string, string | undefined> {
 }
 
 /**
- * Helper to extract video objects from featured videos config
+ * Video type for featured videos
  */
-export function extractVideosFromConfig(config: FeaturedVideosConfig) {
-  return [
-    { id: config.youtube_video_1, title: config.youtube_video_1_title },
-    { id: config.youtube_video_2, title: config.youtube_video_2_title },
-    { id: config.youtube_video_3, title: config.youtube_video_3_title },
-    { id: config.youtube_video_4, title: config.youtube_video_4_title },
-  ].filter((video) => Boolean(video.id));
+export interface Video {
+  id: string;
+  title: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
+}
+
+/**
+ * Helper to extract video objects from featured videos config
+ * Returns array of Video objects compatible with VideoGallery component
+ */
+export function extractVideosFromConfig(config: FeaturedVideosConfig): Video[] {
+  const videos: Video[] = [];
+
+  if (config.youtube_video_1) {
+    videos.push({
+      id: config.youtube_video_1,
+      title: config.youtube_video_1_title || 'Untitled Video',
+      description: null,
+      thumbnailUrl: null,
+    });
+  }
+
+  if (config.youtube_video_2) {
+    videos.push({
+      id: config.youtube_video_2,
+      title: config.youtube_video_2_title || 'Untitled Video',
+      description: null,
+      thumbnailUrl: null,
+    });
+  }
+
+  if (config.youtube_video_3) {
+    videos.push({
+      id: config.youtube_video_3,
+      title: config.youtube_video_3_title || 'Untitled Video',
+      description: null,
+      thumbnailUrl: null,
+    });
+  }
+
+  if (config.youtube_video_4) {
+    videos.push({
+      id: config.youtube_video_4,
+      title: config.youtube_video_4_title || 'Untitled Video',
+      description: null,
+      thumbnailUrl: null,
+    });
+  }
+
+  return videos;
 }

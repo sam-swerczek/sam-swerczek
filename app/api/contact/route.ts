@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getSiteConfig } from '@/lib/supabase/queries';
+import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/utils/rate-limiter';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -44,6 +45,22 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting: 5 requests per minute per IP
+    const ip = getClientIp(request);
+    const isAllowed = rateLimit(
+      ip,
+      RATE_LIMITS.CONTACT_FORM.endpoint,
+      RATE_LIMITS.CONTACT_FORM.maxRequests,
+      RATE_LIMITS.CONTACT_FORM.windowMs
+    );
+
+    if (!isAllowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again in a minute.' },
+        { status: 429 }
+      );
+    }
+
     const { name, email, subject, category, message, projectType, projectBudget } = await request.json();
 
     // Validate required fields

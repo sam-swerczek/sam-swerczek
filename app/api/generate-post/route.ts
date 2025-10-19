@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { generateSlug } from '@/lib/utils/slugify';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/utils/rate-limiter';
 
 /**
  * POST /api/generate-post
@@ -20,6 +23,45 @@ import { generateSlug } from '@/lib/utils/slugify';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Server-side authentication check
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+        },
+      }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Please log in to generate blog posts.' },
+        { status: 401 }
+      );
+    }
+
+    // Rate limiting: 10 requests per hour per IP (this is expensive!)
+    const ip = getClientIp(request);
+    const isAllowed = rateLimit(
+      ip,
+      RATE_LIMITS.BLOG_GENERATION.endpoint,
+      RATE_LIMITS.BLOG_GENERATION.maxRequests,
+      RATE_LIMITS.BLOG_GENERATION.windowMs
+    );
+
+    if (!isAllowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. You can generate up to 10 posts per hour. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     // Check for API key
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {

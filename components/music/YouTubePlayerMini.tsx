@@ -1,12 +1,18 @@
 "use client";
 
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useYouTubePlayer } from "@/components/music/hooks/useYouTubePlayer";
+import { usePlaylistExpansion } from "@/components/music/hooks/usePlaylistExpansion";
 import { VolumeControl, PlaybackControls, ProgressBar } from "./player";
-import ExpandIcon from "@/components/ui/icons/ExpandIcon";
+import PlaylistExpansion from "./PlaylistExpansion";
+import ChevronDownIcon from "@/components/ui/icons/ChevronDownIcon";
 
 export default function YouTubePlayerMini() {
+  const pathname = usePathname();
+  const [shouldFlash, setShouldFlash] = useState(false);
+
   const {
     isPlaying,
     volume,
@@ -21,9 +27,22 @@ export default function YouTubePlayerMini() {
     playlist,
   } = useYouTubePlayer();
 
+  const { isExpanded, toggle, close, expansionRef } = usePlaylistExpansion();
+
+  // Flash animation when navigating to music page
+  useEffect(() => {
+    if (pathname === '/music') {
+      setShouldFlash(true);
+      const timer = setTimeout(() => setShouldFlash(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div
+      className={`flex items-center gap-3 w-full relative ${shouldFlash ? 'animate-subtle-flash' : ''}`}
+      ref={expansionRef}
+    >
       {/* Album Cover & Song Title - Aligned with header */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {/* Fixed-width container matching header profile image - 40px */}
@@ -73,15 +92,19 @@ export default function YouTubePlayerMini() {
           variant="mini"
         />
 
-        {/* Expand Icon - Navigate to /music */}
-        <Link
-          href="/music"
+        {/* Chevron Icon - Toggle playlist expansion */}
+        <button
+          onClick={toggle}
           className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
-          aria-label="Open full player"
+          aria-label={isExpanded ? "Close playlist" : "Open playlist"}
+          aria-expanded={isExpanded}
         >
-          <ExpandIcon className="w-4 h-4" />
-        </Link>
+          <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
       </div>
+
+      {/* Playlist Expansion Panel */}
+      {isExpanded && <PlaylistExpansion onClose={close} />}
     </div>
   );
 }

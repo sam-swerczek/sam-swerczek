@@ -2,6 +2,7 @@
 
 import React, { createContext, useEffect, useRef, useState, useCallback } from 'react';
 import type { Song } from '../types';
+import { logger } from '../utils/logger';
 
 // TypeScript declarations for YouTube IFrame API
 interface YTPlayer {
@@ -137,11 +138,13 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   const playerRef = useRef<YTPlayer | null>(null);
   const playerElementRef = useRef<HTMLDivElement | null>(null);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializingRef = useRef(false);
   const isMountedRef = useRef(true);
   const retryCountRef = useRef(0);
   const currentVideoIdRef = useRef<string>(DEFAULT_VIDEO_ID);
   const shouldAutoplayRef = useRef(false);
+  const playlistInitializedRef = useRef(false);
 
   // State
   const [isHydrated, setIsHydrated] = useState(false);
@@ -187,7 +190,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         };
       }
     } catch (err) {
-      console.error('Failed to load player preferences:', err);
+      logger.error('Failed to load player preferences:', err);
     }
 
     return {
@@ -206,7 +209,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       const updated = { ...current, ...prefs };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch (err) {
-      console.error('Failed to save player preferences:', err);
+      logger.error('Failed to save player preferences:', err);
     }
   }, [loadPreferences]);
 
@@ -225,7 +228,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
           // Save position periodically
           savePreferences({ lastPosition: currentTime });
         } catch (err) {
-          console.error('Failed to get current time:', err);
+          logger.error('Failed to get current time:', err);
         }
       }
     }, UPDATE_INTERVAL);
@@ -261,9 +264,97 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
+  /**
+   * Triggers autoplay with a smooth fade-in effect from 0 to 30% volume over 5 seconds
+   * This is the single source of truth for autoplay logic across the app
+   */
+  const triggerAutoplayWithFadeIn = useCallback(() => {
+    if (!playerRef.current || !isMountedRef.current) {
+      logger.warn('Cannot trigger autoplay - player not ready');
+      return;
+    }
+
+    // Check if we've already autoplayed this session
+    const hasAutoplayedThisSession = typeof window !== 'undefined'
+      ? sessionStorage.getItem('youtube-player-autoplayed') === 'true'
+      : false;
+
+    if (hasAutoplayedThisSession) {
+      logger.log('Autoplay already triggered this session, skipping');
+      return;
+    }
+
+    logger.log('Triggering autoplay with fade-in');
+
+    // Mark as autoplayed for this session
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('youtube-player-autoplayed', 'true');
+    }
+
+    try {
+      const prefs = loadPreferences();
+
+      // Clear any existing fade interval
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+
+      // Start at 0 volume
+      playerRef.current.setVolume(0);
+      setPlayerState(prev => ({ ...prev, volume: 0 }));
+
+      // Start playing
+      playerRef.current.playVideo();
+      setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+
+      // Fade in volume from 0 to 30% over 5 seconds
+      const targetVolume = 0.3;
+      const fadeDuration = 5000; // 5 seconds
+      const fadeSteps = 50; // Update 50 times during fade
+      const stepDuration = fadeDuration / fadeSteps;
+      const volumeIncrement = targetVolume / fadeSteps;
+
+      let currentStep = 0;
+      fadeIntervalRef.current = setInterval(() => {
+        currentStep++;
+        const newVolume = Math.min(volumeIncrement * currentStep, targetVolume);
+
+        if (playerRef.current && isMountedRef.current) {
+          playerRef.current.setVolume(newVolume * 100);
+          setPlayerState(prev => ({ ...prev, volume: newVolume }));
+        }
+
+        if (currentStep >= fadeSteps) {
+          if (fadeIntervalRef.current) {
+            clearInterval(fadeIntervalRef.current);
+            fadeIntervalRef.current = null;
+          }
+          // Save final volume to preferences
+          savePreferences({ volume: targetVolume });
+          logger.log('Autoplay fade-in complete at 30% volume');
+        }
+      }, stepDuration);
+
+    } catch (err) {
+      logger.warn('Autoplay blocked by browser:', err);
+      // Reset to default volume if autoplay fails
+      const prefs = loadPreferences();
+      if (playerRef.current) {
+        playerRef.current.setVolume(prefs.volume * 100);
+      }
+      setPlayerState(prev => ({
+        ...prev,
+        isPlaying: false,
+        isPaused: true,
+        volume: prefs.volume
+      }));
+    }
+  }, [loadPreferences, savePreferences]);
+
   // Player event handlers
   const handleReady = useCallback((event: YTPlayerEvent) => {
-    console.log('YouTube player ready');
+    logger.log('YouTube player ready');
     const player = event.target;
 
     try {
@@ -281,30 +372,22 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       // Set initial volume
       player.setVolume(prefs.volume * 100);
 
-      // Attempt autoplay for first-time visitors
-      if (!prefs.hasVisited) {
-        console.log('First visit detected, attempting autoplay');
-
-        // Mark as visited immediately
-        savePreferences({ hasVisited: true });
-        setPlayerState(prev => ({ ...prev, hasVisited: true }));
-
-        try {
-          player.playVideo();
-          setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
-        } catch (err) {
-          console.warn('Autoplay blocked by browser:', err);
-          setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
-        }
+      // Attempt autoplay for first page load in this session
+      // ONLY if the playlist has been initialized (to ensure featured song is loaded first)
+      if (playlistInitializedRef.current) {
+        logger.log('Player ready and playlist initialized - attempting autoplay');
+        triggerAutoplayWithFadeIn();
+      } else {
+        logger.log('Player ready but playlist not initialized yet - deferring autoplay');
       }
 
       setIsLoading(false);
     } catch (err) {
-      console.error('Error in handleReady:', err);
+      logger.error('Error in handleReady:', err);
       setError('Failed to initialize player');
       setIsLoading(false);
     }
-  }, [loadPreferences, savePreferences]);
+  }, [loadPreferences, triggerAutoplayWithFadeIn]);
 
   const handleStateChange = useCallback((event: YTPlayerEvent) => {
     const state = event.data;
@@ -351,7 +434,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
                   currentTime: 0,
                 };
               } catch (err) {
-                console.error('Failed to autoplay next track:', err);
+                logger.error('Failed to autoplay next track:', err);
                 shouldAutoplayRef.current = false;
               }
             }
@@ -381,18 +464,18 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   }, [startTimeUpdates, stopTimeUpdates, currentTrackToSong]);
 
   const handleError = useCallback((event: YTPlayerEvent) => {
-    console.error('YouTube player error:', event.data);
+    logger.error('YouTube player error:', event.data);
 
     // Retry logic for recoverable errors
     if (retryCountRef.current < 3 && playerRef.current && currentVideoIdRef.current) {
-      console.log(`Retrying playback (attempt ${retryCountRef.current + 1}/3)...`);
+      logger.log(`Retrying playback (attempt ${retryCountRef.current + 1}/3)...`);
       setTimeout(() => {
         if (playerRef.current && isMountedRef.current) {
           try {
             playerRef.current.loadVideoById(currentVideoIdRef.current);
             retryCountRef.current += 1;
           } catch (err) {
-            console.error('Retry failed:', err);
+            logger.error('Retry failed:', err);
           }
         }
       }, 2000);
@@ -411,14 +494,14 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     }
 
     if (typeof window === 'undefined' || !window.YT || !window.YT.Player) {
-      console.warn('YouTube API not ready');
+      logger.warn('YouTube API not ready');
       return;
     }
 
     // Look for the player container element in the DOM
     const containerElement = document.getElementById('youtube-player-container') as HTMLDivElement | null;
     if (!containerElement) {
-      console.log('⚠️ Player container not found in DOM yet, will retry...');
+      logger.log('Player container not found in DOM yet, will retry...');
       return;
     }
 
@@ -430,7 +513,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       try {
         playerRef.current.destroy();
       } catch (err) {
-        console.error('Error cleaning up existing player:', err);
+        logger.error('Error cleaning up existing player:', err);
       }
       playerRef.current = null;
     }
@@ -465,12 +548,12 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         },
       });
 
-      console.log('YouTube player initialized in container');
+      logger.log('YouTube player initialized in container');
 
       // Mark initialization as complete after player is created
       isInitializingRef.current = false;
     } catch (err) {
-      console.error('Failed to initialize player:', err);
+      logger.error('Failed to initialize player:', err);
       setError('Failed to initialize player');
       setIsLoading(false);
       isInitializingRef.current = false;
@@ -496,7 +579,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
 
     // Check if script already exists
     if (window.YT && window.YT.Player) {
-      console.log('YouTube API already loaded');
+      logger.log('YouTube API already loaded');
       setIsScriptLoaded(true);
       return;
     }
@@ -504,11 +587,11 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     // Check if script is already in DOM
     const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
     if (existingScript) {
-      console.log('YouTube API script already in DOM, waiting for load');
+      logger.log('YouTube API script already in DOM, waiting for load');
 
       // Set up callback for when it loads
       window.onYouTubeIframeAPIReady = () => {
-        console.log('YouTube API ready (existing script)');
+        logger.log('YouTube API ready (existing script)');
         setIsScriptLoaded(true);
       };
 
@@ -520,7 +603,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       return;
     }
 
-    console.log('Loading YouTube API script');
+    logger.log('Loading YouTube API script');
 
     // Inject script
     const script = document.createElement('script');
@@ -529,12 +612,12 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
 
     // Set up callback
     window.onYouTubeIframeAPIReady = () => {
-      console.log('YouTube API ready (new script)');
+      logger.log('YouTube API ready (new script)');
       setIsScriptLoaded(true);
     };
 
     script.onerror = () => {
-      console.error('Failed to load YouTube API script');
+      logger.error('Failed to load YouTube API script');
       setError('Failed to load YouTube player');
       setIsLoading(false);
     };
@@ -560,7 +643,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     // Retry logic in case container isn't mounted yet
     const retryTimer = setInterval(() => {
       if (!playerRef.current && document.getElementById('youtube-player-container')) {
-        console.log('Retrying player initialization...');
+        logger.log('Retrying player initialization...');
         initializePlayer();
       }
     }, 500);
@@ -598,7 +681,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
             setPlayerState(prev => ({ ...prev, volume: prefs.volume }));
           }
         } catch (err) {
-          console.error('Failed to sync preferences from storage event:', err);
+          logger.error('Failed to sync preferences from storage event:', err);
         }
       }
     };
@@ -610,7 +693,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log('YouTubePlayerProvider unmounting, cleaning up...');
+      logger.log('YouTubePlayerProvider unmounting, cleaning up...');
 
       // Mark as unmounted to prevent stale updates
       isMountedRef.current = false;
@@ -618,13 +701,19 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       // Stop any running timers
       stopTimeUpdates();
 
+      // Clear fade interval
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+
       // Destroy the YouTube player instance
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
           playerRef.current = null;
         } catch (err) {
-          console.error('Error destroying player:', err);
+          logger.error('Error destroying player:', err);
         }
       }
 
@@ -643,7 +732,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     try {
       playerRef.current.playVideo();
     } catch (err) {
-      console.error('Failed to play:', err);
+      logger.error('Failed to play:', err);
       setError('Failed to play video');
     }
   }, [playerState.isReady]);
@@ -654,7 +743,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     try {
       playerRef.current.pauseVideo();
     } catch (err) {
-      console.error('Failed to pause:', err);
+      logger.error('Failed to pause:', err);
       setError('Failed to pause video');
     }
   }, [playerState.isReady]);
@@ -669,7 +758,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       setPlayerState(prev => ({ ...prev, volume: clampedVolume }));
       savePreferences({ volume: clampedVolume });
     } catch (err) {
-      console.error('Failed to set volume:', err);
+      logger.error('Failed to set volume:', err);
       setError('Failed to set volume');
     }
   }, [playerState.isReady, savePreferences]);
@@ -682,7 +771,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       setPlayerState(prev => ({ ...prev, currentTime: seconds }));
       savePreferences({ lastPosition: seconds });
     } catch (err) {
-      console.error('Failed to seek:', err);
+      logger.error('Failed to seek:', err);
       setError('Failed to seek');
     }
   }, [playerState.isReady, savePreferences]);
@@ -707,26 +796,26 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
             const duration = playerRef.current.getDuration();
             setPlayerState(prev => ({ ...prev, duration }));
           } catch (err) {
-            console.error('Failed to get duration:', err);
+            logger.error('Failed to get duration:', err);
           }
         }
       }, 1000);
     } catch (err) {
-      console.error('Failed to load video:', err);
+      logger.error('Failed to load video:', err);
       setError('Failed to load video');
     }
   }, [playerState.isReady]);
 
   const loadTrack = useCallback((track: Song) => {
     if (!playerRef.current || !playerState.isReady) {
-      console.log('⚠️ Cannot load track - player not ready:', {
+      logger.log('Cannot load track - player not ready:', {
         hasPlayer: !!playerRef.current,
         isReady: playerState.isReady
       });
       return;
     }
 
-    console.log('▶️ Loading track:', {
+    logger.log('Loading track:', {
       title: track.title,
       videoId: track.youtube_video_id
     });
@@ -766,12 +855,12 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
             const duration = playerRef.current.getDuration();
             setPlayerState(prev => ({ ...prev, duration }));
           } catch (err) {
-            console.error('Failed to get duration:', err);
+            logger.error('Failed to get duration:', err);
           }
         }
       }, 1000);
     } catch (err) {
-      console.error('Failed to load track:', err);
+      logger.error('Failed to load track:', err);
       setError('Failed to load track');
     }
   }, [playerState.isReady]);
@@ -779,6 +868,8 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
 
   // Playlist control methods
   const setPlaylist = useCallback((tracks: Song[]) => {
+    logger.log('Setting playlist with', tracks.length, 'tracks. First track:', tracks[0]?.title);
+
     const playlist: CurrentTrack[] = tracks.map(track => ({
       id: track.id,
       title: track.title,
@@ -811,21 +902,38 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       ...prev,
       playlist,
       currentIndex: newIndex,
-      // Auto-load first track if no current track is set
-      currentTrack: prev.currentTrack || (playlist.length > 0 ? playlist[0] : null),
-      videoId: prev.currentTrack?.youtubeVideoId || (playlist.length > 0 ? playlist[0].youtubeVideoId : prev.videoId),
+      // Don't auto-set currentTrack here - let loadTrack set it to ensure sync
     }));
 
-    // If player is ready and there's no current track, load the first track
-    if (!playerState.currentTrack && tracks.length > 0 && playerRef.current && playerState.isReady) {
-      console.log('Auto-loading first track:', tracks[0].title);
-      loadTrack(tracks[0]);
+    // Mark playlist as initialized
+    playlistInitializedRef.current = true;
+
+    // If there's no current track and we have tracks, load the first one
+    // This works whether player is ready now or becomes ready later
+    if (!playerState.currentTrack && tracks.length > 0) {
+      logger.log('Auto-loading first track:', tracks[0].title);
+
+      // If player is ready, load immediately
+      if (playerRef.current && playerState.isReady) {
+        loadTrack(tracks[0]);
+
+        // Trigger autoplay with fade-in (with delay to let track load)
+        logger.log('Triggering deferred autoplay now that playlist is initialized');
+        setTimeout(() => {
+          if (playerRef.current && isMountedRef.current) {
+            triggerAutoplayWithFadeIn();
+          }
+        }, 500);
+      } else {
+        // Player not ready yet - the useEffect will load it when ready
+        logger.log('Player not ready yet, will load first track when ready');
+      }
     }
-  }, [playerState.currentTrack, playerState.isReady, loadTrack]);
+  }, [playerState.currentTrack, playerState.isReady, loadTrack, triggerAutoplayWithFadeIn]);
 
   const jumpToTrack = useCallback((index: number) => {
     if (index < 0 || index >= playerState.playlist.length) {
-      console.warn('Invalid track index:', index);
+      logger.warn('Invalid track index:', index);
       return;
     }
 
@@ -856,14 +964,22 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   // Auto-load first track when player becomes ready if playlist exists but no track is loaded
   useEffect(() => {
     if (playerState.isReady && playerState.playlist.length > 0 && !playerState.currentTrack && playerRef.current) {
-      console.log('Player ready with playlist but no track loaded, auto-loading first track');
+      logger.log('Player ready with playlist but no track loaded, auto-loading first track');
       const firstTrack = playerState.playlist[0];
       const song = currentTrackToSong(firstTrack, 0);
 
       loadTrack(song);
       setPlayerState(prev => ({ ...prev, currentIndex: 0 }));
+
+      // Trigger autoplay with fade-in (with delay to let track load)
+      logger.log('Triggering autoplay (player became ready after playlist init)');
+      setTimeout(() => {
+        if (playerRef.current && isMountedRef.current) {
+          triggerAutoplayWithFadeIn();
+        }
+      }, 500);
     }
-  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack, currentTrackToSong]);
+  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack, currentTrackToSong, triggerAutoplayWithFadeIn]);
 
   const contextValue: YouTubePlayerContextValue = {
     ...playerState,

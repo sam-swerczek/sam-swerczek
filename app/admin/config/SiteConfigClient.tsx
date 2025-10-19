@@ -281,7 +281,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
                           htmlFor={videoIdItem.key}
                           className="block text-xs font-medium text-text-primary mb-1"
                         >
-                          {videoIdItem.label} <span className="text-xs text-text-secondary font-mono">({videoIdItem.key})</span>
+                          {videoIdItem.label}
                         </label>
                         <input
                           type="text"
@@ -299,7 +299,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
                           htmlFor={titleItem.key}
                           className="block text-xs font-medium text-text-primary mb-1"
                         >
-                          {titleItem.label} <span className="text-xs text-text-secondary font-mono">({titleItem.key})</span>
+                          {titleItem.label}
                         </label>
                         <input
                           type="text"
@@ -330,7 +330,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
                         htmlFor={item.key}
                         className="block text-sm font-medium text-text-primary mb-2"
                       >
-                        {item.label} <span className="text-xs text-text-secondary font-mono">({item.key})</span>
+                        {item.label}
                       </label>
                       <input
                         type="text"

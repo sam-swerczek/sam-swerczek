@@ -8,10 +8,10 @@ export default async function Header() {
   const heroImageUrl = generalConfig.find(c => c.key === 'hero_image_url')?.value;
 
   return (
-    <header className="relative border-b border-background-secondary overflow-hidden">
+    <header className="relative border-b border-background-secondary">
       {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/5 via-accent-teal/5 to-transparent opacity-50" />
-      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/10 rounded-full blur-3xl -translate-y-32 translate-x-32" />
+      <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/5 via-accent-teal/5 to-transparent opacity-50 -z-10" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/10 rounded-full blur-3xl -translate-y-32 translate-x-32 -z-10" />
 
       <nav className="relative container mx-auto px-4 py-4 md:py-5 lg:py-6">
         <div className="flex justify-between items-center">

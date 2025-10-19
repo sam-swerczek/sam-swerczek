@@ -21,6 +21,7 @@ export default function SongsAdminClient({ initialSongs }: SongsAdminClientProps
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -130,17 +131,37 @@ export default function SongsAdminClient({ initialSongs }: SongsAdminClientProps
 
     const previousSong = filteredSongs[currentIndex - 1];
 
+    setIsReordering(song.id);
+
+    // Optimistic update - swap display_order values immediately for instant feedback
+    setSongs((prev) =>
+      prev.map((s) => {
+        if (s.id === song.id) {
+          return { ...s, display_order: previousSong.display_order };
+        }
+        if (s.id === previousSong.id) {
+          return { ...s, display_order: song.display_order };
+        }
+        return s;
+      })
+    );
+
     try {
       await reorderSongs([
         { id: song.id, display_order: previousSong.display_order },
         { id: previousSong.id, display_order: song.display_order },
       ]);
 
-      // Refresh songs
+      // Refresh songs to ensure consistency with server
       const updatedSongs = await getAllSongs();
       setSongs(updatedSongs);
     } catch (err) {
       showError('Failed to reorder songs');
+      // Revert optimistic update on error
+      const updatedSongs = await getAllSongs();
+      setSongs(updatedSongs);
+    } finally {
+      setIsReordering(null);
     }
   };
 
@@ -150,17 +171,37 @@ export default function SongsAdminClient({ initialSongs }: SongsAdminClientProps
 
     const nextSong = filteredSongs[currentIndex + 1];
 
+    setIsReordering(song.id);
+
+    // Optimistic update - swap display_order values immediately for instant feedback
+    setSongs((prev) =>
+      prev.map((s) => {
+        if (s.id === song.id) {
+          return { ...s, display_order: nextSong.display_order };
+        }
+        if (s.id === nextSong.id) {
+          return { ...s, display_order: song.display_order };
+        }
+        return s;
+      })
+    );
+
     try {
       await reorderSongs([
         { id: song.id, display_order: nextSong.display_order },
         { id: nextSong.id, display_order: song.display_order },
       ]);
 
-      // Refresh songs
+      // Refresh songs to ensure consistency with server
       const updatedSongs = await getAllSongs();
       setSongs(updatedSongs);
     } catch (err) {
       showError('Failed to reorder songs');
+      // Revert optimistic update on error
+      const updatedSongs = await getAllSongs();
+      setSongs(updatedSongs);
+    } finally {
+      setIsReordering(null);
     }
   };
 
@@ -310,35 +351,49 @@ export default function SongsAdminClient({ initialSongs }: SongsAdminClientProps
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-text-secondary text-sm">{song.display_order}</span>
+                        <span className="text-text-secondary text-sm font-mono">{song.display_order}</span>
                         <div className="flex flex-col gap-1">
                           <button
                             onClick={() => handleMoveUp(song)}
-                            disabled={index === 0}
-                            className="text-text-secondary hover:text-accent-blue disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={index === 0 || isReordering === song.id}
+                            className="text-text-secondary hover:text-accent-blue disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             title="Move up"
                           >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            {isReordering === song.id ? (
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
                           </button>
                           <button
                             onClick={() => handleMoveDown(song)}
-                            disabled={index === filteredSongs.length - 1}
-                            className="text-text-secondary hover:text-accent-blue disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={index === filteredSongs.length - 1 || isReordering === song.id}
+                            className="text-text-secondary hover:text-accent-blue disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             title="Move down"
                           >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            {isReordering === song.id ? (
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
                           </button>
                         </div>
                       </div>

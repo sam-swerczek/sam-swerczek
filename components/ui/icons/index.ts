@@ -18,6 +18,7 @@ export { default as PlayIcon } from './PlayIcon';
 export { default as PauseIcon } from './PauseIcon';
 export { default as VolumeIcon } from './VolumeIcon';
 export { default as ExpandIcon } from './ExpandIcon';
+export { default as ChevronDownIcon } from './ChevronDownIcon';
 export { default as MenuIcon } from './MenuIcon';
 export { GithubIcon } from './GithubIcon';
 export { LinkedInIcon } from './LinkedInIcon';

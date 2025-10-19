@@ -2,12 +2,45 @@ import Link from 'next/link';
 import { getAllPosts, deletePost as deletePostAction, togglePostPublished as togglePostPublishedAction } from '@/lib/supabase/admin';
 import ManagePostsClient from './ManagePostsClient';
 import type { Post } from '@/lib/types';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import { redirect } from 'next/navigation';
 
 // Disable caching for this page to always show fresh data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function ManagePosts() {
+  // Server-side authentication check
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Handle server component cookie limitations
+          }
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/admin/login');
+  }
+
+  // Now safe to fetch admin data
   let posts: Post[] = [];
 
   try {
