@@ -25,15 +25,10 @@ interface RateLimitRecord {
 // Map structure: identifier -> RateLimitRecord
 const rateLimitStore = new Map<string, RateLimitRecord>();
 
-// Cleanup old entries every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (record.resetTime < now) {
-      rateLimitStore.delete(key);
-    }
-  }
-}, 10 * 60 * 1000);
+// Note: Cleanup interval disabled for serverless compatibility
+// In serverless environments, the entire process is recreated per request,
+// so there's no long-running process to clean up. This would cause
+// Vercel builds to fail with "Failed to collect page data" errors.
 
 export interface RateLimitResult {
   success: boolean;
