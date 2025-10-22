@@ -25,6 +25,7 @@ export default function YouTubePlayerMini() {
     next,
     previous,
     playlist,
+    autoplayBlocked,
   } = useYouTubePlayer();
 
   const { isExpanded, toggle, close, expansionRef } = usePlaylistExpansion();
@@ -39,12 +40,29 @@ export default function YouTubePlayerMini() {
   }, [pathname]);
 
   return (
-    <div
-      className={`flex items-center gap-3 w-full relative ${shouldFlash ? 'animate-subtle-flash' : ''}`}
-      ref={expansionRef}
-    >
-      {/* Album Cover & Song Title - Aligned with header */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+    <>
+      {/* Autoplay Blocked Message */}
+      {autoplayBlocked && (
+        <div className="absolute top-0 left-0 right-0 bg-accent-blue/10 border-b border-accent-blue/30 px-4 py-2 z-50 animate-slide-down-fade">
+          <div className="flex items-center justify-between max-w-4xl mx-auto">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-accent-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs md:text-sm text-text-primary">
+                Music autoplay was blocked. Click <button onClick={play} className="underline font-medium text-accent-blue hover:text-accent-teal transition-colors">play</button> to start listening.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`flex items-center gap-3 w-full relative ${shouldFlash ? 'animate-subtle-flash' : ''}`}
+        ref={expansionRef}
+      >
+        {/* Album Cover & Song Title - Aligned with header */}
+        <div className="flex items-center gap-3 flex-shrink-0">
         {/* Fixed-width container matching header profile image - 40px */}
         <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
           {currentTrack?.albumCoverUrl && (
@@ -103,8 +121,9 @@ export default function YouTubePlayerMini() {
         </button>
       </div>
 
-      {/* Playlist Expansion Panel */}
-      {isExpanded && <PlaylistExpansion onClose={close} />}
-    </div>
+        {/* Playlist Expansion Panel */}
+        {isExpanded && <PlaylistExpansion onClose={close} />}
+      </div>
+    </>
   );
 }

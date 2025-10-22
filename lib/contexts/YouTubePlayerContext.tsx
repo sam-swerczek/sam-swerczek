@@ -16,6 +16,7 @@ interface YTPlayer {
   getDuration(): number;
   getPlayerState(): number;
   loadVideoById(videoId: string): void;
+  cueVideoById(videoId: string): void;
   destroy(): void;
   getIframe(): HTMLIFrameElement;
 }
@@ -93,6 +94,8 @@ export interface PlayerState {
   // Playlist management
   playlist: CurrentTrack[];
   currentIndex: number;
+  // Autoplay state
+  autoplayBlocked: boolean;
 }
 
 // Player controls interface
@@ -115,6 +118,8 @@ interface PlayerPreferences {
   volume: number;
   lastPosition: number;
   hasVisited: boolean;
+  userStoppedPlayer: boolean; // Track if user manually stopped the player
+  autoplayAllowed: boolean; // Track if autoplay was successful at least once
 }
 
 // Context value interface
@@ -166,6 +171,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       currentTrack: null,
       playlist: [],
       currentIndex: -1,
+      autoplayBlocked: false,
     };
   });
 
@@ -176,6 +182,8 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         volume: DEFAULT_VOLUME,
         lastPosition: 0,
         hasVisited: false,
+        userStoppedPlayer: false,
+        autoplayAllowed: false,
       };
     }
 
@@ -187,6 +195,8 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
           volume: typeof prefs.volume === 'number' ? prefs.volume : DEFAULT_VOLUME,
           lastPosition: typeof prefs.lastPosition === 'number' ? prefs.lastPosition : 0,
           hasVisited: prefs.hasVisited === true,
+          userStoppedPlayer: prefs.userStoppedPlayer === true,
+          autoplayAllowed: prefs.autoplayAllowed === true,
         };
       }
     } catch (err) {
@@ -197,6 +207,8 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       volume: DEFAULT_VOLUME,
       lastPosition: 0,
       hasVisited: false,
+      userStoppedPlayer: false,
+      autoplayAllowed: false,
     };
   }, []);
 
@@ -267,12 +279,19 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
   /**
    * Triggers autoplay with a smooth fade-in effect from 0 to 30% volume over 5 seconds
    * This is the single source of truth for autoplay logic across the app
+   *
+   * Autoplay Policy:
+   * - First-time visitors: Always attempt autoplay
+   * - Returning visitors who stopped the player: Don't autoplay
+   * - Returning visitors who left it playing: Attempt autoplay
    */
-  const triggerAutoplayWithFadeIn = useCallback(() => {
+  const triggerAutoplayWithFadeIn = useCallback(async () => {
     if (!playerRef.current || !isMountedRef.current) {
       logger.warn('Cannot trigger autoplay - player not ready');
       return;
     }
+
+    const prefs = loadPreferences();
 
     // Check if we've already autoplayed this session
     const hasAutoplayedThisSession = typeof window !== 'undefined'
@@ -284,7 +303,18 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       return;
     }
 
-    logger.log('Triggering autoplay with fade-in');
+    // Determine if we should attempt autoplay based on user preference
+    const shouldAttemptAutoplay = !prefs.hasVisited || // First-time visitor
+                                   !prefs.userStoppedPlayer; // Returning visitor who didn't stop it
+
+    if (!shouldAttemptAutoplay) {
+      logger.log('User previously stopped player - respecting preference, not autoplaying');
+      // Mark as visited to update the preference
+      savePreferences({ hasVisited: true });
+      return;
+    }
+
+    logger.log('Attempting autoplay with fade-in (first visit or user preference allows)');
 
     // Mark as autoplayed for this session
     if (typeof window !== 'undefined') {
@@ -292,8 +322,6 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     }
 
     try {
-      const prefs = loadPreferences();
-
       // Clear any existing fade interval
       if (fadeIntervalRef.current) {
         clearInterval(fadeIntervalRef.current);
@@ -304,9 +332,26 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       playerRef.current.setVolume(0);
       setPlayerState(prev => ({ ...prev, volume: 0 }));
 
-      // Start playing
-      playerRef.current.playVideo();
+      // Attempt to start playing - this will throw if blocked
+      const playPromise = playerRef.current.playVideo();
+
+      // Modern browsers return a Promise from play()
+      // We need to handle the promise rejection for autoplay blocking
+      if (playPromise !== undefined) {
+        await playPromise;
+      }
+
+      // If we get here, autoplay succeeded!
+      logger.log('Autoplay successful - starting fade-in');
+
       setPlayerState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+
+      // Save that autoplay was successful and mark as visited
+      savePreferences({
+        hasVisited: true,
+        autoplayAllowed: true,
+        userStoppedPlayer: false
+      });
 
       // Fade in volume from 0 to 30% over 5 seconds
       const targetVolume = 0.3;
@@ -337,9 +382,16 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       }, stepDuration);
 
     } catch (err) {
-      logger.warn('Autoplay blocked by browser:', err);
+      logger.warn('Autoplay blocked by browser - user interaction required:', err);
+
+      // Mark that autoplay was blocked and this is a visited session
+      savePreferences({
+        hasVisited: true,
+        autoplayAllowed: false,
+        userStoppedPlayer: false
+      });
+
       // Reset to default volume if autoplay fails
-      const prefs = loadPreferences();
       if (playerRef.current) {
         playerRef.current.setVolume(prefs.volume * 100);
       }
@@ -347,8 +399,22 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         ...prev,
         isPlaying: false,
         isPaused: true,
-        volume: prefs.volume
+        volume: prefs.volume,
+        autoplayBlocked: true
       }));
+
+      // Log helpful message for debugging
+      logger.log('Autoplay was blocked. User can manually click play to start music.');
+
+      // Auto-hide the blocked message after 10 seconds
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setPlayerState(prev => ({
+            ...prev,
+            autoplayBlocked: false
+          }));
+        }
+      }, 10000);
     }
   }, [loadPreferences, savePreferences]);
 
@@ -374,9 +440,17 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
 
       // Attempt autoplay for first page load in this session
       // ONLY if the playlist has been initialized (to ensure featured song is loaded first)
+      // AND user preference allows autoplay
       if (playlistInitializedRef.current) {
-        logger.log('Player ready and playlist initialized - attempting autoplay');
-        triggerAutoplayWithFadeIn();
+        // Check user preference FIRST before attempting autoplay
+        const shouldAttemptAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+        if (shouldAttemptAutoplay) {
+          logger.log('Player ready and playlist initialized - attempting autoplay');
+          triggerAutoplayWithFadeIn();
+        } else {
+          logger.log('User previously stopped player - skipping autoplay in handleReady');
+        }
       } else {
         logger.log('Player ready but playlist not initialized yet - deferring autoplay');
       }
@@ -405,7 +479,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
         setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
         stopTimeUpdates();
 
-        // Trigger autoplay if there's a playlist
+        // Trigger autoplay if there's a playlist and user preference allows
         shouldAutoplayRef.current = true;
         // Use setTimeout to break out of event handler and trigger next track
         setTimeout(() => {
@@ -424,6 +498,9 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
               try {
                 retryCountRef.current = 0;
                 currentVideoIdRef.current = song.youtube_video_id;
+
+                // Always use loadVideoById for next track in playlist
+                // The shouldAutoplayRef flag will handle whether to play it
                 playerRef.current.loadVideoById(song.youtube_video_id);
 
                 return {
@@ -472,7 +549,15 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       setTimeout(() => {
         if (playerRef.current && isMountedRef.current) {
           try {
-            playerRef.current.loadVideoById(currentVideoIdRef.current);
+            // Check user preference to determine how to load the video
+            const prefs = loadPreferences();
+            const shouldAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+            if (shouldAutoplay) {
+              playerRef.current.loadVideoById(currentVideoIdRef.current);
+            } else {
+              playerRef.current.cueVideoById(currentVideoIdRef.current);
+            }
             retryCountRef.current += 1;
           } catch (err) {
             logger.error('Retry failed:', err);
@@ -485,7 +570,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     }
 
     setPlayerState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
-  }, []);
+  }, [loadPreferences]);
 
   // Initialize YouTube player
   const initializePlayer = useCallback(() => {
@@ -731,22 +816,44 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
 
     try {
       playerRef.current.playVideo();
+
+      // Track that user manually started the player
+      // This allows autoplay on their next visit
+      savePreferences({
+        userStoppedPlayer: false,
+        hasVisited: true,
+        autoplayAllowed: true
+      });
+
+      // Clear autoplay blocked state since user manually started
+      setPlayerState(prev => ({ ...prev, autoplayBlocked: false }));
+
+      logger.log('User started player - preference saved');
     } catch (err) {
       logger.error('Failed to play:', err);
       setError('Failed to play video');
     }
-  }, [playerState.isReady]);
+  }, [playerState.isReady, savePreferences]);
 
   const pause = useCallback(() => {
     if (!playerRef.current || !playerState.isReady) return;
 
     try {
       playerRef.current.pauseVideo();
+
+      // Track that user manually stopped the player
+      // This prevents autoplay on their next visit
+      savePreferences({
+        userStoppedPlayer: true,
+        hasVisited: true
+      });
+
+      logger.log('User paused player - preference saved');
     } catch (err) {
       logger.error('Failed to pause:', err);
       setError('Failed to pause video');
     }
-  }, [playerState.isReady]);
+  }, [playerState.isReady, savePreferences]);
 
   const setVolume = useCallback((volume: number) => {
     if (!playerRef.current || !playerState.isReady) return;
@@ -780,7 +887,18 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
     if (!playerRef.current || !playerState.isReady) return;
 
     try {
-      playerRef.current.loadVideoById(videoId);
+      // Check user preference to determine how to load the video
+      const prefs = loadPreferences();
+      const shouldAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+      if (shouldAutoplay) {
+        // User wants autoplay - use loadVideoById (loads and plays)
+        playerRef.current.loadVideoById(videoId);
+      } else {
+        // User previously stopped - use cueVideoById (loads paused)
+        playerRef.current.cueVideoById(videoId);
+      }
+
       setPlayerState(prev => ({
         ...prev,
         videoId,
@@ -804,7 +922,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       logger.error('Failed to load video:', err);
       setError('Failed to load video');
     }
-  }, [playerState.isReady]);
+  }, [playerState.isReady, loadPreferences]);
 
   const loadTrack = useCallback((track: Song) => {
     if (!playerRef.current || !playerState.isReady) {
@@ -827,7 +945,20 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       // Update the ref so handleError has access to current video ID
       currentVideoIdRef.current = track.youtube_video_id;
 
-      playerRef.current.loadVideoById(track.youtube_video_id);
+      // Check user preference to determine how to load the video
+      const prefs = loadPreferences();
+      const shouldAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+      if (shouldAutoplay) {
+        // User wants autoplay - use loadVideoById (loads and plays)
+        logger.log('Loading track with autoplay (user preference allows)');
+        playerRef.current.loadVideoById(track.youtube_video_id);
+      } else {
+        // User previously stopped - use cueVideoById (loads paused)
+        logger.log('Loading track without autoplay (user previously stopped)');
+        playerRef.current.cueVideoById(track.youtube_video_id);
+      }
+
       setPlayerState(prev => ({
         ...prev,
         videoId: track.youtube_video_id,
@@ -863,7 +994,7 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       logger.error('Failed to load track:', err);
       setError('Failed to load track');
     }
-  }, [playerState.isReady]);
+  }, [playerState.isReady, loadPreferences]);
 
 
   // Playlist control methods
@@ -917,19 +1048,27 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       if (playerRef.current && playerState.isReady) {
         loadTrack(tracks[0]);
 
-        // Trigger autoplay with fade-in (with delay to let track load)
-        logger.log('Triggering deferred autoplay now that playlist is initialized');
-        setTimeout(() => {
-          if (playerRef.current && isMountedRef.current) {
-            triggerAutoplayWithFadeIn();
-          }
-        }, 500);
+        // Check user preference before triggering autoplay
+        const prefs = loadPreferences();
+        const shouldAttemptAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+        if (shouldAttemptAutoplay) {
+          // Trigger autoplay with fade-in (with delay to let track load)
+          logger.log('Triggering deferred autoplay now that playlist is initialized');
+          setTimeout(() => {
+            if (playerRef.current && isMountedRef.current) {
+              triggerAutoplayWithFadeIn();
+            }
+          }, 500);
+        } else {
+          logger.log('User previously stopped player - skipping autoplay on playlist init');
+        }
       } else {
         // Player not ready yet - the useEffect will load it when ready
         logger.log('Player not ready yet, will load first track when ready');
       }
     }
-  }, [playerState.currentTrack, playerState.isReady, loadTrack, triggerAutoplayWithFadeIn]);
+  }, [playerState.currentTrack, playerState.isReady, loadTrack, triggerAutoplayWithFadeIn, loadPreferences]);
 
   const jumpToTrack = useCallback((index: number) => {
     if (index < 0 || index >= playerState.playlist.length) {
@@ -971,15 +1110,23 @@ export function YouTubePlayerProvider({ children }: { children: React.ReactNode 
       loadTrack(song);
       setPlayerState(prev => ({ ...prev, currentIndex: 0 }));
 
-      // Trigger autoplay with fade-in (with delay to let track load)
-      logger.log('Triggering autoplay (player became ready after playlist init)');
-      setTimeout(() => {
-        if (playerRef.current && isMountedRef.current) {
-          triggerAutoplayWithFadeIn();
-        }
-      }, 500);
+      // Check user preference before triggering autoplay
+      const prefs = loadPreferences();
+      const shouldAttemptAutoplay = !prefs.hasVisited || !prefs.userStoppedPlayer;
+
+      if (shouldAttemptAutoplay) {
+        // Trigger autoplay with fade-in (with delay to let track load)
+        logger.log('Triggering autoplay (player became ready after playlist init)');
+        setTimeout(() => {
+          if (playerRef.current && isMountedRef.current) {
+            triggerAutoplayWithFadeIn();
+          }
+        }, 500);
+      } else {
+        logger.log('User previously stopped player - skipping autoplay on track load');
+      }
     }
-  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack, currentTrackToSong, triggerAutoplayWithFadeIn]);
+  }, [playerState.isReady, playerState.playlist, playerState.currentTrack, loadTrack, currentTrackToSong, triggerAutoplayWithFadeIn, loadPreferences]);
 
   const contextValue: YouTubePlayerContextValue = {
     ...playerState,
