@@ -187,14 +187,18 @@ export interface Video {
 /**
  * Helper to extract video objects from featured videos config
  * Returns array of Video objects compatible with VideoGallery component
+ * Sanitizes titles to prevent XSS attacks
  */
 export function extractVideosFromConfig(config: FeaturedVideosConfig): Video[] {
   const videos: Video[] = [];
 
+  // Import sanitization utility (lazy load for server-side compatibility)
+  const { sanitizeText } = require('../utils/sanitize');
+
   if (config.youtube_video_1) {
     videos.push({
       id: config.youtube_video_1,
-      title: config.youtube_video_1_title || 'Untitled Video',
+      title: sanitizeText(config.youtube_video_1_title || 'Untitled Video'),
       description: null,
       thumbnailUrl: null,
     });
@@ -203,7 +207,7 @@ export function extractVideosFromConfig(config: FeaturedVideosConfig): Video[] {
   if (config.youtube_video_2) {
     videos.push({
       id: config.youtube_video_2,
-      title: config.youtube_video_2_title || 'Untitled Video',
+      title: sanitizeText(config.youtube_video_2_title || 'Untitled Video'),
       description: null,
       thumbnailUrl: null,
     });
@@ -212,7 +216,7 @@ export function extractVideosFromConfig(config: FeaturedVideosConfig): Video[] {
   if (config.youtube_video_3) {
     videos.push({
       id: config.youtube_video_3,
-      title: config.youtube_video_3_title || 'Untitled Video',
+      title: sanitizeText(config.youtube_video_3_title || 'Untitled Video'),
       description: null,
       thumbnailUrl: null,
     });
@@ -221,7 +225,7 @@ export function extractVideosFromConfig(config: FeaturedVideosConfig): Video[] {
   if (config.youtube_video_4) {
     videos.push({
       id: config.youtube_video_4,
-      title: config.youtube_video_4_title || 'Untitled Video',
+      title: sanitizeText(config.youtube_video_4_title || 'Untitled Video'),
       description: null,
       thumbnailUrl: null,
     });
