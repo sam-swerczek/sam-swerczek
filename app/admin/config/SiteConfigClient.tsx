@@ -18,7 +18,6 @@ interface ConfigItem {
   category: string;
   label: string;
   placeholder?: string;
-  videoIndex?: number; // For grouping video ID and title together
 }
 
 // Predefined configuration items organized by category
@@ -46,16 +45,6 @@ const CONFIG_SCHEMA: ConfigItem[] = [
   // Professional Links
   { key: 'linkedin_url', value: '', category: 'professional', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/...' },
   { key: 'github_url', value: '', category: 'professional', label: 'GitHub', placeholder: 'https://github.com/...' },
-
-  // Featured Videos
-  { key: 'youtube_video_1', value: '', category: 'featured_videos', label: 'Video ID', placeholder: 'dQw4w9WgXcQ', videoIndex: 1 },
-  { key: 'youtube_video_1_title', value: '', category: 'featured_videos', label: 'Video Title', placeholder: 'My Awesome Performance', videoIndex: 1 },
-  { key: 'youtube_video_2', value: '', category: 'featured_videos', label: 'Video ID', placeholder: 'dQw4w9WgXcQ', videoIndex: 2 },
-  { key: 'youtube_video_2_title', value: '', category: 'featured_videos', label: 'Video Title', placeholder: 'Live Session', videoIndex: 2 },
-  { key: 'youtube_video_3', value: '', category: 'featured_videos', label: 'Video ID', placeholder: 'dQw4w9WgXcQ', videoIndex: 3 },
-  { key: 'youtube_video_3_title', value: '', category: 'featured_videos', label: 'Video Title', placeholder: 'Cover Song', videoIndex: 3 },
-  { key: 'youtube_video_4', value: '', category: 'featured_videos', label: 'Video ID', placeholder: 'dQw4w9WgXcQ', videoIndex: 4 },
-  { key: 'youtube_video_4_title', value: '', category: 'featured_videos', label: 'Video Title', placeholder: 'Original Music', videoIndex: 4 },
 ];
 
 export default function SiteConfigClient({ initialConfig }: SiteConfigClientProps) {
@@ -65,7 +54,6 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [fetchingVideo, setFetchingVideo] = useState<number | null>(null);
 
   // Merge schema with existing config
   const configItems = useMemo(() => {
@@ -81,59 +69,6 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
 
   const handleValueChange = (key: string, value: string) => {
     setEditedValues((prev) => ({ ...prev, [key]: value }));
-  };
-
-  // Extract YouTube video ID from URL
-  const extractYouTubeId = (url: string): string | null => {
-    // Match various YouTube URL formats
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-      /^([a-zA-Z0-9_-]{11})$/ // Just the ID
-    ];
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  // Fetch video title from YouTube
-  const fetchYouTubeTitle = async (videoId: string): Promise<string | null> => {
-    try {
-      // Use YouTube oEmbed API (no API key required)
-      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.title || null;
-      }
-    } catch (err) {
-      console.error('Failed to fetch YouTube title:', err);
-    }
-    return null;
-  };
-
-  // Handle YouTube URL paste
-  const handleYouTubeUrlPaste = async (videoIndex: number, url: string) => {
-    const videoId = extractYouTubeId(url);
-
-    if (!videoId) {
-      setError('Invalid YouTube URL or video ID');
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
-    // Set the video ID immediately
-    handleValueChange(`youtube_video_${videoIndex}`, videoId);
-
-    // Fetch the title
-    setFetchingVideo(videoIndex);
-    const title = await fetchYouTubeTitle(videoId);
-    setFetchingVideo(null);
-
-    if (title) {
-      handleValueChange(`youtube_video_${videoIndex}_title`, title);
-    }
   };
 
   const handleSave = async () => {
@@ -195,11 +130,10 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
     streaming: 'Streaming Music Platforms',
     music_social: 'Social Media',
     professional: 'Professional Links',
-    featured_videos: 'Featured Videos',
   };
 
   // Define category order
-  const categoryOrder = ['general', 'streaming', 'music_social', 'professional', 'featured_videos'];
+  const categoryOrder = ['general', 'streaming', 'music_social', 'professional'];
 
   return (
     <div className="space-y-6">
@@ -230,93 +164,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
           </h2>
 
           <div className="space-y-4">
-            {category === 'featured_videos' ? (
-              // Group video fields by index
-              (() => {
-                const videoGroups: Record<number, ConfigItem[]> = {};
-                items.forEach(item => {
-                  if (item.videoIndex) {
-                    if (!videoGroups[item.videoIndex]) {
-                      videoGroups[item.videoIndex] = [];
-                    }
-                    videoGroups[item.videoIndex].push(item);
-                  }
-                });
-
-                return Object.entries(videoGroups).map(([index, groupItems]) => {
-                  const videoIdItem = groupItems.find(i => i.key.includes('_title') === false);
-                  const titleItem = groupItems.find(i => i.key.includes('_title'));
-
-                  if (!videoIdItem || !titleItem) return null;
-
-                  return (
-                    <div key={index} className="bg-background-primary/50 border border-gray-700 rounded-lg p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-accent-blue">Featured Video {index}</h3>
-
-                      {/* YouTube URL Quick Input */}
-                      <div>
-                        <label className="block text-xs font-medium text-text-secondary mb-1">
-                          Quick Add: Paste YouTube URL
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="https://youtube.com/watch?v=... or https://youtu.be/..."
-                            onPaste={(e) => {
-                              e.preventDefault();
-                              const url = e.clipboardData.getData('text');
-                              handleYouTubeUrlPaste(parseInt(index), url);
-                            }}
-                            className="flex-1 px-3 py-2 bg-background-primary border border-gray-600 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-teal placeholder:text-text-secondary/50"
-                          />
-                          {fetchingVideo === parseInt(index) && (
-                            <span className="text-xs text-accent-teal self-center">Fetching title...</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Video ID */}
-                      <div>
-                        <label
-                          htmlFor={videoIdItem.key}
-                          className="block text-xs font-medium text-text-primary mb-1"
-                        >
-                          {videoIdItem.label}
-                        </label>
-                        <input
-                          type="text"
-                          id={videoIdItem.key}
-                          value={videoIdItem.value}
-                          onChange={(e) => handleValueChange(videoIdItem.key, e.target.value)}
-                          placeholder={videoIdItem.placeholder}
-                          className="w-full px-3 py-2 bg-background-primary border border-gray-700 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                        />
-                      </div>
-
-                      {/* Video Title */}
-                      <div>
-                        <label
-                          htmlFor={titleItem.key}
-                          className="block text-xs font-medium text-text-primary mb-1"
-                        >
-                          {titleItem.label}
-                        </label>
-                        <input
-                          type="text"
-                          id={titleItem.key}
-                          value={titleItem.value}
-                          onChange={(e) => handleValueChange(titleItem.key, e.target.value)}
-                          placeholder={titleItem.placeholder}
-                          className="w-full px-3 py-2 bg-background-primary border border-gray-700 rounded-lg text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                        />
-                      </div>
-                    </div>
-                  );
-                });
-              })()
-            ) : (
-              // Regular fields for other categories
-              items.map((item) => (
+            {items.map((item) => (
                 <div key={item.key}>
                   {(item.key === 'profile_image_url' || item.key === 'hero_image_url' || item.key === 'contact_image_url') ? (
                     <ImageUpload
@@ -343,8 +191,7 @@ export default function SiteConfigClient({ initialConfig }: SiteConfigClientProp
                     </>
                   )}
                 </div>
-              ))
-            )}
+              ))}
           </div>
         </div>
       );

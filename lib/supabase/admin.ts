@@ -1,8 +1,23 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createServerClient } from './server';
+import { createServerClient, createRouteClient } from './server';
 import type { Post, SiteConfig } from '../types';
+
+/**
+ * Verify user authentication for admin operations
+ * Throws error if user is not authenticated
+ */
+async function verifyAdminAuth() {
+  const authClient = await createRouteClient();
+  const { data: { user }, error: authError } = await authClient.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error('Unauthorized: User must be authenticated to perform admin operations');
+  }
+
+  return user;
+}
 
 // ADMIN QUERIES (using service role key for full access)
 
@@ -209,6 +224,9 @@ export async function getAllSiteConfig() {
 }
 
 export async function updateSiteConfig(id: string, value: string) {
+  // Verify authentication
+  await verifyAdminAuth();
+
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -230,6 +248,9 @@ export async function updateSiteConfig(id: string, value: string) {
 }
 
 export async function createSiteConfig(key: string, value: string, category: string) {
+  // Verify authentication
+  await verifyAdminAuth();
+
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -251,6 +272,9 @@ export async function createSiteConfig(key: string, value: string, category: str
 }
 
 export async function deleteSiteConfig(id: string) {
+  // Verify authentication
+  await verifyAdminAuth();
+
   const supabase = createServerClient();
 
   const { error } = await supabase
