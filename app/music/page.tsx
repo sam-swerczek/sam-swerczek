@@ -25,9 +25,9 @@ export const metadata: Metadata = {
   },
 };
 
-// Disable caching to always fetch fresh config
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Use ISR with 5-minute revalidation for better performance
+// Config data doesn't change frequently enough to warrant force-dynamic
+export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function MusicPage() {
   // Fetch all required data in parallel
@@ -102,7 +102,7 @@ export default async function MusicPage() {
                 <p className="text-text-secondary mb-6">
                   Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!
                 </p>
-                <Button href={general.booking_email ? `mailto:${general.booking_email}` : '#'} variant="secondary" size="md">
+                <Button href="/contact?intent=music" variant="secondary" size="md">
                   Book a Show
                 </Button>
               </div>

@@ -23,6 +23,7 @@ export interface Post {
   meta_description: string | null;
   short_title: string | null;
   type: string;
+  featured: boolean;
 }
 
 /**

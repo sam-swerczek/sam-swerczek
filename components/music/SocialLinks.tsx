@@ -92,7 +92,7 @@ export default function SocialLinks({
 
   const layoutClasses = layout === "grid"
     ? "grid grid-cols-2 sm:grid-cols-4 gap-4"
-    : "grid grid-cols-2 lg:grid-cols-4 gap-4";
+    : "flex flex-wrap justify-center gap-3 md:gap-4";
 
   return (
     <div className={layoutClasses}>
@@ -103,19 +103,19 @@ export default function SocialLinks({
           target="_blank"
           rel="noopener noreferrer"
           className={`
-            group flex items-center justify-center gap-3 px-6 py-4
+            group flex items-center justify-center gap-3 px-4 md:px-6 py-4
             bg-background-secondary border border-text-secondary/30
             rounded-lg transition-all duration-300
             hover:border-transparent hover:scale-105 hover:shadow-lg
             ${link.color}
-            w-full
+            ${layout === "horizontal" ? "flex-shrink-0" : "w-full"}
           `}
           aria-label={`Visit ${link.name} profile`}
         >
           <span className="transition-transform duration-300 group-hover:scale-110">
             {link.icon}
           </span>
-          <span className="font-medium text-sm sm:text-base">{link.name}</span>
+          <span className="font-medium text-sm md:text-base hidden md:inline">{link.name}</span>
         </a>
       ))}
     </div>

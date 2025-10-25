@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ContactHero from '@/components/contact/ContactHero';
 import IntentCards from '@/components/contact/IntentCards';
 import type { IntentType } from '@/components/contact/IntentCards';
@@ -28,14 +29,28 @@ export default function ContactPageClient({
   tiktokUrl,
   patreonUrl,
 }: ContactPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedIntent, setSelectedIntent] = useState<IntentType | null>(null);
 
+  // Read intent from URL on mount and when searchParams change
+  useEffect(() => {
+    const intentParam = searchParams.get('intent');
+    if (intentParam === 'music' || intentParam === 'code') {
+      setSelectedIntent(intentParam as IntentType);
+    } else {
+      setSelectedIntent(null);
+    }
+  }, [searchParams]);
+
   const handleSelectIntent = (intent: IntentType) => {
-    setSelectedIntent(intent);
+    // Update URL with intent parameter without adding to history
+    router.replace(`/contact?intent=${intent}`, { scroll: false });
   };
 
   const handleBack = () => {
-    setSelectedIntent(null);
+    // Navigate back to contact page without intent parameter
+    router.replace('/contact', { scroll: false });
   };
 
   return (

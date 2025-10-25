@@ -58,8 +58,9 @@ export default function FeaturedWorksShowcase({ featuredSong, githubUrl }: Featu
 
   return (
     <section ref={sectionRef} className="relative py-12 md:py-16 bg-background-primary overflow-hidden">
-      {/* Background subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background-navy/50 to-background-primary" />
+      {/* Background gradient matching hero section bottom - navy left to orange right */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
 
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-6xl mx-auto">

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import ContactPageClient from './ContactPageClient';
 import { getConfigObject, type MusicSocialConfig, type EngineeringSocialConfig, type GeneralConfig } from '@/lib/supabase/config-helpers';
 
@@ -16,15 +17,18 @@ export default async function ContactPage() {
   ]);
 
   return (
-    <ContactPageClient
-      profileImageUrl={general.profile_image_url}
-      contactImageUrl={general.contact_image_url}
-      bookingEmail={general.booking_email}
-      instagramUrl={musicSocial.instagram_handle}
-      facebookUrl={musicSocial.facebook_url}
-      linkedinUrl={musicSocial.linkedin_music || engineeringSocial.linkedin_url}
-      tiktokUrl={musicSocial.tiktok_url}
-      patreonUrl={musicSocial.patreon_url}
-    />
+    // Suspense boundary required for ContactPageClient's useSearchParams()
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ContactPageClient
+        profileImageUrl={general.profile_image_url}
+        contactImageUrl={general.contact_image_url}
+        bookingEmail={general.booking_email}
+        instagramUrl={musicSocial.instagram_handle}
+        facebookUrl={musicSocial.facebook_url}
+        linkedinUrl={musicSocial.linkedin_music || engineeringSocial.linkedin_url}
+        tiktokUrl={musicSocial.tiktok_url}
+        patreonUrl={musicSocial.patreon_url}
+      />
+    </Suspense>
   );
 }

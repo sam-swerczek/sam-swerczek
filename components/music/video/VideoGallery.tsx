@@ -1,13 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useYouTubePlayer } from "@/components/music/hooks/useYouTubePlayer";
 import type { VideoGalleryProps, Video } from "./types";
 
 export default function VideoGallery({ videos }: VideoGalleryProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(videos[0] || null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const { pause } = useYouTubePlayer();
+
+  // Intersection Observer for scroll-triggered animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Only animate once
+        }
+      },
+      { threshold: 0.2 } // Trigger when 20% visible
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   if (videos.length === 0) {
     return (
@@ -35,105 +56,115 @@ export default function VideoGallery({ videos }: VideoGalleryProps) {
 
   return (
     <div className="w-full">
-      {/* Primary Video Player */}
-      <section aria-label="Featured video player" className="w-full lg:max-w-4xl md:max-w-3xl mx-auto mb-8 md:mb-12 animate-theater-reveal">
-        {/* Outer glow container - creates theatrical spotlight effect */}
-        <div className="relative px-4 py-6 md:px-8 md:py-10">
-          {/* Multi-layer theatrical glow */}
-          <div className="absolute inset-0 -z-10">
-            {/* Inner blue glow */}
-            <div className="absolute inset-0 bg-gradient-radial from-accent-blue/20 via-accent-blue/5 to-transparent blur-3xl" />
-            {/* Teal accent glow */}
-            <div className="absolute inset-0 bg-gradient-radial from-accent-teal/15 via-transparent to-transparent blur-2xl scale-110" />
+      {/* Unified Video Section */}
+      <section
+        ref={sectionRef}
+        aria-label="Video gallery"
+        className={`w-full max-w-6xl mx-auto opacity-0 ${isVisible ? 'animate-discover' : ''}`}
+      >
+        <div className="relative">
+          {/* Video Gallery badge - top right */}
+          <div className="absolute -top-3 right-6 z-20">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-gold to-accent-gold/80 rounded-full shadow-lg">
+              <svg className="w-4 h-4 text-background-primary" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm font-bold text-background-primary uppercase tracking-wide">
+                Video Gallery
+              </span>
+            </div>
           </div>
 
-          {/* Premium frame wrapper */}
-          <div className="relative">
-            {/* Top accent line - like theater curtain rod */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-accent-blue/50 to-transparent" />
+          {/* Section container with thick gold border */}
+          <div className="relative rounded-2xl border-[3px] border-accent-gold overflow-hidden shadow-2xl shadow-accent-gold/20">
+            {/* Background with gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-background-secondary to-background-primary" />
 
-            {/* Main player with enhanced frame */}
-            <div className="relative group">
-              {/* Animated border gradient */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-accent-blue/30 via-accent-teal/20 to-accent-blue/30 p-[2px] animate-subtle-pulse">
-                <div className="absolute inset-0 rounded-xl bg-background-primary" />
-              </div>
+            {/* Subtle pattern overlay */}
+            <div
+              className="absolute inset-0 opacity-5"
+              style={{
+                backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(74, 158, 255, 0.3) 1px, transparent 0)',
+                backgroundSize: '32px 32px',
+              }}
+            />
 
-              {/* Video player content */}
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-background-secondary shadow-[0_0_60px_rgba(74,158,255,0.15),0_0_120px_rgba(74,158,255,0.08)] group-hover:shadow-[0_0_80px_rgba(74,158,255,0.25),0_0_140px_rgba(74,158,255,0.12)] transition-all duration-500">
-                {!isPlaying ? (
-                  // Thumbnail with play button
-                  <button
-                    onClick={handlePlayClick}
-                    className="relative w-full h-full group cursor-pointer"
-                    aria-label={`Play ${selectedVideo?.title}`}
-                  >
-                    <img
-                      src={selectedVideo?.thumbnailUrl || `https://img.youtube.com/vi/${selectedVideo?.id}/maxresdefault.jpg`}
-                      alt={selectedVideo?.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-200" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {/* Multi-ring play button with pulse effect */}
-                      <div className="relative">
-                        {/* Outer pulse ring */}
-                        <div className="absolute inset-0 bg-accent-blue/30 rounded-full animate-ping-slow scale-150" />
+            {/* Content */}
+            <div className="relative p-6 md:p-10">
+              {/* Primary Video Player */}
+              <div className="mb-6 md:mb-8">
+          <div className="group cursor-pointer" onClick={!isPlaying ? handlePlayClick : undefined}>
+            {/* Video player with hover effect */}
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-background-secondary border-2 border-accent-blue/40 group-hover:border-accent-blue/60 shadow-lg group-hover:shadow-xl transition-all duration-300">
+              {!isPlaying ? (
+                // Thumbnail with play button
+                <div className="relative w-full h-full">
+                  <img
+                    src={selectedVideo?.thumbnailUrl || `https://img.youtube.com/vi/${selectedVideo?.id}/maxresdefault.jpg`}
+                    alt={selectedVideo?.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
 
-                        {/* Middle glow ring */}
-                        <div className="absolute -inset-4 bg-accent-blue/20 rounded-full blur-xl" />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/70 transition-all duration-300" />
 
-                        {/* Main button */}
-                        <div className="relative bg-gradient-to-br from-accent-blue to-accent-teal rounded-full p-8 shadow-[0_0_40px_rgba(74,158,255,0.5)] group-hover:shadow-[0_0_60px_rgba(74,158,255,0.7)] group-hover:scale-110 transition-all duration-300">
-                          {/* Inner white glow */}
-                          <div className="absolute inset-2 bg-white/10 rounded-full blur-sm" />
+                  {/* Play button with inviting pulse */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      {/* Subtle pulse ring on hover */}
+                      <div className="absolute inset-0 bg-accent-blue/40 rounded-full blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                          {/* Play icon */}
-                          <svg className="relative w-12 h-12 text-white ml-1.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
+                      {/* Play button */}
+                      <div className="relative bg-white hover:bg-accent-blue rounded-full p-5 md:p-7 shadow-2xl group-hover:shadow-accent-blue/50 group-hover:scale-110 transition-all duration-300">
+                        <svg className="w-8 h-8 md:w-12 md:h-12 text-background-primary group-hover:text-white ml-1 transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Video info at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
                     {selectedVideo?.title && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                        <h3 className="text-white text-xl font-semibold">{selectedVideo.title}</h3>
-                      </div>
+                      <h2 className="text-white text-xl md:text-2xl font-bold mb-1 md:mb-2 drop-shadow-lg">
+                        {selectedVideo.title}
+                      </h2>
                     )}
-                  </button>
-                ) : (
-                  // YouTube iframe
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${selectedVideo?.id}?autoplay=1&rel=0`}
-                    title={selectedVideo?.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full"
-                  />
-                )}
-              </div>
+                    <div className="flex items-center gap-2 text-white/90">
+                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      <span className="text-sm md:text-base font-medium drop-shadow">Watch now</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // YouTube iframe
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${selectedVideo?.id}?autoplay=1&rel=0`}
+                  title={selectedVideo?.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              )}
             </div>
 
-            {/* Bottom accent line - creates premium frame */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-accent-teal/40 to-transparent" />
+            {/* Optional description below */}
+            {selectedVideo?.description && !isPlaying && (
+              <div className="mt-4 md:mt-6 px-2">
+                <p className="text-sm md:text-base text-text-secondary line-clamp-2">
+                  {selectedVideo.description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      </section>
 
-      {/* Thumbnail Gallery */}
-      <nav aria-label="Video playlist" className="mt-8 md:mt-10 lg:mt-12 max-w-4xl mx-auto relative">
-        {/* Subtle divider line */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-text-secondary/30 to-transparent" />
-
-        {/* Optional subtle label */}
-        <div className="text-center mb-4 md:mb-6">
-          <span className="text-text-secondary text-xs md:text-sm uppercase tracking-wider font-medium">
-            More Videos
-          </span>
-        </div>
-
-        {/* Mobile: Horizontal Cards */}
-        <div className="md:hidden flex flex-col gap-2">
+        {/* Thumbnail Gallery */}
+        <nav aria-label="Video playlist" className="relative">
+          {/* Mobile: Horizontal Cards */}
+          <div className="md:hidden flex flex-col gap-2">
           {videos.map((video) => {
             const isActive = selectedVideo?.id === video.id;
             return (
@@ -240,7 +271,11 @@ export default function VideoGallery({ videos }: VideoGalleryProps) {
             );
           })}
         </div>
-      </nav>
+        </nav>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

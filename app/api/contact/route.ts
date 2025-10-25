@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getSiteConfig } from '@/lib/supabase/queries';
 import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/utils/rate-limiter';
+import { sanitizeText } from '@/lib/utils/sanitize';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -22,18 +23,6 @@ const MAX_LENGTHS = {
   projectType: 100,
   projectBudget: 100,
 };
-
-/**
- * Escapes HTML special characters to prevent XSS attacks
- */
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 /**
  * Validates email format
@@ -117,28 +106,37 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize all user inputs before including in email
+    const sanitizedName = sanitizeText(name);
+    const sanitizedEmail = sanitizeText(email);
+    const sanitizedSubject = sanitizeText(subject);
+    const sanitizedMessage = sanitizeText(message);
+    const sanitizedCategory = sanitizeText(categoryLabels[category] || category);
+    const sanitizedProjectType = projectType ? sanitizeText(projectType) : null;
+    const sanitizedProjectBudget = projectBudget ? sanitizeText(projectBudget) : null;
+
     // Send email via Resend
     await resend.emails.send({
       from: 'Contact Form <onboarding@resend.dev>', // Note: You can verify your own domain in Resend for custom sender
       to: contactEmail,
-      subject: `[${categoryLabels[category] || 'Contact'}] ${escapeHtml(subject)}`,
+      subject: `[${categoryLabels[category] || 'Contact'}] ${sanitizedSubject}`,
       replyTo: email,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">New Contact Form Submission</h2>
 
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>From:</strong> ${escapeHtml(name)}</p>
-            <p style="margin: 5px 0;"><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p style="margin: 5px 0;"><strong>Category:</strong> ${escapeHtml(categoryLabels[category] || category)}</p>
-            <p style="margin: 5px 0;"><strong>Subject:</strong> ${escapeHtml(subject)}</p>
-            ${projectType ? `<p style="margin: 5px 0;"><strong>Project Type:</strong> ${escapeHtml(projectType)}</p>` : ''}
-            ${projectBudget ? `<p style="margin: 5px 0;"><strong>Project Budget:</strong> ${escapeHtml(projectBudget)}</p>` : ''}
+            <p style="margin: 5px 0;"><strong>From:</strong> ${sanitizedName}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${sanitizedEmail}</p>
+            <p style="margin: 5px 0;"><strong>Category:</strong> ${sanitizedCategory}</p>
+            <p style="margin: 5px 0;"><strong>Subject:</strong> ${sanitizedSubject}</p>
+            ${sanitizedProjectType ? `<p style="margin: 5px 0;"><strong>Project Type:</strong> ${sanitizedProjectType}</p>` : ''}
+            ${sanitizedProjectBudget ? `<p style="margin: 5px 0;"><strong>Project Budget:</strong> ${sanitizedProjectBudget}</p>` : ''}
           </div>
 
           <div style="margin: 20px 0;">
             <h3 style="color: #333;">Message:</h3>
-            <p style="white-space: pre-wrap; line-height: 1.6;">${escapeHtml(message)}</p>
+            <p style="white-space: pre-wrap; line-height: 1.6;">${sanitizedMessage}</p>
           </div>
 
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">

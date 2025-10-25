@@ -10,8 +10,12 @@ export default async function Footer() {
   const linkedinUrl = siteConfig.find(c => c.key === 'linkedin_url')?.value;
 
   return (
-    <footer className="border-t border-background-secondary mt-auto">
-      <div className="container mx-auto px-4 py-8">
+    <footer className="relative border-t border-background-secondary mt-auto bg-background-primary overflow-hidden">
+      {/* Background gradient matching hero section bottom - navy left to orange right */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-text-secondary text-sm">
             © {currentYear} Sam Swerczek. All rights reserved.

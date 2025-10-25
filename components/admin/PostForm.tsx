@@ -31,6 +31,8 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
   const [featuredImageUrl, setFeaturedImageUrl] = useState(post?.featured_image_url || '');
   const [metaDescription, setMetaDescription] = useState(post?.meta_description || initialData?.metaDescription || '');
   const [published, setPublished] = useState(post?.published || false);
+  const [type, setType] = useState(post?.type || 'blog post');
+  const [featured, setFeatured] = useState(post?.featured || false);
   const [autoSlug, setAutoSlug] = useState(!post);
   const [autoShortTitle, setAutoShortTitle] = useState(!post?.short_title);
 
@@ -115,7 +117,8 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
       published_at: shouldPublish ? new Date().toISOString() : null,
       author_id: post?.author_id || '', // Will be set by parent component
       short_title: shortTitle.trim() || null,
-      type: post?.type || 'blog post', // Default type
+      type: type.trim(),
+      featured: featured,
     };
 
     await onSubmit(postData);
@@ -251,6 +254,25 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
         />
       </FormField>
 
+      {/* Type */}
+      <FormField
+        id="type"
+        label="Content Type"
+        helperText='e.g., "blog post", "music release", "tutorial" (affects timeline positioning)'
+      >
+        <input
+          type="text"
+          id="type"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className={inputClassName()}
+          placeholder="blog post"
+        />
+        <p className="text-xs text-text-secondary mt-1">
+          Music-related types (music, song, performance, release) appear on the left side of the timeline
+        </p>
+      </FormField>
+
       {/* Featured Image URL */}
       <FormField
         id="featuredImage"
@@ -302,6 +324,23 @@ export default function PostForm({ post, onSubmit, isLoading = false, initialDat
           Published
           <span className="ml-2 text-text-secondary font-normal">
             (Uncheck to save as draft)
+          </span>
+        </label>
+      </div>
+
+      {/* Featured Checkbox */}
+      <div className="flex items-center gap-3 p-4 bg-background-secondary rounded-lg border border-gray-700">
+        <input
+          type="checkbox"
+          id="featured"
+          checked={featured}
+          onChange={(e) => setFeatured(e.target.checked)}
+          className="w-5 h-5 rounded border-gray-700 bg-background-primary text-accent-gold focus:ring-2 focus:ring-accent-gold"
+        />
+        <label htmlFor="featured" className="text-sm font-medium text-text-primary">
+          Featured
+          <span className="ml-2 text-text-secondary font-normal">
+            (Check to add a star to this post in the activity timeline)
           </span>
         </label>
       </div>

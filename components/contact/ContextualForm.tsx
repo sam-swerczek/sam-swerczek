@@ -21,7 +21,7 @@ interface ContextualFormProps {
 const INTENT_LABELS = {
   music: 'Music & Performance',
   code: 'Code & Engineering',
-  connect: 'Just Connect',
+  connect: 'Connect',
 };
 
 export default function ContextualForm({

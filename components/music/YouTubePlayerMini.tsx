@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import Image from "next/image";
 import { useYouTubePlayer } from "@/components/music/hooks/useYouTubePlayer";
 import { usePlaylistExpansion } from "@/components/music/hooks/usePlaylistExpansion";
@@ -10,8 +9,6 @@ import PlaylistExpansion from "./PlaylistExpansion";
 import ChevronDownIcon from "@/components/ui/icons/ChevronDownIcon";
 
 export default function YouTubePlayerMini() {
-  const pathname = usePathname();
-  const [shouldFlash, setShouldFlash] = useState(false);
 
   const {
     isPlaying,
@@ -29,15 +26,6 @@ export default function YouTubePlayerMini() {
   } = useYouTubePlayer();
 
   const { isExpanded, toggle, close, expansionRef } = usePlaylistExpansion();
-
-  // Flash animation when navigating to music page
-  useEffect(() => {
-    if (pathname === '/music') {
-      setShouldFlash(true);
-      const timer = setTimeout(() => setShouldFlash(false), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [pathname]);
 
   return (
     <>
@@ -58,7 +46,7 @@ export default function YouTubePlayerMini() {
       )}
 
       <div
-        className={`flex items-center gap-3 w-full relative ${shouldFlash ? 'animate-subtle-flash' : ''}`}
+        className="flex items-center gap-3 w-full relative"
         ref={expansionRef}
       >
         {/* Album Cover & Song Title - Aligned with header */}
@@ -121,8 +109,8 @@ export default function YouTubePlayerMini() {
         </button>
       </div>
 
-        {/* Playlist Expansion Panel */}
-        {isExpanded && <PlaylistExpansion onClose={close} />}
+      {/* Playlist Expansion Panel */}
+      {isExpanded && <PlaylistExpansion onClose={close} />}
       </div>
     </>
   );
