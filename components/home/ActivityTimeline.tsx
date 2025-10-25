@@ -40,6 +40,24 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   // Check for reduced motion preference
   const shouldReduceMotion = useReducedMotion();
 
+  // Animation variants for header
+  const headerVariants = {
+    hidden: {
+      opacity: 0,
+      y: shouldReduceMotion ? 0 : -50,
+      scale: shouldReduceMotion ? 1 : 0.8,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 1.4,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
   // Animation variants for music cards (fly in from left)
   const musicCardVariants = {
     hidden: {
@@ -52,7 +70,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
       x: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: 1.2,
         ease: [0.34, 1.56, 0.64, 1] as const, // back-out easing
       },
     },
@@ -78,7 +96,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
       x: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: 1.2,
         ease: [0.34, 1.56, 0.64, 1] as const, // back-out easing
       },
     },
@@ -209,14 +227,20 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-[900px] mx-auto">
           {/* Section heading */}
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={headerVariants}
+          >
             <h2 className="text-4xl font-bold text-text-primary font-montserrat mb-4">
               Recent Activity
             </h2>
             <p className="text-lg text-text-secondary">
               Latest music releases and engineering insights
             </p>
-          </div>
+          </motion.div>
 
           {/* Timeline */}
           <div className="relative">
@@ -255,24 +279,6 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                       delay: Math.min(index, 2) * 0.12, // Stagger by 120ms, max 3 cards
                     }}
                   >
-                    {/* Icon indicator - anchored to card corner */}
-                    <div
-                      className={`
-                        absolute -top-2 w-8 h-8 rounded-full bg-background-secondary border-2
-                        ${isMusicCategory ? 'border-accent-blue -left-2' : 'border-accent-teal -right-2'}
-                        flex items-center justify-center transition-all duration-300
-                        group-hover:scale-110 group-hover:shadow-lg
-                        ${isMusicCategory ? 'group-hover:shadow-accent-blue/30' : 'group-hover:shadow-accent-teal/30'}
-                        z-10
-                      `}
-                    >
-                      {isMusicCategory ? (
-                        <MusicIcon className="w-4 h-4 text-accent-blue" />
-                      ) : (
-                        <CodeIcon className="w-4 h-4 text-accent-teal" />
-                      )}
-                    </div>
-
                     {/* Content card - clickable and compact design */}
                     <Link
                       href={`/blog/${item.slug}`}
@@ -282,13 +288,29 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                           : 'border-accent-teal/20 hover:border-accent-teal/40 hover:shadow-accent-teal/10'
                       }`}
                     >
+                      {/* Activity Type Tag */}
+                      <div className="mb-3">
+                        <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold ${
+                          isMusicCategory
+                            ? 'bg-accent-blue/10 text-accent-blue border border-accent-blue/30'
+                            : 'bg-accent-teal/10 text-accent-teal border border-accent-teal/30'
+                        }`}>
+                          {isMusicCategory ? (
+                            <MusicIcon className="w-4 h-4" />
+                          ) : (
+                            <CodeIcon className="w-4 h-4" />
+                          )}
+                          {item.activityType}
+                        </span>
+                      </div>
+
                       {/* Title */}
                       <div className="mb-3">
-                        <h3 className="text-lg font-bold text-text-primary line-clamp-2 font-montserrat">
+                        <h3 className="text-lg font-bold text-text-primary line-clamp-1 font-montserrat">
                           {item.shortTitle}
                         </h3>
                         {item.title !== item.shortTitle && (
-                          <p className="text-sm text-text-secondary mt-1 line-clamp-1">
+                          <p className="text-sm text-text-secondary mt-1 line-clamp-2">
                             {item.title}
                           </p>
                         )}
@@ -300,9 +322,9 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
 
                         // Only render YouTube embed if video ID passes strict validation
                         if (youtubeVideoId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeVideoId)) {
-                          // Render YouTube embed
+                          // Render YouTube embed (smaller with 40% aspect ratio)
                           return (
-                            <div className="mb-3 relative w-full rounded-lg overflow-hidden bg-background-primary" style={{ paddingBottom: '56.25%' }}>
+                            <div className="mb-3 relative w-full rounded-lg overflow-hidden bg-background-primary max-h-[180px]" style={{ paddingBottom: '40%' }}>
                               <iframe
                                 className="absolute top-0 left-0 w-full h-full"
                                 src={`https://www.youtube.com/embed/${youtubeVideoId}`}
@@ -313,13 +335,13 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                             </div>
                           );
                         } else if (!youtubeVideoId && item.featuredImageUrl) {
-                          // Render image only if it's not a video ID
+                          // Render image only if it's not a video ID (smaller with max height)
                           return (
-                            <div className="mb-3 relative w-full rounded-lg overflow-hidden">
+                            <div className="mb-3 relative w-full rounded-lg overflow-hidden max-h-[180px]">
                               <img
                                 src={item.featuredImageUrl}
                                 alt={item.title}
-                                className="w-full h-auto object-cover"
+                                className="w-full h-full object-cover"
                               />
                             </div>
                           );

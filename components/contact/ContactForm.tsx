@@ -54,8 +54,38 @@ export default function ContactForm({ intent = 'connect' }: ContactFormProps) {
     successDuration: 5000,
   });
 
+  const validateEmail = (email: string): string | null => {
+    // Check if email is empty
+    if (!email) {
+      return 'Email is required';
+    }
+
+    // Basic format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+
+    // Check for valid TLD (at least 2 characters)
+    const tldRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!tldRegex.test(email)) {
+      return 'Please enter a valid email address with a proper domain (e.g., .com, .org)';
+    }
+
+    return null;
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Client-side email validation
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      await handleSubmit(async () => {
+        throw new Error(emailError);
+      });
+      return;
+    }
 
     await handleSubmit(async () => {
       const response = await fetch('/api/contact', {
@@ -65,7 +95,8 @@ export default function ContactForm({ intent = 'connect' }: ContactFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send message');
       }
 
       setFormData({ name: '', email: '', subject: '', category: config.categoryValue, message: '', projectType: '', projectBudget: '' });
@@ -99,6 +130,8 @@ export default function ContactForm({ intent = 'connect' }: ContactFormProps) {
             id="email"
             name="email"
             required
+            pattern="[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}"
+            title="Please enter a valid email address with a proper domain (e.g., name@example.com)"
             value={formData.email}
             onChange={handleChange}
             className={inputClassName()}

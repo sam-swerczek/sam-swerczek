@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/home/HeroSection";
+import AboutMe from "@/components/home/AboutMe";
 import ActivityTimeline from "@/components/home/ActivityTimeline";
 import ConnectSection from "@/components/home/ConnectSection";
 import { getHomepageData } from "@/lib/data/homepage";
@@ -17,6 +18,9 @@ export default async function Home() {
     <>
       {/* Hero Section - Identity and immediate navigation */}
       <HeroSection heroImageUrl={data.heroImageUrl} />
+
+      {/* About Me - Quick introduction */}
+      <AboutMe />
 
       {/* Activity Timeline - Recent releases and blog posts */}
       <ActivityTimeline blogPosts={data.blogPosts} commentCounts={data.commentCounts} />
