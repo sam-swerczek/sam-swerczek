@@ -28,7 +28,7 @@ export default function AboutMe() {
       scale: 1,
       transition: {
         duration: 1.4,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
   };
@@ -45,7 +45,7 @@ export default function AboutMe() {
       scale: 1,
       transition: {
         duration: 1.6,
-        ease: [0.25, 0.46, 0.45, 0.94],
+        ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
   };
@@ -74,11 +74,11 @@ export default function AboutMe() {
           {/* Content */}
           <motion.div variants={contentVariants}>
             <p className="text-lg md:text-xl text-text-secondary leading-relaxed font-light text-center">
-              I'm a{' '}
+              I&apos;m a{' '}
               <span className="text-accent-blue font-medium">singer-songwriter</span>
               {' '}creating music that connects and a{' '}
               <span className="text-accent-teal font-medium">software engineer</span>
-              {' '}building innovative solutions. Whether I'm composing or coding, I'm driven by the pursuit of crafting experiences that resonate.
+              {' '}building innovative solutions. Whether I&apos;m composing or coding, I&apos;m driven by the pursuit of crafting experiences that resonate.
             </p>
           </motion.div>
         </motion.div>
