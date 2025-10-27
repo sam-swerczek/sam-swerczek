@@ -117,7 +117,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
             <div className="text-center flex-1">
               {/* Hero Section with fade-in animation */}
               <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-text-primary font-montserrat tracking-tight whitespace-nowrap">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-text-primary font-montserrat tracking-tight md:whitespace-nowrap">
                   Sam Swerczek
                 </h1>
               </div>

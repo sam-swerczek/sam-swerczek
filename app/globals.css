@@ -3,8 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  /* Prevent horizontal scroll on mobile
+   * Fixes issue where viewport can scroll right to show blank gray background
+   * Root cause: Large text elements (hero heading) and wide containers can overflow on small viewports
+   * This is a defensive measure while individual components use responsive breakpoints
+   */
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   body {
     @apply bg-background-primary text-text-primary;
+    overflow-x: hidden;
+    width: 100%;
+    min-width: 0; /* Ensure child containers respect viewport width */
   }
 
   /* Enhanced focus styles for accessibility */

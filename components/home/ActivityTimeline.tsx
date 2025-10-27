@@ -62,24 +62,16 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   const musicCardVariants = {
     hidden: {
       opacity: 0,
-      x: shouldReduceMotion ? 0 : -80,
-      scale: shouldReduceMotion ? 1 : 0.95,
+      x: shouldReduceMotion ? 0 : -40,
+      scale: shouldReduceMotion ? 1 : 0.98,
     },
     visible: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: 1.2,
-        ease: [0.34, 1.56, 0.64, 1] as const, // back-out easing
-      },
-    },
-    exit: {
-      opacity: 0,
-      x: shouldReduceMotion ? 0 : -80,
-      transition: {
-        duration: 0.4,
-        ease: 'easeInOut' as const,
+        duration: 0.6,
+        ease: [0.25, 0.46, 0.45, 0.94] as const, // smooth easeOutCubic
       },
     },
   };
@@ -88,24 +80,16 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   const engineeringCardVariants = {
     hidden: {
       opacity: 0,
-      x: shouldReduceMotion ? 0 : 80,
-      scale: shouldReduceMotion ? 1 : 0.95,
+      x: shouldReduceMotion ? 0 : 40,
+      scale: shouldReduceMotion ? 1 : 0.98,
     },
     visible: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: 1.2,
-        ease: [0.34, 1.56, 0.64, 1] as const, // back-out easing
-      },
-    },
-    exit: {
-      opacity: 0,
-      x: shouldReduceMotion ? 0 : 80,
-      transition: {
-        duration: 0.4,
-        ease: 'easeInOut' as const,
+        duration: 0.6,
+        ease: [0.25, 0.46, 0.45, 0.94] as const, // smooth easeOutCubic
       },
     },
   };
@@ -267,26 +251,25 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                     `}
                     initial="hidden"
                     whileInView="visible"
-                    exit="exit"
                     viewport={{
-                      once: false,
-                      amount: 0.25,
-                      margin: '-100px'
+                      once: true,
+                      amount: 0.2,
                     }}
                     variants={isMusicCategory ? musicCardVariants : engineeringCardVariants}
                     custom={index}
                     transition={{
-                      delay: Math.min(index, 2) * 0.12, // Stagger by 120ms, max 3 cards
+                      delay: Math.min(index, 3) * 0.1, // Stagger by 100ms
                     }}
                   >
                     {/* Content card - clickable and compact design */}
                     <Link
                       href={`/blog/${item.slug}`}
-                      className={`block relative px-6 py-4 rounded-lg bg-background-secondary/30 backdrop-blur-sm border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer ${
+                      className={`block relative px-6 py-4 rounded-lg bg-background-secondary/30 backdrop-blur-sm border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer will-change-transform ${
                         isMusicCategory
                           ? 'border-accent-blue/20 hover:border-accent-blue/40 hover:shadow-accent-blue/10'
                           : 'border-accent-teal/20 hover:border-accent-teal/40 hover:shadow-accent-teal/10'
                       }`}
+                      style={{ transform: 'translateZ(0)' }}
                     >
                       {/* Activity Type Tag */}
                       <div className="mb-3">
@@ -331,6 +314,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                                 title={item.title}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
+                                loading="lazy"
                               />
                             </div>
                           );
