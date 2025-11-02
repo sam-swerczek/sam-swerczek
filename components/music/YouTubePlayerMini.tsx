@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useYouTubePlayer } from "@/components/music/hooks/useYouTubePlayer";
 import { usePlaylistExpansion } from "@/components/music/hooks/usePlaylistExpansion";
@@ -26,6 +26,22 @@ export default function YouTubePlayerMini() {
   } = useYouTubePlayer();
 
   const { isExpanded, toggle, close, expansionRef } = usePlaylistExpansion();
+
+  // Track when music just started to trigger one-time flash
+  const [showHighlight, setShowHighlight] = useState(false);
+  const previousPlayingRef = useRef(isPlaying);
+
+  useEffect(() => {
+    // Detect when music starts playing (transition from not playing to playing)
+    if (!previousPlayingRef.current && isPlaying) {
+      setShowHighlight(true);
+      // Remove highlight after animation completes (2 seconds)
+      setTimeout(() => {
+        setShowHighlight(false);
+      }, 2000);
+    }
+    previousPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   return (
     <>
@@ -90,6 +106,7 @@ export default function YouTubePlayerMini() {
           onNext={next}
           onPrevious={previous}
           variant="mini"
+          showHighlight={showHighlight}
         />
 
         <VolumeControl
@@ -101,11 +118,15 @@ export default function YouTubePlayerMini() {
         {/* Chevron Icon - Toggle playlist expansion */}
         <button
           onClick={toggle}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
+          className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
           aria-label={isExpanded ? "Close playlist" : "Open playlist"}
           aria-expanded={isExpanded}
         >
-          <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+          {/* Subtle pulse ring highlight - only show when music just started */}
+          {showHighlight && (
+            <span className="absolute inset-0 rounded-full bg-accent-blue/20 animate-ping-once opacity-75" aria-hidden="true" />
+          )}
+          <ChevronDownIcon className={`relative z-10 w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
         </button>
       </div>
 

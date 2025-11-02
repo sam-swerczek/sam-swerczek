@@ -16,6 +16,7 @@ interface PlaybackControlsProps {
   showTimeDisplay?: boolean;
   currentTime?: number;
   duration?: number;
+  showHighlight?: boolean; // Show one-time flash when music starts
 }
 
 export default function PlaybackControls({
@@ -31,6 +32,7 @@ export default function PlaybackControls({
   showTimeDisplay = false,
   currentTime = 0,
   duration = 0,
+  showHighlight = false,
 }: PlaybackControlsProps) {
   const togglePlay = () => {
     if (isPlaying) {
@@ -65,14 +67,20 @@ export default function PlaybackControls({
         {/* Play/Pause Button */}
         <button
           onClick={togglePlay}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
+          className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
-          {isPlaying ? (
-            <PauseIcon className="w-4 h-4" />
-          ) : (
-            <PlayIcon className="w-4 h-4" />
+          {/* Subtle pulse ring highlight - only show when music just started */}
+          {showHighlight && (
+            <span className="absolute inset-0 rounded-full bg-accent-blue/20 animate-ping-once opacity-75" aria-hidden="true" />
           )}
+          <span className="relative z-10">
+            {isPlaying ? (
+              <PauseIcon className="w-4 h-4" />
+            ) : (
+              <PlayIcon className="w-4 h-4" />
+            )}
+          </span>
         </button>
 
         {/* Next Button */}

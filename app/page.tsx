@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/home/HeroSection";
 import AboutMe from "@/components/home/AboutMe";
+import MusicSection from "@/components/home/MusicSection";
 import ActivityTimeline from "@/components/home/ActivityTimeline";
 import ConnectSection from "@/components/home/ConnectSection";
 import { getHomepageData } from "@/lib/data/homepage";
@@ -19,14 +20,17 @@ export default async function Home() {
       {/* Hero Section - Identity and immediate navigation */}
       <HeroSection heroImageUrl={data.heroImageUrl} />
 
-      {/* About Me - Quick introduction */}
+      {/* About Me - Quick introduction with skills */}
       <AboutMe />
+
+      {/* Music - Songwriting philosophy and play button */}
+      <MusicSection />
 
       {/* Activity Timeline - Recent releases and blog posts */}
       <ActivityTimeline blogPosts={data.blogPosts} commentCounts={data.commentCounts} />
 
-      {/* Connect Section - Social media links */}
-      <ConnectSection social={data.social} />
+      {/* Connect Section - Contact call to action */}
+      <ConnectSection contactImageUrl={data.contactImageUrl} />
     </>
   );
 }

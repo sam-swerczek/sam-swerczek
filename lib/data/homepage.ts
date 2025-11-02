@@ -31,10 +31,12 @@ export async function getHomepageData(): Promise<HomepageData> {
 
   // Extract specific config values
   const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
+  const contactImageUrl = siteConfig.find(c => c.key === 'contact_image_url')?.value;
   const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value || 'https://github.com';
 
   return {
     heroImageUrl,
+    contactImageUrl,
     githubUrl,
     featuredSong,
     blogPosts,

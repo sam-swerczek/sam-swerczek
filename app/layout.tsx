@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import PlayerBar from "@/components/layout/PlayerBar";
+import Footer from "@/components/layout/Footer";
 import YouTubePlayerContainer from "@/components/music/YouTubePlayerContainer";
 import FeaturedSongInitializer from "@/components/music/FeaturedSongInitializer";
 import { YouTubePlayerProvider } from "@/lib/contexts/YouTubePlayerContext";
 import { getSongs, getFeaturedSong } from "@/lib/supabase/queries";
+import { getConfigObject, type MusicSocialConfig, type EngineeringSocialConfig, type StreamingConfig } from "@/lib/supabase/config-helpers";
+import LayoutClient from "@/components/layout/LayoutClient";
 
 const inter = Inter({ subsets: ["latin"] });
 const montserrat = Montserrat({
@@ -27,10 +29,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch all songs and featured song to initialize the player with full playlist
-  const [songs, featuredSong] = await Promise.all([
+  // Fetch all songs, featured song, and footer configs in parallel
+  const [songs, featuredSong, musicSocial, engineeringSocial, streaming] = await Promise.all([
     getSongs(),
-    getFeaturedSong()
+    getFeaturedSong(),
+    getConfigObject<MusicSocialConfig>('music_social'),
+    getConfigObject<EngineeringSocialConfig>('engineering_social'),
+    getConfigObject<StreamingConfig>('streaming'),
   ]);
 
   return (
@@ -39,14 +44,23 @@ export default async function RootLayout({
         <YouTubePlayerProvider>
           {/* Initialize player with featured song and full playlist */}
           <FeaturedSongInitializer featuredSong={featuredSong} songs={songs} />
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <PlayerBar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <LayoutClient
+            header={
+              <div className="bg-background-primary/95 border-b border-background-secondary shadow-lg">
+                <Header />
+                <PlayerBar />
+              </div>
+            }
+            footer={
+              <Footer
+                musicSocial={musicSocial}
+                engineeringSocial={engineeringSocial}
+                streaming={streaming}
+              />
+            }
+          >
+            {children}
+          </LayoutClient>
           {/* Hidden YouTube player container - persists across all pages */}
           <YouTubePlayerContainer />
         </YouTubePlayerProvider>

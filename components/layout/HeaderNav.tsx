@@ -171,12 +171,16 @@ export default function HeaderNav() {
         <MenuIcon isOpen={isMobileMenuOpen} className="w-6 h-6" />
       </button>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - positioned above all content to ensure consistent blur */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden animate-fade-in"
+          className="fixed inset-0 z-[60] md:hidden backdrop-blur-sm bg-black/70 animate-fade-in"
           onClick={() => setIsMobileMenuOpen(false)}
           aria-hidden="true"
+          style={{
+            WebkitBackdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(4px)',
+          }}
         />
       )}
 
@@ -184,7 +188,14 @@ export default function HeaderNav() {
       <div
         ref={mobileMenuRef}
         id="mobile-menu"
-        className={`fixed top-0 right-0 bottom-0 w-[360px] max-w-[90vw] bg-gradient-to-b from-background-secondary via-background-secondary to-background-secondary/95 shadow-[-8px_0_24px_0_rgba(0,0,0,0.3)] border-l border-white/5 z-50 md:hidden transition-transform duration-250 ease-out ${
+        style={{
+          backgroundColor: 'rgb(21, 23, 25)',
+          opacity: 1,
+          isolation: 'isolate',
+          height: '100vh',
+          minHeight: '100vh'
+        }}
+        className={`fixed top-0 right-0 bottom-0 w-[360px] max-w-[90vw] shadow-[-8px_0_24px_0_rgba(0,0,0,0.3)] border-l border-white/5 z-[70] md:hidden transition-transform duration-250 ease-out flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0 animate-slide-in-from-right' : 'translate-x-full'
         }`}
         role="dialog"
@@ -192,7 +203,7 @@ export default function HeaderNav() {
         aria-label="Mobile navigation menu"
       >
         {/* Header with Menu label and close button */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 flex-shrink-0">
           <span className="text-text-primary font-medium tracking-wide">Menu</span>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -214,7 +225,7 @@ export default function HeaderNav() {
         </div>
 
         {/* Navigation Links with Staggered Animation */}
-        <nav className="flex flex-col px-6 py-4 gap-1.5">
+        <nav className="flex flex-col px-6 py-4 gap-1.5 flex-1 overflow-y-auto">
           {NAV_LINKS.map((link, index) => (
             <Link
               key={link.href}

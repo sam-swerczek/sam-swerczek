@@ -6,6 +6,32 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    // Skill indicator and value card colors - prevents JIT from missing dynamic classes
+    'text-accent-blue',
+    'text-accent-teal',
+    'text-accent-gold',
+    'bg-accent-blue/10',
+    'bg-accent-teal/10',
+    'bg-accent-gold/10',
+    'border-accent-blue/20',
+    'border-accent-teal/20',
+    'border-accent-gold/20',
+    'border-accent-blue/30',
+    'border-accent-teal/30',
+    'border-accent-gold/30',
+    'border-accent-blue/40',
+    'border-accent-teal/40',
+    'border-accent-gold/40',
+    'border-accent-blue/60',
+    'border-accent-teal/60',
+    'hover:border-accent-blue/40',
+    'hover:border-accent-teal/40',
+    'hover:border-accent-gold/40',
+    'hover:shadow-accent-blue/5',
+    'hover:shadow-accent-teal/5',
+    'hover:shadow-accent-gold/5',
+  ],
   theme: {
     extend: {
       colors: {

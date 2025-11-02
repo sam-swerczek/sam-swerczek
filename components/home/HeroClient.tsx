@@ -30,7 +30,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-start md:items-center justify-center overflow-hidden pt-4 md:pt-0 md:-mt-[8vh]"
       onMouseMove={handleMouseMove}
     >
       {/* Split Image Background - Only visible on desktop */}
@@ -89,9 +89,9 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-gold/10 rounded-full blur-3xl animate-float-delayed"></div>
 
       {/* Main content */}
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-10 container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 md:gap-12 lg:gap-16">
             {/* Personal Image - Left side on desktop, top on mobile */}
             {heroImageUrl && (
               <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
@@ -117,17 +117,17 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
             <div className="text-center flex-1">
               {/* Hero Section with fade-in animation */}
               <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-text-primary font-montserrat tracking-tight md:whitespace-nowrap">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 text-text-primary font-montserrat tracking-tight md:whitespace-nowrap">
                   Sam Swerczek
                 </h1>
               </div>
 
               {/* Tagline with delayed animation */}
               <div className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <p className="text-xl md:text-2xl lg:text-3xl text-text-secondary mb-4 font-light">
+                <p className="text-lg md:text-2xl lg:text-3xl text-text-secondary mb-3 md:mb-4 font-light">
                   Crafting melodies & products
                 </p>
-                <div className="flex items-center justify-center gap-3 mb-12">
+                <div className="flex items-center justify-center gap-3 mb-8 md:mb-12">
                   <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent-blue to-transparent"></div>
                   <p className="text-sm md:text-base text-text-secondary/80 uppercase tracking-widest">
                     <span className="whitespace-nowrap">Singer-Songwriter</span>
@@ -141,27 +141,33 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
 
               {/* CTAs with staggered animation */}
               <div className={`transition-all duration-1000 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <div className="flex flex-row gap-3 justify-center">
                   <Link
                     href="/music"
-                    className="group w-full sm:w-auto sm:min-w-[160px] px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
+                    className="group w-auto min-w-[140px] md:min-w-[160px] px-4 md:px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-full bg-background-secondary/50 border border-accent-blue/30 group-hover:border-accent-blue/50 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
                         <MusicIcon className="w-4 h-4 text-accent-blue/70 group-hover:text-accent-blue transition-colors duration-300" />
                       </span>
-                      <span className="font-medium">Explore Music</span>
+                      <span className="font-medium">
+                        <span className="md:hidden">Music</span>
+                        <span className="hidden md:inline">Explore Music</span>
+                      </span>
                     </span>
                   </Link>
                   <Link
                     href="/blog"
-                    className="group w-full sm:w-auto sm:min-w-[160px] px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
+                    className="group w-auto min-w-[140px] md:min-w-[160px] px-4 md:px-6 py-3 bg-transparent border border-text-secondary/20 hover:border-text-secondary/40 text-text-primary rounded-lg transition-all duration-300 inline-flex items-center justify-center"
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-full bg-background-secondary/50 border border-accent-teal/30 group-hover:border-accent-teal/50 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
                         <CodeIcon className="w-4 h-4 text-accent-teal/70 group-hover:text-accent-teal transition-colors duration-300" />
                       </span>
-                      <span className="font-medium">Engineering & Blog</span>
+                      <span className="font-medium">
+                        <span className="md:hidden">Engineering</span>
+                        <span className="hidden md:inline">Engineering & Blog</span>
+                      </span>
                     </span>
                   </Link>
                 </div>
@@ -170,7 +176,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
           </div>
 
           {/* Scroll indicator - hidden on large screens */}
-          <div className={`mt-20 transition-all duration-1000 delay-700 text-center lg:hidden ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`mt-8 md:mt-20 transition-all duration-1000 delay-700 text-center lg:hidden ${mounted ? 'opacity-100' : 'opacity-0'}`}>
             <a
               href="#about"
               className="inline-flex flex-col items-center gap-2 text-text-secondary/50 hover:text-text-secondary/80 transition-colors"

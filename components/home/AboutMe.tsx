@@ -1,20 +1,11 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
+import { skillIndicators } from '@/lib/config/content';
+import { containerVariants, headerVariants, ANIMATION_TIMING } from '@/lib/config/animations';
 
 export default function AboutMe() {
   const shouldReduceMotion = useReducedMotion();
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.5,
-        delayChildren: 0.2,
-      },
-    },
-  };
 
   const headerVariants = {
     hidden: {
@@ -73,13 +64,29 @@ export default function AboutMe() {
 
           {/* Content */}
           <motion.div variants={contentVariants}>
-            <p className="text-lg md:text-xl text-text-secondary leading-relaxed font-light text-center">
+            <p className="text-lg md:text-xl text-text-secondary leading-relaxed text-center mb-6 font-light">
               I&apos;m a{' '}
-              <span className="text-accent-blue font-medium">singer-songwriter</span>
+              <span className="text-accent-blue">singer-songwriter</span>
               {' '}creating music that connects and a{' '}
-              <span className="text-accent-teal font-medium">software engineer</span>
+              <span className="text-accent-teal">software engineer</span>
               {' '}building innovative solutions. Whether I&apos;m composing or coding, I&apos;m driven by the pursuit of crafting experiences that resonate.
             </p>
+
+            {/* Skills */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {skillIndicators.map((skill) => (
+                <span
+                  key={skill.label}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
+                    skill.color === 'accent-blue'
+                      ? 'bg-accent-blue/10 text-accent-blue border border-accent-blue/20'
+                      : 'bg-accent-teal/10 text-accent-teal border border-accent-teal/20'
+                  }`}
+                >
+                  {skill.label}
+                </span>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       </div>

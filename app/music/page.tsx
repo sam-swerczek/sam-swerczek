@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import VideoGallery from "@/components/music/video/VideoGallery";
-import SocialLinks from "@/components/music/SocialLinks";
 import StreamingLinks from "@/components/music/StreamingLinks";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -87,28 +86,6 @@ export default async function MusicPage() {
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
           </section>
 
-
-          {/* Upcoming Shows Placeholder */}
-          <section>
-            <SectionHeader
-              title="Upcoming Shows"
-              subtitle="Check back for upcoming performance dates"
-              className="text-center"
-            />
-            <div className="bg-background-secondary/50 backdrop-blur-sm p-8 md:p-12 rounded-2xl border border-text-secondary/10 text-center">
-              <div className="max-w-md mx-auto">
-                <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-accent-blue/40" />
-                <h3 className="text-xl font-semibold mb-2">No Shows Scheduled Yet</h3>
-                <p className="text-text-secondary mb-6">
-                  Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!
-                </p>
-                <Button href="/contact?intent=music" variant="secondary" size="md">
-                  Book a Show
-                </Button>
-              </div>
-            </div>
-          </section>
-
           {/* Patreon CTA */}
           {social.patreon_url && (
             <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-gold/20 via-accent-gold/10 to-transparent border border-accent-gold/30 p-8 md:p-12">
@@ -133,22 +110,24 @@ export default async function MusicPage() {
             </section>
           )}
 
-          {/* Social Media Section */}
+          {/* Upcoming Shows Placeholder */}
           <section>
             <SectionHeader
-              title="Connect With Me"
-              subtitle="Follow for updates, new releases, and upcoming shows"
+              title="Upcoming Shows"
+              subtitle="Check back for upcoming performance dates"
               className="text-center"
             />
-            <div className="bg-background-secondary/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-text-secondary/10">
-              <SocialLinks
-                instagramUrl={social.instagram_handle}
-                facebookUrl={social.facebook_url}
-                linkedinUrl={social.linkedin_music}
-                tiktokUrl={social.tiktok_url}
-                patreonUrl={social.patreon_url}
-                layout="grid"
-              />
+            <div className="bg-background-secondary/50 backdrop-blur-sm p-8 md:p-12 rounded-2xl border border-text-secondary/10 text-center">
+              <div className="max-w-md mx-auto">
+                <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-accent-blue/40" />
+                <h3 className="text-xl font-semibold mb-2">No Shows Scheduled Yet</h3>
+                <p className="text-text-secondary mb-6">
+                  Stay tuned for upcoming performance dates and locations. Follow me on social media to be the first to know!
+                </p>
+                <Button href="/contact?intent=music" variant="secondary" size="md">
+                  Book a Show
+                </Button>
+              </div>
             </div>
           </section>
 
