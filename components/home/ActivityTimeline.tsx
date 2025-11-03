@@ -43,15 +43,16 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   const headerVariants = {
     hidden: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : -50,
-      scale: shouldReduceMotion ? 1 : 0.8,
+      y: shouldReduceMotion ? 0 : -80,
+      scale: shouldReduceMotion ? 1 : 0.75,
     },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
-        duration: 1.4,
+        duration: shouldReduceMotion ? 0.3 : 2.5,
+        delay: shouldReduceMotion ? 0 : 0.4,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
@@ -61,15 +62,15 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   const musicCardVariants = {
     hidden: {
       opacity: 0,
-      x: shouldReduceMotion ? 0 : -40,
-      scale: shouldReduceMotion ? 1 : 0.98,
+      x: shouldReduceMotion ? 0 : -100,
+      scale: shouldReduceMotion ? 1 : 0.92,
     },
     visible: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: shouldReduceMotion ? 0.3 : 1.4,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
@@ -79,15 +80,15 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
   const engineeringCardVariants = {
     hidden: {
       opacity: 0,
-      x: shouldReduceMotion ? 0 : 40,
-      scale: shouldReduceMotion ? 1 : 0.98,
+      x: shouldReduceMotion ? 0 : 100,
+      scale: shouldReduceMotion ? 1 : 0.92,
     },
     visible: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: shouldReduceMotion ? 0.3 : 1.4,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
@@ -163,7 +164,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
     .slice(0, 4);
 
   return (
-    <section className="relative py-16 md:py-20 bg-background-primary overflow-hidden">
+    <section className="relative py-24 md:py-36 bg-background-primary overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
@@ -175,7 +176,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
             className="text-center mb-12"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.2 }}
             variants={headerVariants}
           >
             <h2 className="text-4xl font-bold text-text-primary font-montserrat mb-4">

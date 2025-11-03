@@ -7,6 +7,9 @@ import { MusicSocialConfig, EngineeringSocialConfig } from '@/lib/supabase/confi
  */
 export interface HomepageData {
   heroImageUrl?: string;
+  aboutMeImageUrl?: string;
+  musicImageUrl?: string;
+  engineeringImageUrl?: string;
   contactImageUrl?: string;
   githubUrl: string;
   featuredSong: Song | null;

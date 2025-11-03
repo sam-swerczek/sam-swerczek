@@ -5,37 +5,13 @@
 
 export const skillIndicators = [
   {
-    label: 'Performance',
-    icon: 'music' as const,
-    color: 'accent-blue',
-    category: 'music' as const,
-  },
-  {
     label: 'Songwriting',
     icon: 'music' as const,
     color: 'accent-blue',
     category: 'music' as const,
   },
   {
-    label: 'Music Production',
-    icon: 'music' as const,
-    color: 'accent-blue',
-    category: 'music' as const,
-  },
-  {
     label: 'Web Development',
-    icon: 'code' as const,
-    color: 'accent-teal',
-    category: 'engineering' as const,
-  },
-  {
-    label: 'Application Development',
-    icon: 'code' as const,
-    color: 'accent-teal',
-    category: 'engineering' as const,
-  },
-  {
-    label: 'System Design',
     icon: 'code' as const,
     color: 'accent-teal',
     category: 'engineering' as const,

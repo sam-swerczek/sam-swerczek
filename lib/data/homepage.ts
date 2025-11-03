@@ -31,11 +31,17 @@ export async function getHomepageData(): Promise<HomepageData> {
 
   // Extract specific config values
   const heroImageUrl = siteConfig.find(c => c.key === 'hero_image_url')?.value;
+  const aboutMeImageUrl = siteConfig.find(c => c.key === 'about_me_image_url')?.value;
+  const musicImageUrl = siteConfig.find(c => c.key === 'music_image_url')?.value;
+  const engineeringImageUrl = siteConfig.find(c => c.key === 'engineering_image_url')?.value;
   const contactImageUrl = siteConfig.find(c => c.key === 'contact_image_url')?.value;
   const githubUrl = siteConfig.find(c => c.key === 'github_url')?.value || 'https://github.com';
 
   return {
     heroImageUrl,
+    aboutMeImageUrl,
+    musicImageUrl,
+    engineeringImageUrl,
     contactImageUrl,
     githubUrl,
     featuredSong,

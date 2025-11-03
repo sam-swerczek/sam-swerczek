@@ -151,18 +151,20 @@ export default function Footer({ musicSocial, engineeringSocial, streaming, isCo
             ))}
           </div>
 
-          {/* Nav Links */}
-          <nav className="flex items-center gap-4 md:gap-6 text-sm">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="text-text-secondary hover:text-accent-blue transition-colors"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
+          {/* Nav Links - hidden in compact mode */}
+          {!isCompact && (
+            <nav className="flex items-center gap-4 md:gap-6 text-sm">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-text-secondary hover:text-accent-blue transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+          )}
 
           {/* Copyright - hidden in compact mode */}
           {!isCompact && (

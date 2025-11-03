@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HeroSection from "@/components/home/HeroSection";
 import AboutMe from "@/components/home/AboutMe";
 import MusicSection from "@/components/home/MusicSection";
+import EngineeringSection from "@/components/home/EngineeringSection";
 import ActivityTimeline from "@/components/home/ActivityTimeline";
 import ConnectSection from "@/components/home/ConnectSection";
 import { getHomepageData } from "@/lib/data/homepage";
@@ -24,7 +25,10 @@ export default async function Home() {
       <AboutMe />
 
       {/* Music - Songwriting philosophy and play button */}
-      <MusicSection />
+      <MusicSection musicImageUrl={data.musicImageUrl} />
+
+      {/* Engineering - Site development and GitHub link */}
+      <EngineeringSection engineeringImageUrl={data.engineeringImageUrl} githubUrl={data.githubUrl} />
 
       {/* Activity Timeline - Recent releases and blog posts */}
       <ActivityTimeline blogPosts={data.blogPosts} commentCounts={data.commentCounts} />
