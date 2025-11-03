@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRightIcon } from '@/components/ui/icons';
+import { MusicIcon, CodeIcon, BookIcon } from '@/components/ui/icons';
 import { Post } from '@/lib/types';
 import { motion, useReducedMotion } from 'framer-motion';
 
@@ -38,25 +38,6 @@ interface ActivityTimelineProps {
 
 export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityTimelineProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  // Animation variants for header
-  const headerVariants = {
-    hidden: {
-      opacity: 0,
-      y: shouldReduceMotion ? 0 : -80,
-      scale: shouldReduceMotion ? 1 : 0.75,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: shouldReduceMotion ? 0.3 : 2.5,
-        delay: shouldReduceMotion ? 0 : 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
-      },
-    },
-  };
 
   // Animation variants for music cards (fly in from left)
   const musicCardVariants = {
@@ -103,24 +84,6 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
     return 'engineering';
   };
 
-  // Generate intelligent CTA text based on activity type
-  const getCtaText = (type: string): string => {
-    const lowerType = type.toLowerCase();
-    if (lowerType.includes('music video') || lowerType.includes('video')) {
-      return 'Watch Video';
-    }
-    if (lowerType.includes('song') || lowerType.includes('music release')) {
-      return 'Listen Now';
-    }
-    if (lowerType.includes('performance') || lowerType.includes('live')) {
-      return 'Watch Performance';
-    }
-    if (lowerType.includes('tutorial')) {
-      return 'Read Tutorial';
-    }
-    return 'Read Post';
-  };
-
   // Extract YouTube video ID from URL
   const extractYouTubeFromContent = (content: string): string | null => {
     const iframeMatch = content.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
@@ -164,94 +127,104 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
     .slice(0, 4);
 
   return (
-    <section className="relative py-24 md:py-36 bg-background-primary overflow-hidden">
+    <section className="relative pt-36 md:pt-48 pb-24 md:pb-36 bg-background-primary overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
 
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-[900px] mx-auto">
-          {/* Section heading */}
+          {/* Section header */}
           <motion.div
-            className="text-center mb-12"
+            className="text-center mb-20"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={headerVariants}
+            viewport={{ once: true, amount: 0.3 }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  duration: shouldReduceMotion ? 0.3 : 2.4,
+                  delay: shouldReduceMotion ? 0 : 0.5,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                },
+              },
+            }}
           >
-            <h2 className="text-4xl font-bold text-text-primary font-montserrat mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-primary font-montserrat mb-3">
               Recent Activity
             </h2>
-            <p className="text-lg text-text-secondary font-light">
-              Latest music releases and engineering insights
+            <p className="text-base md:text-lg text-text-secondary/80 font-light">
+              Explore my thoughts on music, engineering, and everything in between
             </p>
           </motion.div>
 
           {/* Timeline items */}
-          <div className="space-y-8">
+          <div className="space-y-20">
             {timelineItems.map((item, index) => {
               const isMusicCategory = item.category === 'music';
+              const IconComponent = isMusicCategory ? MusicIcon : CodeIcon;
 
               return (
                 <motion.article
                   key={item.id}
-                  className={`
-                    relative pl-6
-                    border-l-4 ${isMusicCategory ? 'border-accent-blue/60' : 'border-accent-teal/60'}
-                  `}
+                  className="relative"
                   initial="hidden"
                   whileInView="visible"
-                  viewport={{ once: true, amount: 0.2 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   variants={isMusicCategory ? musicCardVariants : engineeringCardVariants}
                   custom={index}
                   transition={{ delay: Math.min(index, 3) * 0.1 }}
                 >
-                  <Link
-                    href={`/blog/${item.slug}`}
-                    className="block hover:opacity-90 transition-opacity"
-                  >
-                    <div className="space-y-2">
+                  <div className="flex gap-4 items-start">
+                    {/* Icon */}
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                      isMusicCategory
+                        ? 'bg-accent-blue/20 text-accent-blue'
+                        : 'bg-accent-teal/20 text-accent-teal'
+                    }`}>
+                      <IconComponent className="w-4 h-4" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 space-y-1.5">
                       {/* Title */}
-                      <h3 className="text-2xl font-bold text-text-primary font-montserrat hover:text-accent-teal transition-colors">
-                        {item.shortTitle}
-                      </h3>
+                      <Link
+                        href={`/blog/${item.slug}`}
+                        className="group"
+                      >
+                        <h3 className="text-lg font-semibold text-text-primary font-montserrat group-hover:text-accent-teal transition-colors">
+                          {item.shortTitle}
+                        </h3>
+                      </Link>
 
                       {/* Date */}
-                      <time dateTime={item.published_at} className="block text-sm text-text-secondary">
+                      <time dateTime={item.published_at} className="block text-xs text-text-secondary/70">
                         {formatDate(item.published_at)}
                       </time>
 
                       {/* Excerpt */}
-                      <p className="text-text-secondary leading-relaxed line-clamp-2 font-light">
+                      <p className="text-sm text-text-secondary/80 leading-relaxed line-clamp-2 font-light">
                         {item.excerpt}
                       </p>
-
-                      {/* CTA */}
-                      <div className="pt-2">
-                        <span className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                          isMusicCategory
-                            ? 'text-accent-blue hover:text-accent-blue/80'
-                            : 'text-accent-teal hover:text-accent-teal/80'
-                        }`}>
-                          {getCtaText(item.activityType)}
-                          <ArrowRightIcon className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
                     </div>
-                  </Link>
+                  </div>
                 </motion.article>
               );
             })}
           </div>
 
           {/* View All link */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-background-secondary/50 hover:bg-accent-teal/10 border border-accent-teal/30 hover:border-accent-teal/60 transition-all duration-300 text-text-primary hover:text-accent-teal font-medium"
+              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-lg bg-transparent hover:bg-accent-teal/10 border border-text-secondary/20 hover:border-text-secondary/40 transition-all duration-300 text-text-primary hover:text-accent-teal font-medium"
             >
-              View All Activity
-              <ArrowRightIcon className="w-5 h-5" />
+              <span className="w-8 h-8 rounded-full bg-background-secondary/50 border border-accent-teal/30 group-hover:border-accent-teal/50 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
+                <BookIcon className="w-4 h-4 text-accent-teal/70 group-hover:text-accent-teal transition-colors duration-300" />
+              </span>
+              <span>Read the Blog</span>
             </Link>
           </div>
         </div>

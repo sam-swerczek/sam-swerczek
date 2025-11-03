@@ -15,30 +15,25 @@ export default function MusicSection({ musicImageUrl }: MusicSectionProps) {
   const { play, isPlaying, isReady } = useYouTubePlayer();
 
   return (
-    <section id="music-section" className="relative py-24 md:py-36 bg-background-primary overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
-
-      <div className="relative z-10 container mx-auto px-4">
-        <motion.div
-          className="max-w-4xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={{
-            hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 80 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: {
-                duration: shouldReduceMotion ? 0.3 : 2.4,
-                delay: shouldReduceMotion ? 0 : 0.5,
-                ease: [0.25, 0.46, 0.45, 0.94],
-              },
-            },
-          }}
-        >
+    <motion.div
+      id="music-section"
+      className="w-full"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={{
+        hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 80 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: shouldReduceMotion ? 0.3 : 2.4,
+            delay: shouldReduceMotion ? 0 : 0.5,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          },
+        },
+      }}
+    >
           {/* Main Content Box */}
           <div className="bg-background-secondary/30 backdrop-blur-sm rounded-t-2xl border border-text-secondary/10 border-b-0 p-6 md:p-8">
             {/* Image and Text Row */}
@@ -46,7 +41,7 @@ export default function MusicSection({ musicImageUrl }: MusicSectionProps) {
               {/* Text Content - Left Side */}
               <div className="flex-1 text-center">
                 <p className="text-base md:text-xl text-text-secondary leading-relaxed font-light">
-                  <span>My music explores the messy, painful, beautiful art of being human. Give it a listen.</span>
+                  <span>My music explores the messy, beautiful art of being human. <br />Give it a listen.</span>
                 </p>
               </div>
 
@@ -86,8 +81,6 @@ export default function MusicSection({ musicImageUrl }: MusicSectionProps) {
               </span>
             </span>
           </button>
-        </motion.div>
-      </div>
-    </section>
+    </motion.div>
   );
 }

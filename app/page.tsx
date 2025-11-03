@@ -24,11 +24,22 @@ export default async function Home() {
       {/* About Me - Quick introduction with skills */}
       <AboutMe />
 
-      {/* Music - Songwriting philosophy and play button */}
-      <MusicSection musicImageUrl={data.musicImageUrl} />
+      {/* Combined Music & Engineering Section - Side by side on large screens */}
+      <section className="relative py-24 md:py-36 bg-background-primary overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-background-navy via-[rgb(21,23,25)] to-background-primary/95" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent-gold/8" />
 
-      {/* Engineering - Site development and GitHub link */}
-      <EngineeringSection engineeringImageUrl={data.engineeringImageUrl} githubUrl={data.githubUrl} />
+        <div className="relative z-10 container mx-auto px-4">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Music - Songwriting philosophy and play button */}
+            <MusicSection musicImageUrl={data.musicImageUrl} />
+
+            {/* Engineering - Site development and GitHub link */}
+            <EngineeringSection engineeringImageUrl={data.engineeringImageUrl} githubUrl={data.githubUrl} />
+          </div>
+        </div>
+      </section>
 
       {/* Activity Timeline - Recent releases and blog posts */}
       <ActivityTimeline blogPosts={data.blogPosts} commentCounts={data.commentCounts} />

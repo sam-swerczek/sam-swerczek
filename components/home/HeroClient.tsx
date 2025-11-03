@@ -100,7 +100,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
                   <div className="absolute -inset-1 bg-gradient-to-r from-accent-blue via-accent-teal to-accent-gold rounded-full blur-xl opacity-50 group-hover:opacity-75 transition duration-500"></div>
 
                   {/* Image container */}
-                  <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-accent-blue/30 shadow-2xl bg-background-secondary">
+                  <div className="relative w-64 h-64 lg:w-80 lg:h-80 rounded-full overflow-hidden border-4 border-accent-blue/30 shadow-2xl bg-background-secondary">
                     <Image
                       src={heroImageUrl}
                       alt="Sam Swerczek"
@@ -117,14 +117,14 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
             <div className="text-center flex-1">
               {/* Hero Section with fade-in animation */}
               <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 text-text-primary font-montserrat tracking-tight md:whitespace-nowrap">
+                <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 text-text-primary font-montserrat tracking-tight md:whitespace-nowrap">
                   Sam Swerczek
                 </h1>
               </div>
 
               {/* Tagline with delayed animation */}
               <div className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <p className="text-lg md:text-2xl lg:text-3xl text-text-secondary mb-3 md:mb-4 font-light">
+                <p className="text-lg lg:text-2xl xl:text-3xl text-text-secondary mb-3 md:mb-4 font-light">
                   Crafting melodies & products
                 </p>
                 <div className="flex items-center justify-center gap-3 mb-8 md:mb-12">
@@ -176,7 +176,7 @@ export default function HeroClient({ heroImageUrl }: HeroClientProps) {
           </div>
 
           {/* Scroll indicator - hidden on large screens */}
-          <div className={`mt-8 md:mt-20 transition-all duration-1000 delay-700 text-center lg:hidden ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`mt-8 lg:hidden transition-all duration-1000 delay-700 text-center ${mounted ? 'opacity-100' : 'opacity-0'}`}>
             <a
               href="#about"
               className="inline-flex flex-col items-center gap-2 text-text-secondary/50 hover:text-text-secondary/80 transition-colors"
