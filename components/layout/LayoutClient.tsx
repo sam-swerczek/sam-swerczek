@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef, cloneElement } from 'react';
+import { useEffect, useState, useRef, cloneElement, ReactElement } from 'react';
 import { useYouTubePlayer } from '@/components/music/hooks/useYouTubePlayer';
 
 interface LayoutClientProps {
   header: React.ReactNode;
-  footer: React.ReactElement;
+  footer: ReactElement<{ isCompact?: boolean }>;
   children: React.ReactNode;
 }
 
