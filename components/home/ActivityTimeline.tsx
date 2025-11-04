@@ -161,7 +161,7 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
           </motion.div>
 
           {/* Timeline items */}
-          <div className="space-y-20">
+          <div className="space-y-2">
             {timelineItems.map((item, index) => {
               const isMusicCategory = item.category === 'music';
               const IconComponent = isMusicCategory ? MusicIcon : CodeIcon;
@@ -177,39 +177,39 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                   custom={index}
                   transition={{ delay: Math.min(index, 3) * 0.1 }}
                 >
-                  <div className="flex gap-4 items-start">
-                    {/* Icon */}
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      isMusicCategory
-                        ? 'bg-accent-blue/20 text-accent-blue'
-                        : 'bg-accent-teal/20 text-accent-teal'
-                    }`}>
-                      <IconComponent className="w-4 h-4" />
-                    </div>
+                  <Link
+                    href={`/blog/${item.slug}`}
+                    className="group block py-8 px-4 -mx-4 rounded-lg hover:bg-background-secondary/30 transition-all duration-300"
+                  >
+                    <div className="flex gap-4 items-start">
+                      {/* Icon */}
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        isMusicCategory
+                          ? 'bg-accent-blue/20 text-accent-blue group-hover:bg-accent-blue/30'
+                          : 'bg-accent-teal/20 text-accent-teal group-hover:bg-accent-teal/30'
+                      }`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
 
-                    {/* Content */}
-                    <div className="flex-1 space-y-1.5">
-                      {/* Title */}
-                      <Link
-                        href={`/blog/${item.slug}`}
-                        className="group"
-                      >
+                      {/* Content */}
+                      <div className="flex-1 space-y-1.5">
+                        {/* Title */}
                         <h3 className="text-lg font-semibold text-text-primary font-montserrat group-hover:text-accent-teal transition-colors">
                           {item.shortTitle}
                         </h3>
-                      </Link>
 
-                      {/* Date */}
-                      <time dateTime={item.published_at} className="block text-xs text-text-secondary/70">
-                        {formatDate(item.published_at)}
-                      </time>
+                        {/* Date */}
+                        <time dateTime={item.published_at} className="block text-xs text-text-secondary/70">
+                          {formatDate(item.published_at)}
+                        </time>
 
-                      {/* Excerpt */}
-                      <p className="text-sm text-text-secondary/80 leading-relaxed line-clamp-2 font-light">
-                        {item.excerpt}
-                      </p>
+                        {/* Excerpt */}
+                        <p className="text-sm text-text-secondary/80 leading-relaxed line-clamp-2 font-light">
+                          {item.excerpt}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </motion.article>
               );
             })}
