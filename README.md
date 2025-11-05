@@ -1,176 +1,103 @@
-# Personal Portfolio & Blog
+# Sam Swerczek
 
-> A full-stack personal website combining music portfolio and engineering blog with AI-assisted content management
+> Software engineer, musician, and maker of things
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Powered-green?style=flat&logo=supabase)](https://supabase.com/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
 
-A modern personal website built with Next.js that serves dual purposes: showcasing music work and sharing engineering insights. Features a custom CMS with AI-powered blog post generation.
+## About This Project
 
-## Core Functionality
+This is my personal website—a place to share my thoughts on software engineering, showcase my music, and experiment with web technologies I find interesting. It's both a portfolio and a playground, built with Next.js and designed to serve two audiences: those interested in my engineering work and those who want to hear my music.
 
-### Public Features
+The site features a full-featured CMS for managing content, a custom YouTube-based music player, and is built with modern web technologies that I enjoy working with. It's also a testing ground for collaboration patterns with AI agents—something I document extensively.
 
-**Music Portfolio** (`/music`)
-- Audio-only YouTube player with playlist support
-- Streaming platform links (Spotify, Apple Music, YouTube Music)
-- Featured performance videos
-- Social media integration
-- Upcoming shows section
+## What's Inside
 
-**Engineering Blog** (`/blog`)
-- Markdown-based blog posts with syntax highlighting
-- Tag-based filtering and search
-- Related posts recommendations
-- SEO-optimized individual post pages
+**Blog** - Technical articles about software engineering, web development, music production, and creative work. Features tag-based filtering, search, and AI-assisted content generation.
 
-**Home Page** (`/`)
-- Combined landing page for both audiences
-- Featured works showcase
-- Activity timeline (recent music & posts)
-- Quick navigation to music or blog
+**Music Player** - Custom YouTube-based player with playlist management that provides continuous playback while navigating the site. Integrates with streaming platforms like Spotify and Apple Music.
 
-**Contact Form** (`/contact`)
-- Email delivery via Resend API
-- Form validation
-- Professional email formatting
+**Admin Portal** - Full-featured CMS for managing blog posts, music content, and site configuration. Includes AI-powered blog post generation using Claude.
 
-### Admin Features
-
-**Content Management** (`/admin/posts`)
-- Create, edit, delete blog posts
-- AI-powered draft generation using Claude API
-- Markdown editor with live preview
-- Tag management
-- Publish/unpublish controls
-
-**Music Management** (`/admin/songs`)
-- Add/edit songs for the YouTube player
-- Display order management
-- Featured song selection
-- YouTube video ID integration
-
-**Site Configuration** (`/admin/config`)
-- Dynamic site settings without redeployment
-- Social media links
-- Streaming platform URLs
-- Featured video management
-
-**Authentication**
-- Supabase Auth with email/password
-- Middleware-based route protection
-- Row-level security (RLS) policies
-
-## How It Works
-
-### Routing Structure
-```
-/                    Landing page for both audiences
-/music               Music portfolio page
-/blog                Blog listing with filtering
-/blog/[slug]         Individual blog post
-/contact             Contact form
-/admin               Admin dashboard (protected)
-/admin/posts         Post management (protected)
-/admin/songs         Song management (protected)
-/admin/config        Site configuration (protected)
-```
-
-### Data Architecture
-- **posts** table: Blog content with Markdown, tags, publish state
-- **songs** table: YouTube playlist with metadata and ordering
-- **site_config** table: Key-value pairs for dynamic settings
-- Row-Level Security ensures public read, admin-only write
-
-### AI Integration
-The admin CMS includes Claude AI integration for blog post drafting:
-- Prompt-based generation from brief descriptions
-- Generates title, content, tags, and SEO metadata
-- Integrates with existing editor workflow
-- Optional - manual creation still fully supported
+**AI-Assisted Development** - Documented collaboration patterns with AI agents, including architectural decisions, refactoring journeys, and development workflows.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router) with React Server Components
-- **Language**: TypeScript 5.9
-- **Styling**: Tailwind CSS
-- **Database**: Supabase (PostgreSQL) with Row-Level Security
-- **Authentication**: Supabase Auth
-- **AI**: Anthropic Claude API (Sonnet 4)
-- **Email**: Resend API
-- **Testing**: Jest + React Testing Library
-- **Deployment**: Vercel
+**Core**: Next.js 15 · React 19 · TypeScript · Tailwind CSS
 
-## Project Structure
+**Backend**: Supabase (PostgreSQL, Auth, RLS) · Next.js API Routes
 
-```
-/app                      # Next.js App Router
-  /admin                  # Protected admin routes
-  /blog                   # Blog routes (listing + [slug])
-  /music                  # Music portfolio
-  /contact                # Contact form
-  /api                    # API routes (AI generation, email)
+**Integrations**: Claude AI (Anthropic) · Resend (Email) · YouTube IFrame API
 
-/components               # React components
-  /admin                  # Admin-specific components
-  /blog                   # Blog components
-  /home                   # Home page sections
-  /layout                 # Header, Footer, Navigation
-  /music                  # Music components (players, links)
-  /ui                     # Reusable UI components
+**Animation**: Framer Motion · Custom CSS animations
 
-/lib                      # Utilities and config
-  /supabase               # Database clients & queries
-  /utils                  # Helper functions
-  /types.ts               # TypeScript types
-
-/supabase/migrations      # Database schema
-```
+**Deployment**: Vercel
 
 ## Documentation
 
-Detailed technical documentation in `/docs`:
-- [Architecture & Design](docs/ARCHITECTURE.md) - System design and patterns
-- [Supabase Setup](docs/SUPABASE_SETUP.md) - Database configuration
-- [Testing Strategy](docs/TESTING.md) - Test infrastructure
-- [Deployment Guide](docs/DEPLOYMENT.md) - Vercel deployment
+Comprehensive documentation is available to help you understand the architecture, contribute, or learn from the patterns used:
 
-## Development
+### Getting Started
+- **[Quick Start Guide](./docs/getting-started/QUICK_START.md)** - Run locally or deploy
+- **[Setup Guide](./docs/getting-started/SETUP_GUIDE.md)** - Environment configuration
+- **[Deployment](./docs/getting-started/DEPLOYMENT.md)** - Vercel deployment instructions
 
-### Setup
+### Development
+- **[Development Patterns](./docs/development/DEVELOPMENT_PATTERNS.md)** ← **START HERE** for feature development
+- **[Code Patterns](./docs/development/CODE_PATTERNS.md)** - Specific code examples
+- **[Design System](./docs/development/DESIGN_SYSTEM.md)** - Colors, typography, components
+- **[Testing Strategy](./docs/development/TESTING.md)** - Testing infrastructure
+
+### Architecture
+- **[Architecture Overview](./docs/architecture/OVERVIEW.md)** - High-level system design
+- **[Technical Architecture](./docs/architecture/TECHNICAL_ARCHITECTURE.md)** - Deep technical dive
+- **[Authentication](./docs/architecture/AUTHENTICATION.md)** - Auth implementation
+- **[YouTube Player](./docs/architecture/YOUTUBE_PLAYER.md)** - Player architecture
+
+### Collaboration
+- **[AI Agents Guide](./docs/collaboration/AI_AGENTS.md)** - Working with AI agents
+- **[Contributing](./docs/collaboration/CONTRIBUTING.md)** - How to contribute
+
+### Reference
+- **[Design Decisions](./docs/reference/DESIGN_DECISIONS.md)** - Historical design choices
+- **[Refactoring Journey](./docs/reference/REFACTORING_JOURNEY.md)** - Evolution of the codebase
+
+**→ [Full Documentation Index](./docs/INDEX.md)**
+
+## Quick Start
+
+Want to run this locally?
+
 ```bash
-# Install dependencies
+git clone https://github.com/yourusername/personal-page
+cd personal-page
 npm install
-
-# Configure environment variables
-cp .env.local.example .env.local
-# Add your Supabase URL, keys, Anthropic API key, and Resend API key
-
-# Run database migrations (see docs/SUPABASE_SETUP.md)
-
-# Start dev server
 npm run dev
 ```
 
-### Testing
-```bash
-npm test                # Run all tests
-npm run test:watch      # Watch mode
-npm run test:coverage   # Coverage report
-```
+For detailed setup including environment variables and database configuration, see the **[Quick Start Guide](./docs/getting-started/QUICK_START.md)**.
 
-### Environment Variables
-Required in `.env.local`:
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (admin operations)
-- `ANTHROPIC_API_KEY` - Claude API key (for blog generation)
-- `RESEND_API_KEY` - Resend API key (for contact form)
-- `RESEND_FROM_EMAIL` - Verified sender email
-- `CONTACT_TO_EMAIL` - Where to send contact form submissions
+## Project Highlights
+
+This project showcases several interesting technical implementations:
+
+- **Server Components First** - Leverages Next.js 15 App Router with strategic use of Server and Client Components
+- **Persistent Media Player** - YouTube player that continues playback during navigation without remounting
+- **AI-Powered CMS** - Claude API integration for blog post generation
+- **Row-Level Security** - Database-level security with Supabase RLS policies
+- **Animation System** - Three-tier animation architecture (Tailwind, Framer Motion, custom)
+- **Documented Patterns** - Extensive documentation of architectural decisions and development patterns
+
+## Contributing
+
+Contributions, suggestions, and feedback are welcome! Please see **[Contributing Guidelines](./docs/collaboration/CONTRIBUTING.md)** for details on the development workflow and how to work with AI agents on this project.
 
 ## License
 
 All rights reserved. This code is provided for portfolio and educational purposes.
+
+---
+
+Built with ☕ and 🎵 by Sam Swerczek

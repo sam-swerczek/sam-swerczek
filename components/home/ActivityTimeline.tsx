@@ -1,9 +1,24 @@
+/**
+ * ActivityTimeline Component
+ *
+ * Displays recent music releases and blog posts in a timeline format.
+ *
+ * Animation Strategy:
+ * - Music cards slide in from LEFT (semantic: creative/artistic direction)
+ * - Engineering cards slide in from RIGHT (semantic: technical/logical direction)
+ * - Uses centralized animation variants from /lib/config/animations.ts
+ * - Respects user's reduced motion preferences
+ */
 'use client';
 
 import Link from 'next/link';
 import { MusicIcon, CodeIcon, BookIcon } from '@/components/ui/icons';
 import { Post } from '@/lib/types';
 import { motion, useReducedMotion } from 'framer-motion';
+import {
+  activityMusicCardVariants,
+  activityEngineeringCardVariants
+} from '@/lib/config/animations';
 
 type ActivityCategory = 'engineering' | 'music';
 
@@ -38,42 +53,6 @@ interface ActivityTimelineProps {
 
 export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityTimelineProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  // Animation variants for music cards (fly in from left)
-  const musicCardVariants = {
-    hidden: {
-      opacity: 0,
-      x: shouldReduceMotion ? 0 : -100,
-      scale: shouldReduceMotion ? 1 : 0.92,
-    },
-    visible: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
-      transition: {
-        duration: shouldReduceMotion ? 0.3 : 1.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
-      },
-    },
-  };
-
-  // Animation variants for engineering cards (fly in from right)
-  const engineeringCardVariants = {
-    hidden: {
-      opacity: 0,
-      x: shouldReduceMotion ? 0 : 100,
-      scale: shouldReduceMotion ? 1 : 0.92,
-    },
-    visible: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
-      transition: {
-        duration: shouldReduceMotion ? 0.3 : 1.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
-      },
-    },
-  };
 
   // Determine category based on post type
   const getCategoryFromType = (type: string): ActivityCategory => {
@@ -173,8 +152,8 @@ export default function ActivityTimeline({ blogPosts, commentCounts }: ActivityT
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.3 }}
-                  variants={isMusicCategory ? musicCardVariants : engineeringCardVariants}
-                  custom={index}
+                  variants={isMusicCategory ? activityMusicCardVariants : activityEngineeringCardVariants}
+                  custom={shouldReduceMotion}
                   transition={{ delay: Math.min(index, 3) * 0.1 }}
                 >
                   <Link

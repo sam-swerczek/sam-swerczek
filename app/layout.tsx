@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import PlayerBar from "@/components/layout/PlayerBar";
-import Footer from "@/components/layout/Footer";
 import YouTubePlayerContainer from "@/components/music/YouTubePlayerContainer";
 import FeaturedSongInitializer from "@/components/music/FeaturedSongInitializer";
 import { YouTubePlayerProvider } from "@/lib/contexts/YouTubePlayerContext";
-import { getSongs, getFeaturedSong } from "@/lib/supabase/queries";
+import { getSongs, getFeaturedSong, getSiteConfig } from "@/lib/supabase/queries";
 import { getConfigObject, type MusicSocialConfig, type EngineeringSocialConfig, type StreamingConfig } from "@/lib/supabase/config-helpers";
 import LayoutClient from "@/components/layout/LayoutClient";
 
@@ -29,14 +26,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch all songs, featured song, and footer configs in parallel
-  const [songs, featuredSong, musicSocial, engineeringSocial, streaming] = await Promise.all([
+  // Fetch all songs, featured song, configs, and hero image in parallel
+  const [songs, featuredSong, musicSocial, engineeringSocial, streaming, generalConfig] = await Promise.all([
     getSongs(),
     getFeaturedSong(),
     getConfigObject<MusicSocialConfig>('music_social'),
     getConfigObject<EngineeringSocialConfig>('engineering_social'),
     getConfigObject<StreamingConfig>('streaming'),
+    getSiteConfig('general'),
   ]);
+
+  const heroImageUrl = generalConfig.find(c => c.key === 'hero_image_url')?.value;
 
   return (
     <html lang="en">
@@ -45,19 +45,12 @@ export default async function RootLayout({
           {/* Initialize player with featured song and full playlist */}
           <FeaturedSongInitializer featuredSong={featuredSong} songs={songs} />
           <LayoutClient
-            header={
-              <div className="bg-background-primary/95 border-b border-background-secondary shadow-lg">
-                <Header />
-                <PlayerBar />
-              </div>
-            }
-            footer={
-              <Footer
-                musicSocial={musicSocial}
-                engineeringSocial={engineeringSocial}
-                streaming={streaming}
-              />
-            }
+            siteData={{
+              heroImageUrl,
+              musicSocial,
+              engineeringSocial,
+              streaming,
+            }}
           >
             {children}
           </LayoutClient>

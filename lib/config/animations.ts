@@ -141,3 +141,53 @@ export const slideInRightVariants = {
     },
   },
 };
+
+/**
+ * Long slide-in from left variants (for activity timeline music cards)
+ * Used for more dramatic entrance animations with extended duration
+ */
+export const slideInLeftLongVariants = {
+  hidden: (reduceMotion: boolean) => ({
+    opacity: 0,
+    x: reduceMotion ? 0 : -100,
+    scale: reduceMotion ? 1 : 0.92,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: ANIMATION_TIMING.slow,
+      ease: ANIMATION_TIMING.easeOutCubic,
+    },
+  },
+};
+
+/**
+ * Long slide-in from right variants (for activity timeline engineering cards)
+ * Used for more dramatic entrance animations with extended duration
+ */
+export const slideInRightLongVariants = {
+  hidden: (reduceMotion: boolean) => ({
+    opacity: 0,
+    x: reduceMotion ? 0 : 100,
+    scale: reduceMotion ? 1 : 0.92,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: ANIMATION_TIMING.slow,
+      ease: ANIMATION_TIMING.easeOutCubic,
+    },
+  },
+};
+
+/**
+ * Semantic aliases for Activity Timeline
+ * Music cards slide from left (creative/artistic direction)
+ * Engineering cards slide from right (technical/logical direction)
+ */
+export const activityMusicCardVariants = slideInLeftLongVariants;
+export const activityEngineeringCardVariants = slideInRightLongVariants;

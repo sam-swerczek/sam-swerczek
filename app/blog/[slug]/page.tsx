@@ -70,53 +70,41 @@ export default async function BlogPostPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="max-w-4xl mx-auto">
-        {/* Back Link */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center text-accent-blue hover:text-accent-teal transition-colors duration-200 mb-8 group"
-        >
-          <svg
-            className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Blog
-        </Link>
 
-        {/* Article Header */}
+        {/* Article Header - Dramatic & Center Aligned */}
         <article>
-          <header className="mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
+          <header className="pt-12 md:pt-16 mb-16 md:mb-20 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-text-primary mb-8 leading-tight font-montserrat max-w-4xl mx-auto">
               {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 mb-6 text-text-secondary">
-              <time dateTime={post.published_at || undefined} className="text-sm md:text-base">
+            {/* Metadata - Centered */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-6 text-text-secondary/70">
+              <time dateTime={post.published_at || undefined} className="text-sm">
                 {publishedDate}
               </time>
-              <span className="text-text-secondary/50">•</span>
-              <span className="text-sm md:text-base">By Sam Swerczek</span>
+              <span className="text-text-secondary/30">•</span>
+              <span className="text-sm">Sam Swerczek</span>
             </div>
 
+            {/* Tags - Centered */}
             {post.tags && post.tags.length > 0 && (
-              <TagsList tags={post.tags} className="mb-8" />
+              <div className="flex justify-center mb-8">
+                <TagsList tags={post.tags} />
+              </div>
             )}
 
+            {/* Excerpt - Centered & Dramatic */}
             {post.excerpt && (
-              <p className="text-xl text-text-secondary italic border-l-4 border-accent-blue pl-6 py-2">
+              <p className="text-xl md:text-2xl text-text-secondary/80 font-light max-w-3xl mx-auto leading-relaxed">
                 {post.excerpt}
               </p>
             )}
+
+            {/* Decorative Divider */}
+            <div className="mt-12 h-px w-24 mx-auto bg-gradient-to-r from-transparent via-accent-teal/40 to-transparent" />
           </header>
 
           {/* Article Content */}
@@ -124,7 +112,9 @@ export default async function BlogPostPage({ params }: PageProps) {
         </article>
 
         {/* Comments Section */}
-        <CommentSection postId={post.id} />
+        <div id="comments">
+          <CommentSection postId={post.id} />
+        </div>
 
         {/* Related Posts Section */}
         {relatedPosts.length > 0 && (

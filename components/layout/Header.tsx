@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getSiteConfig } from "@/lib/supabase/queries";
 import HeaderNav from "./HeaderNav";
 
-export default async function Header() {
-  const generalConfig = await getSiteConfig('general');
-  const heroImageUrl = generalConfig.find(c => c.key === 'hero_image_url')?.value;
+interface HeaderProps {
+  heroImageUrl?: string;
+}
 
+export default function Header({ heroImageUrl }: HeaderProps) {
   return (
     <header className="relative border-b border-background-secondary">
       {/* Subtle gradient background */}

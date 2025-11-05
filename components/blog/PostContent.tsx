@@ -12,6 +12,14 @@ export default function PostContent({ content, className = '' }: PostContentProp
       if (paragraph.trim() === '') return null;
 
       // Handle headings
+      if (paragraph.startsWith('# ') && !paragraph.startsWith('## ')) {
+        return (
+          <h1 key={index} className="text-3xl md:text-4xl font-bold text-text-primary mt-12 mb-6 first:mt-0">
+            {paragraph.replace('# ', '')}
+          </h1>
+        );
+      }
+
       if (paragraph.startsWith('## ')) {
         return (
           <h2 key={index} className="text-2xl md:text-3xl font-bold text-text-primary mt-12 mb-4 first:mt-0">

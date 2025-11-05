@@ -1,4 +1,6 @@
-# Architecture Documentation
+# Technical Architecture
+
+> For a high-level overview of architectural decisions, see [Architecture Overview](./OVERVIEW.md)
 
 ## Table of Contents
 1. [System Architecture Overview](#system-architecture-overview)
@@ -270,7 +272,7 @@ The admin site config interface is organized into these logical sections with cl
 - Groups related settings together
 - Provides clear mental model for admins
 - Scales well as new config options are added
-- See `docs/DESIGN_DECISIONS.md` for detailed rationale
+- See [Design Decisions](../reference/DESIGN_DECISIONS.md) for detailed rationale
 
 **Recent Additions** (October 2025):
 - `hero_image_url`: Dynamic hero section background image, fetched server-side and passed to client component

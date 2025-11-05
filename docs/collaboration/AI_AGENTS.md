@@ -971,7 +971,7 @@ Sam provided a comprehensive summary of recent code changes:
 - Dynamic configuration adoption across components
 
 **AI Role**: Analyzed the changes, read existing documentation, and updated three key documents:
-1. ARCHITECTURE.md - Added server/client split pattern for components
+1. TECHNICAL_ARCHITECTURE.md - Added server/client split pattern for components
 2. CODE_PATTERNS.md - Extended the "Client suffix" pattern to component level
 3. REFACTORING_JOURNEY.md - Added Phase 3 documenting October changes
 

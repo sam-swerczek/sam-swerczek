@@ -58,26 +58,26 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   return (
     <section className="mt-16 pt-12 border-t border-text-secondary/10">
-      {/* Section header */}
+      {/* Section header - Smaller & More Classy */}
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-text-primary flex items-center gap-3">
-          <MessageIcon className="w-8 h-8 text-accent-blue" />
+        <h2 className="text-xl font-semibold text-text-primary flex items-center gap-2.5 font-montserrat">
+          <MessageIcon className="w-5 h-5 text-accent-teal/70" />
           Comments
           {!isLoading && (
-            <span className="text-text-secondary/70 text-2xl font-normal">
+            <span className="text-text-secondary/60 text-base font-normal">
               ({comments.length})
             </span>
           )}
         </h2>
 
-        {/* Add Comment button - only shown to authenticated users */}
+        {/* Add Comment button - Subtle styling */}
         {!authLoading && user && !showForm && (
-          <Button
-            variant="primary"
+          <button
             onClick={() => setShowForm(true)}
+            className="text-sm text-text-secondary/70 hover:text-accent-teal border border-text-secondary/20 hover:border-accent-teal/40 px-4 py-2 rounded-lg transition-all duration-200"
           >
             Add Comment
-          </Button>
+          </button>
         )}
       </div>
 

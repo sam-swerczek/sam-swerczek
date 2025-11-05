@@ -1,15 +1,27 @@
 'use client';
 
-import { useEffect, useState, useRef, cloneElement, ReactElement } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useYouTubePlayer } from '@/components/music/hooks/useYouTubePlayer';
+import Header from './Header';
+import BlogPostHeader from './BlogPostHeader';
+import PlayerBar from './PlayerBar';
+import Footer from './Footer';
+import type { MusicSocialConfig, EngineeringSocialConfig, StreamingConfig } from '@/lib/supabase/config-helpers';
+
+interface SiteData {
+  heroImageUrl?: string;
+  musicSocial: MusicSocialConfig;
+  engineeringSocial: EngineeringSocialConfig;
+  streaming: StreamingConfig;
+}
 
 interface LayoutClientProps {
-  header: React.ReactNode;
-  footer: ReactElement<{ isCompact?: boolean }>;
+  siteData: SiteData;
   children: React.ReactNode;
 }
 
-export default function LayoutClient({ header, footer, children }: LayoutClientProps) {
+export default function LayoutClient({ siteData, children }: LayoutClientProps) {
   const [showHeader, setShowHeader] = useState(true);
   const [showFooter, setShowFooter] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
@@ -18,6 +30,12 @@ export default function LayoutClient({ header, footer, children }: LayoutClientP
 
   // Track when music is playing
   const { isPlaying } = useYouTubePlayer();
+
+  // Get current pathname for conditional rendering
+  const pathname = usePathname();
+
+  // Detect if we're on a blog post page for conditional footer/spacer
+  const isBlogPost = pathname.startsWith('/blog/') && pathname !== '/blog' && pathname !== '/blog/';
 
   useEffect(() => {
     let ticking = false;
@@ -105,11 +123,18 @@ export default function LayoutClient({ header, footer, children }: LayoutClientP
           showHeader ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        {header}
+        {isBlogPost ? (
+          <BlogPostHeader heroImageUrl={siteData.heroImageUrl} />
+        ) : (
+          <div className="bg-background-primary/95 border-b border-background-secondary shadow-lg">
+            <Header heroImageUrl={siteData.heroImageUrl} />
+            <PlayerBar />
+          </div>
+        )}
       </div>
 
       {/* Spacer to prevent content from going under fixed header - approximately header + player bar height */}
-      <div className="h-[140px]" />
+      <div className={isBlogPost ? 'h-[72px]' : 'h-[140px]'} />
 
       {/* Main content */}
       <main className="flex-grow pb-[200px]">
@@ -122,7 +147,12 @@ export default function LayoutClient({ header, footer, children }: LayoutClientP
           showFooter ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        {cloneElement(footer, { isCompact: !isAtBottom })}
+        <Footer
+          musicSocial={siteData.musicSocial}
+          engineeringSocial={siteData.engineeringSocial}
+          streaming={siteData.streaming}
+          isCompact={!isAtBottom}
+        />
       </div>
     </div>
   );
