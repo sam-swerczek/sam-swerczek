@@ -234,8 +234,8 @@ export default function HeaderNav() {
                 group relative flex items-center gap-3 px-5 py-4 rounded-xl transition-all
                 active:scale-[0.98]
                 ${isActive(link.href)
-                  ? 'text-accent-blue bg-accent-blue/20'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-background-primary/40 active:bg-background-primary/60'
+                  ? 'text-accent-blue border-2 border-accent-blue'
+                  : 'text-text-secondary border-2 border-transparent hover:text-text-primary hover:bg-background-primary/40 active:bg-background-primary/60'
                 }
                 animate-slide-in-from-top-2
               `}

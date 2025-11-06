@@ -1,11 +1,31 @@
+'use client';
+
+import DOMPurify from 'isomorphic-dompurify';
+
 interface PostContentProps {
   content: string;
   className?: string;
 }
 
 export default function PostContent({ content, className = '' }: PostContentProps) {
-  // Format the content with proper line breaks and styling
-  // This is a simple implementation - in production, you'd use a markdown renderer
+  // Helper function to process inline markdown formatting with XSS protection
+  const processInlineMarkdown = (text: string): string => {
+    const formatted = text
+      // Handle bold text first (before italic to avoid conflicts)
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
+      // Handle italic text (single asterisks not part of bold)
+      .replace(/\*(.+?)\*/g, '<em class="text-text-primary italic">$1</em>')
+      // Handle inline code
+      .replace(/`(.+?)`/g, '<code class="px-2 py-1 bg-background-secondary text-accent-teal rounded text-sm font-mono">$1</code>');
+
+    // Sanitize HTML to prevent XSS attacks
+    return DOMPurify.sanitize(formatted, {
+      ALLOWED_TAGS: ['strong', 'em', 'code'],
+      ALLOWED_ATTR: ['class'],
+      ALLOW_DATA_ATTR: false,
+    });
+  };
+
   const formatContent = (text: string) => {
     return text.split('\n').map((paragraph, index) => {
       // Skip empty paragraphs
@@ -42,19 +62,21 @@ export default function PostContent({ content, className = '' }: PostContentProp
         return null; // Will handle code blocks separately
       }
 
-      // Handle list items
+      // Handle list items - now with inline markdown processing
       if (paragraph.startsWith('- ')) {
+        const listContent = paragraph.replace('- ', '');
+        const formattedListContent = processInlineMarkdown(listContent);
         return (
-          <li key={index} className="text-text-secondary leading-relaxed ml-6 mb-2">
-            {paragraph.replace('- ', '')}
-          </li>
+          <li
+            key={index}
+            className="text-text-secondary leading-relaxed ml-6 mb-2"
+            dangerouslySetInnerHTML={{ __html: formattedListContent }}
+          />
         );
       }
 
-      // Handle bold text (simple regex replacement)
-      const formattedParagraph = paragraph
-        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
-        .replace(/`(.+?)`/g, '<code class="px-2 py-1 bg-background-secondary text-accent-teal rounded text-sm font-mono">$1</code>');
+      // Handle bold, italic, and inline code for regular paragraphs
+      const formattedParagraph = processInlineMarkdown(paragraph);
 
       // Regular paragraph
       return (
