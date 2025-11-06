@@ -63,22 +63,10 @@ export default function VideoGallery({ videos }: VideoGalleryProps) {
         className={`w-full max-w-6xl mx-auto opacity-0 ${isVisible ? 'animate-discover' : ''}`}
       >
         <div className="relative">
-          {/* Video Gallery badge - top right */}
-          <div className="absolute -top-3 right-6 z-20">
-            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-accent-gold to-accent-gold/80 rounded-full shadow-lg">
-              <svg className="w-4 h-4 text-background-primary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm font-bold text-background-primary uppercase tracking-wide">
-                Video Gallery
-              </span>
-            </div>
-          </div>
-
-          {/* Section container with thick gold border */}
-          <div className="relative rounded-2xl border-[3px] border-accent-gold overflow-hidden shadow-2xl shadow-accent-gold/20">
+          {/* Section container with clean blue border */}
+          <div className="relative rounded-2xl border border-accent-blue/30 overflow-hidden shadow-xl">
             {/* Background with gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-background-secondary to-background-primary" />
+            <div className="absolute inset-0 bg-gradient-to-br from-background-secondary/90 to-background-primary/90" />
 
             {/* Subtle pattern overlay */}
             <div

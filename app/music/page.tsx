@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import VideoGallery from "@/components/music/video/VideoGallery";
-import StreamingLinks from "@/components/music/StreamingLinks";
+import YouTubePlayerFull from "@/components/music/YouTubePlayerFull";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
 import {
@@ -12,6 +12,7 @@ import {
   type GeneralConfig,
   type Video,
 } from "@/lib/supabase/config-helpers";
+import { getSongs } from "@/lib/supabase/queries";
 import { CalendarIcon } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -30,11 +31,12 @@ export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function MusicPage() {
   // Fetch all required data in parallel
-  const [streaming, social, videosRaw, general] = await Promise.all([
+  const [streaming, social, videosRaw, general, songs] = await Promise.all([
     getConfigObject<StreamingConfig>('streaming'),
     getConfigObject<MusicSocialConfig>('music_social'),
     getConfigObject<FeaturedVideosConfig>('featured_videos'),
     getConfigObject<GeneralConfig>('general'),
+    getSongs(),
   ]);
 
   // Extract videos from config
@@ -63,27 +65,26 @@ export default async function MusicPage() {
       <div className="container mx-auto px-4 py-12 md:py-20 pb-20 relative z-10">
         <div className="max-w-6xl mx-auto space-y-20 md:space-y-28">
 
-          {/* Featured Videos Section */}
+          {/* Full Music Player Section - NEW, FIRST */}
           <section className="pt-4 md:pt-8">
-            <VideoGallery videos={videos} />
+            <YouTubePlayerFull
+              songs={songs}
+              streamingLinks={{
+                spotifyUrl: streaming.spotify_url,
+                appleMusicUrl: streaming.apple_music_url,
+                youtubePlaylistUrl: streaming.youtube_music_url,
+              }}
+            />
           </section>
 
-          {/* Streaming Platforms Section */}
-          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent-blue/20 via-accent-teal/10 to-transparent border border-accent-blue/30 p-8 md:p-12">
-            <div className="relative z-10">
-              <SectionHeader
-                title="Stream My Music"
-                subtitle="Listen on your favorite platform"
-                className="text-center"
-              />
-              <StreamingLinks
-                spotifyUrl={streaming.spotify_url}
-                appleMusicUrl={streaming.apple_music_url}
-                youtubePlaylistUrl={streaming.youtube_music_url}
-              />
-            </div>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/20 rounded-full blur-3xl -z-0" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -z-0" />
+          {/* Featured Videos Section - MOVED DOWN */}
+          <section>
+            <SectionHeader
+              title="Live Performances & Music Videos"
+              subtitle="Watch my latest performances and releases"
+              className="text-center mb-8"
+            />
+            <VideoGallery videos={videos} />
           </section>
 
           {/* Patreon CTA */}

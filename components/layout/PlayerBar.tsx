@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import YouTubePlayerMini from "@/components/music/YouTubePlayerMini";
 
 export default function PlayerBar() {
   const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
+
+  // Hide player bar on music page (full player shown there instead)
+  const isMusicPage = pathname === '/music';
 
   useEffect(() => {
     setMounted(true);
@@ -18,7 +23,7 @@ export default function PlayerBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!mounted) {
+  if (!mounted || isMusicPage) {
     return null;
   }
 

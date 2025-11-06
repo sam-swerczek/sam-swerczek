@@ -36,6 +36,7 @@ export default function LayoutClient({ siteData, children }: LayoutClientProps) 
 
   // Detect if we're on a blog post page for conditional footer/spacer
   const isBlogPost = pathname.startsWith('/blog/') && pathname !== '/blog' && pathname !== '/blog/';
+  const isMusicPage = pathname === '/music';
 
   useEffect(() => {
     let ticking = false;
@@ -134,7 +135,7 @@ export default function LayoutClient({ siteData, children }: LayoutClientProps) 
       </div>
 
       {/* Spacer to prevent content from going under fixed header - approximately header + player bar height */}
-      <div className={isBlogPost ? 'h-[72px]' : 'h-[140px]'} />
+      <div className={isBlogPost || isMusicPage ? 'h-[72px]' : 'h-[140px]'} />
 
       {/* Main content */}
       <main className="flex-grow pb-[200px]">

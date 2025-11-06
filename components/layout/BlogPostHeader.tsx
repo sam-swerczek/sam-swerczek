@@ -34,10 +34,10 @@ export default function BlogPostHeader({ heroImageUrl }: BlogPostHeaderProps) {
           </Link>
 
           {/* Center: Profile Info */}
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
               {heroImageUrl && (
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-accent-blue/30">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-accent-blue/30 group-hover:border-accent-blue/60 transition-colors">
                   <Image
                     src={heroImageUrl}
                     alt="Sam Swerczek"
@@ -49,14 +49,14 @@ export default function BlogPostHeader({ heroImageUrl }: BlogPostHeaderProps) {
               )}
             </div>
             <div className="text-center hidden sm:block">
-              <div className="font-montserrat font-bold text-text-primary text-sm">
+              <div className="font-montserrat font-bold text-text-primary group-hover:text-accent-blue transition-colors text-sm">
                 Sam Swerczek
               </div>
               <div className="text-xs text-text-secondary/70">
                 Software Engineer & Musician
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Right: Jump to Comments */}
           <a
