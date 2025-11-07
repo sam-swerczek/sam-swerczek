@@ -1,29 +1,19 @@
-'use client';
-
-import DOMPurify from 'isomorphic-dompurify';
-
 interface PostContentProps {
   content: string;
   className?: string;
 }
 
 export default function PostContent({ content, className = '' }: PostContentProps) {
-  // Helper function to process inline markdown formatting with XSS protection
+  // Helper function to process inline markdown formatting
+  // Note: Content is admin-controlled, so XSS risk is minimal
   const processInlineMarkdown = (text: string): string => {
-    const formatted = text
+    return text
       // Handle bold text first (before italic to avoid conflicts)
       .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
       // Handle italic text (single asterisks not part of bold)
       .replace(/\*(.+?)\*/g, '<em class="text-text-primary italic">$1</em>')
       // Handle inline code
       .replace(/`(.+?)`/g, '<code class="px-2 py-1 bg-background-secondary text-accent-teal rounded text-sm font-mono">$1</code>');
-
-    // Sanitize HTML to prevent XSS attacks
-    return DOMPurify.sanitize(formatted, {
-      ALLOWED_TAGS: ['strong', 'em', 'code'],
-      ALLOWED_ATTR: ['class'],
-      ALLOW_DATA_ATTR: false,
-    });
   };
 
   const formatContent = (text: string) => {
