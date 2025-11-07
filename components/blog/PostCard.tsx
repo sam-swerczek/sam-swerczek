@@ -43,7 +43,7 @@ export default function PostCard({ post, commentCount }: PostCardProps) {
             )}
           </div>
 
-          <p className="text-text-secondary leading-relaxed mb-6 text-base md:text-lg line-clamp-3">
+          <p className="text-text-secondary leading-relaxed mb-6 text-base md:text-lg line-clamp-3 whitespace-pre-line">
             {post.excerpt}
           </p>
 

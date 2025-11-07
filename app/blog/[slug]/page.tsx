@@ -98,7 +98,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
             {/* Excerpt - Centered & Dramatic */}
             {post.excerpt && (
-              <p className="text-xl md:text-2xl text-text-secondary/80 font-light max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl md:text-2xl text-text-secondary/80 font-light max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
                 {post.excerpt}
               </p>
             )}
@@ -133,7 +133,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-accent-blue transition-colors duration-200">
                       {relatedPost.title}
                     </h3>
-                    <p className="text-sm text-text-secondary line-clamp-2 mb-3">
+                    <p className="text-sm text-text-secondary line-clamp-2 mb-3 whitespace-pre-line">
                       {relatedPost.excerpt}
                     </p>
                     <div className="text-sm text-accent-blue group-hover:text-accent-teal transition-colors duration-200">

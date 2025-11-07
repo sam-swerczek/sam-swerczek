@@ -41,7 +41,7 @@ export default async function FeaturedBlog() {
                   {featuredPost.title}
                 </Link>
                 {' — '}
-                {featuredPost.excerpt}
+                <span className="whitespace-pre-line">{featuredPost.excerpt}</span>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2 sm:justify-end">
