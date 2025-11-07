@@ -37,7 +37,7 @@ export default function NotFound() {
         </h2>
 
         <p className="text-lg md:text-xl text-text-secondary leading-relaxed mb-8">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
 
         {/* Countdown and redirect message */}
