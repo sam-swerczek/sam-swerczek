@@ -25,16 +25,36 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://samswerczek.com';
+  const postUrl = `${siteUrl}/blog/${slug}`;
+  const ogImage = post.featured_image_url || `${siteUrl}/og-image-default.png`;
+
   return {
     title: `${post.title} | Sam Swerczek`,
     description: post.meta_description || post.excerpt,
     openGraph: {
       title: post.title,
       description: post.meta_description || post.excerpt,
+      url: postUrl,
+      siteName: 'Sam Swerczek',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
       type: 'article',
       publishedTime: post.published_at || undefined,
       authors: ['Sam Swerczek'],
       tags: post.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.meta_description || post.excerpt,
+      images: [ogImage],
     },
   };
 }
