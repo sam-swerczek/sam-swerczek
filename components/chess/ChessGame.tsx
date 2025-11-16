@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess, Square } from 'chess.js';
 
@@ -8,7 +8,6 @@ import {
   createChessGame,
   getGameState,
   makeMove,
-  undoMove,
   resetGame,
   getLegalMovesForSquare,
 } from '@/lib/chess/gameLogic';
@@ -92,7 +91,8 @@ export default function ChessGame() {
 
       return false;
     },
-    [game, gameState.isGameOver, gameState.turn, isAIThinking, isTimerRunning, whiteTime, updateGameState, clearSelection]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game, gameState.isGameOver, gameState.turn, isAIThinking, isTimerRunning, updateGameState, clearSelection]
   );
 
   // Handle square click for move highlighting and click-to-move
@@ -159,36 +159,50 @@ export default function ChessGame() {
     [game, gameState.isGameOver, gameState.turn, isAIThinking, isTimerRunning, selectedSquare, validMoves, updateGameState, clearSelection]
   );
 
-  // Timer countdown effect
+  // Timer countdown effect - using ref to avoid race conditions
+  const turnRef = useRef(gameState.turn);
+
+  useEffect(() => {
+    turnRef.current = gameState.turn;
+  }, [gameState.turn]);
+
   useEffect(() => {
     if (!isTimerRunning || gameState.isGameOver) return;
 
     const interval = setInterval(() => {
-      if (gameState.turn === 'w') {
+      const currentTurn = turnRef.current;
+
+      if (currentTurn === 'w') {
         setWhiteTime((prev) => {
-          const newTime = prev - 100;
+          const newTime = prev - 1000;
           if (newTime <= 0) {
             setIsTimerRunning(false);
-            alert('Time out! Black (AI) wins!');
+            // Show timeout message without blocking
+            setTimeout(() => {
+              alert('Time out! Black (AI) wins!');
+            }, 0);
             return 0;
           }
           return newTime;
         });
       } else {
         setBlackTime((prev) => {
-          const newTime = prev - 100;
+          const newTime = prev - 1000;
           if (newTime <= 0) {
             setIsTimerRunning(false);
-            alert('Time out! You win!');
+            // Show timeout message without blocking
+            setTimeout(() => {
+              alert('Time out! You win!');
+            }, 0);
             return 0;
           }
           return newTime;
         });
       }
-    }, 100);
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerRunning, gameState.turn, gameState.isGameOver]);
+  }, [isTimerRunning, gameState.isGameOver]);
 
   // AI move effect with human-like thinking time
   useEffect(() => {
@@ -245,27 +259,6 @@ export default function ChessGame() {
     setBlackTime(5 * 60 * 1000);
     setIsTimerRunning(false);
   }, [game, updateGameState, clearSelection]);
-
-  // Handle undo move (undo both player and AI move)
-  const handleUndo = useCallback(() => {
-    if (gameState.moveHistory.length === 0) return;
-
-    // Undo AI move
-    undoMove(game);
-    // Undo player move
-    undoMove(game);
-
-    updateGameState();
-    setIsAIThinking(false);
-    clearSelection();
-
-    // If we undo to the start, stop the timer
-    if (gameState.moveHistory.length <= 2) {
-      setIsTimerRunning(false);
-      setWhiteTime(5 * 60 * 1000);
-      setBlackTime(5 * 60 * 1000);
-    }
-  }, [game, gameState.moveHistory.length, updateGameState, clearSelection]);
 
   // Handle resign
   const handleResign = useCallback(() => {
@@ -374,9 +367,7 @@ export default function ChessGame() {
             {/* Game Controls */}
             <GameControls
               onNewGame={handleNewGame}
-              onUndo={handleUndo}
               onResign={handleResign}
-              canUndo={gameState.moveHistory.length >= 2}
               isGameOver={gameState.isGameOver}
             />
 
