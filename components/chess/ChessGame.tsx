@@ -19,6 +19,7 @@ import GameStatus from './GameStatus';
 import GameControls from './GameControls';
 import MoveHistory from './MoveHistory';
 import LichessChallenge from './LichessChallenge';
+import GameTimer from './GameTimer';
 
 export default function ChessGame() {
   // Initialize chess game instance
@@ -27,6 +28,11 @@ export default function ChessGame() {
   // Game state
   const [gameState, setGameState] = useState<GameState>(() => getGameState(game));
   const [isAIThinking, setIsAIThinking] = useState(false);
+
+  // Timer state (in milliseconds) - 5 minutes each
+  const [whiteTime, setWhiteTime] = useState(5 * 60 * 1000);
+  const [blackTime, setBlackTime] = useState(5 * 60 * 1000);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   // Move highlighting state
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -61,6 +67,11 @@ export default function ChessGame() {
         return false;
       }
 
+      // Don't allow moves if out of time
+      if (whiteTime <= 0) {
+        return false;
+      }
+
       const move: ChessMove = {
         from: sourceSquare,
         to: targetSquare,
@@ -70,6 +81,10 @@ export default function ChessGame() {
       const result = makeMove(game, move);
 
       if (result.success) {
+        // Start timer on first move
+        if (!isTimerRunning) {
+          setIsTimerRunning(true);
+        }
         updateGameState();
         clearSelection();
         return true;
@@ -77,7 +92,7 @@ export default function ChessGame() {
 
       return false;
     },
-    [game, gameState.isGameOver, gameState.turn, isAIThinking, updateGameState, clearSelection]
+    [game, gameState.isGameOver, gameState.turn, isAIThinking, isTimerRunning, whiteTime, updateGameState, clearSelection]
   );
 
   // Handle square click for move highlighting and click-to-move
@@ -112,6 +127,10 @@ export default function ChessGame() {
           const result = makeMove(game, move);
 
           if (result.success) {
+            // Start timer on first move
+            if (!isTimerRunning) {
+              setIsTimerRunning(true);
+            }
             updateGameState();
             clearSelection();
           }
@@ -137,10 +156,41 @@ export default function ChessGame() {
         }
       }
     },
-    [game, gameState.isGameOver, gameState.turn, isAIThinking, selectedSquare, validMoves, updateGameState, clearSelection]
+    [game, gameState.isGameOver, gameState.turn, isAIThinking, isTimerRunning, selectedSquare, validMoves, updateGameState, clearSelection]
   );
 
-  // AI move effect
+  // Timer countdown effect
+  useEffect(() => {
+    if (!isTimerRunning || gameState.isGameOver) return;
+
+    const interval = setInterval(() => {
+      if (gameState.turn === 'w') {
+        setWhiteTime((prev) => {
+          const newTime = prev - 100;
+          if (newTime <= 0) {
+            setIsTimerRunning(false);
+            alert('Time out! Black (AI) wins!');
+            return 0;
+          }
+          return newTime;
+        });
+      } else {
+        setBlackTime((prev) => {
+          const newTime = prev - 100;
+          if (newTime <= 0) {
+            setIsTimerRunning(false);
+            alert('Time out! You win!');
+            return 0;
+          }
+          return newTime;
+        });
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isTimerRunning, gameState.turn, gameState.isGameOver]);
+
+  // AI move effect with human-like thinking time
   useEffect(() => {
     const makeAIMove = async () => {
       // Only make AI move if it's black's turn and game is not over
@@ -148,8 +198,15 @@ export default function ChessGame() {
         setIsAIThinking(true);
         clearSelection(); // Clear any player selection when AI is thinking
 
-        // Add a delay for better UX (simulate thinking time)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Calculate human-like thinking time
+        // Most moves: 1-7 seconds, tough positions: up to 12 seconds
+        // Use weighted random: 70% chance of 1-7s, 30% chance of 7-12s
+        const isComplexPosition = Math.random() < 0.3;
+        const thinkingTime = isComplexPosition
+          ? 7000 + Math.random() * 5000 // 7-12 seconds for complex positions
+          : 1000 + Math.random() * 6000; // 1-7 seconds for normal moves
+
+        await new Promise((resolve) => setTimeout(resolve, thinkingTime));
 
         try {
           const aiMove = await getAIMove(gameState.fen, { level: 1 });
@@ -183,6 +240,10 @@ export default function ChessGame() {
     updateGameState();
     setIsAIThinking(false);
     clearSelection();
+    // Reset timers
+    setWhiteTime(5 * 60 * 1000);
+    setBlackTime(5 * 60 * 1000);
+    setIsTimerRunning(false);
   }, [game, updateGameState, clearSelection]);
 
   // Handle undo move (undo both player and AI move)
@@ -197,6 +258,13 @@ export default function ChessGame() {
     updateGameState();
     setIsAIThinking(false);
     clearSelection();
+
+    // If we undo to the start, stop the timer
+    if (gameState.moveHistory.length <= 2) {
+      setIsTimerRunning(false);
+      setWhiteTime(5 * 60 * 1000);
+      setBlackTime(5 * 60 * 1000);
+    }
   }, [game, gameState.moveHistory.length, updateGameState, clearSelection]);
 
   // Handle resign
@@ -297,6 +365,9 @@ export default function ChessGame() {
 
           {/* Right Sidebar - Game Info */}
           <div className="space-y-4">
+            {/* Game Timer */}
+            <GameTimer whiteTime={whiteTime} blackTime={blackTime} currentTurn={gameState.turn} />
+
             {/* Game Status */}
             <GameStatus gameState={gameState} isAIThinking={isAIThinking} />
 
