@@ -31,6 +31,10 @@ export default function YouTubePlayerMini() {
   const [showHighlight, setShowHighlight] = useState(false);
   const previousPlayingRef = useRef(isPlaying);
 
+  // Track attention-drawing animation after 10 seconds of inactivity
+  const [showAttention, setShowAttention] = useState(false);
+  const attentionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     // Detect when music starts playing (transition from not playing to playing)
     if (!previousPlayingRef.current && isPlaying) {
@@ -39,8 +43,41 @@ export default function YouTubePlayerMini() {
       setTimeout(() => {
         setShowHighlight(false);
       }, 2000);
+      // Clear attention animation when music starts
+      setShowAttention(false);
+      if (attentionTimerRef.current) {
+        clearTimeout(attentionTimerRef.current);
+        attentionTimerRef.current = null;
+      }
     }
     previousPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Set up 10-second timer to draw attention to play button if music isn't playing
+  useEffect(() => {
+    // Clear any existing timer
+    if (attentionTimerRef.current) {
+      clearTimeout(attentionTimerRef.current);
+      attentionTimerRef.current = null;
+    }
+
+    // Only set timer if music is not playing
+    if (!isPlaying) {
+      attentionTimerRef.current = setTimeout(() => {
+        setShowAttention(true);
+      }, 10000); // 10 seconds
+    } else {
+      // Clear attention animation if music is playing
+      setShowAttention(false);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (attentionTimerRef.current) {
+        clearTimeout(attentionTimerRef.current);
+        attentionTimerRef.current = null;
+      }
+    };
   }, [isPlaying]);
 
   return (
@@ -106,7 +143,7 @@ export default function YouTubePlayerMini() {
           onNext={next}
           onPrevious={previous}
           variant="mini"
-          showHighlight={showHighlight}
+          showHighlight={showHighlight || showAttention}
         />
 
         <VolumeControl

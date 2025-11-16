@@ -33,6 +33,9 @@ export default function ChessGame() {
   const [blackTime, setBlackTime] = useState(5 * 60 * 1000);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
+  // AI difficulty level (1-4, default to 2)
+  const [aiLevel, setAiLevel] = useState(2);
+
   // Move highlighting state
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [validMoves, setValidMoves] = useState<string[]>([]);
@@ -223,7 +226,7 @@ export default function ChessGame() {
         await new Promise((resolve) => setTimeout(resolve, thinkingTime));
 
         try {
-          const aiMove = await getAIMove(gameState.fen, { level: 1 });
+          const aiMove = await getAIMove(gameState.fen, { level: aiLevel });
 
           if (aiMove) {
             const move: ChessMove = {
@@ -246,7 +249,28 @@ export default function ChessGame() {
     };
 
     makeAIMove();
-  }, [game, gameState.turn, gameState.isGameOver, gameState.fen, isAIThinking, updateGameState, clearSelection]);
+  }, [game, gameState.turn, gameState.isGameOver, gameState.fen, isAIThinking, aiLevel, updateGameState, clearSelection]);
+
+  // Handle AI level change
+  const handleAiLevelChange = useCallback((newLevel: number) => {
+    // If game is in progress, confirm before changing
+    if (!gameState.isGameOver && gameState.moveHistory.length > 0) {
+      if (window.confirm('Changing difficulty will start a new game. Continue?')) {
+        setAiLevel(newLevel);
+        // Reset the game
+        resetGame(game);
+        updateGameState();
+        setIsAIThinking(false);
+        clearSelection();
+        setWhiteTime(5 * 60 * 1000);
+        setBlackTime(5 * 60 * 1000);
+        setIsTimerRunning(false);
+      }
+    } else {
+      // No game in progress, just change the level
+      setAiLevel(newLevel);
+    }
+  }, [gameState.isGameOver, gameState.moveHistory.length, game, updateGameState, clearSelection]);
 
   // Handle new game
   const handleNewGame = useCallback(() => {
@@ -369,6 +393,8 @@ export default function ChessGame() {
               onNewGame={handleNewGame}
               onResign={handleResign}
               isGameOver={gameState.isGameOver}
+              aiLevel={aiLevel}
+              onAiLevelChange={handleAiLevelChange}
             />
 
             {/* Move History */}

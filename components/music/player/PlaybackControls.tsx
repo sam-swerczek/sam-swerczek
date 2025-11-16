@@ -16,7 +16,7 @@ interface PlaybackControlsProps {
   showTimeDisplay?: boolean;
   currentTime?: number;
   duration?: number;
-  showHighlight?: boolean; // Show one-time flash when music starts
+  showHighlight?: boolean; // Show one-time flash when music starts or subtle pulse for attention
 }
 
 export default function PlaybackControls({
@@ -70,9 +70,14 @@ export default function PlaybackControls({
           className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-accent-blue/10 text-text-secondary hover:text-accent-blue transition-all duration-200 focus:outline-none"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
-          {/* Subtle pulse ring highlight - only show when music just started */}
+          {/* Highlight animation - ping once when music starts, pulse subtly for attention when paused */}
           {showHighlight && (
-            <span className="absolute inset-0 rounded-full bg-accent-blue/20 animate-ping-once opacity-75" aria-hidden="true" />
+            <span
+              className={`absolute inset-0 rounded-full bg-accent-blue/20 ${
+                isPlaying ? 'animate-ping-once opacity-75' : 'animate-pulse-subtle'
+              }`}
+              aria-hidden="true"
+            />
           )}
           <span className="relative z-10">
             {isPlaying ? (
