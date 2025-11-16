@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ExternalLinkIcon, GithubIcon } from '@/components/ui/icons';
 
 export const metadata: Metadata = {
@@ -7,7 +8,25 @@ export const metadata: Metadata = {
   description: 'Explore my software engineering and music projects.',
 };
 
-const projects = [
+interface Project {
+  title: string;
+  description: string;
+  tags: string[];
+  githubUrl?: string;
+  liveUrl?: string;
+  imageUrl?: string;
+  isInternal?: boolean;
+}
+
+const projects: Project[] = [
+  {
+    title: 'Interactive Chess Game',
+    description: 'An interactive chess game where you can play against an AI opponent. Built with React, chess.js for game logic, and js-chess-engine for the AI. Features move highlighting, move history, undo functionality, and a link to challenge me on Lichess.',
+    tags: ['React', 'TypeScript', 'Chess.js', 'AI'],
+    liveUrl: '/projects/chess',
+    imageUrl: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=800&q=80',
+    isInternal: true,
+  },
   {
     title: 'Personal Portfolio Site',
     description: 'A modern, full-stack portfolio website built with Next.js, TypeScript, and Supabase. Features include a blog with comments, music showcase with YouTube integration, and admin dashboard.',
@@ -90,7 +109,15 @@ export default function ProjectsPage() {
                       <ExternalLinkIcon className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
-                  {project.liveUrl && (
+                  {project.liveUrl && project.isInternal ? (
+                    <Link
+                      href={project.liveUrl}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border-2 border-accent-teal/30 hover:border-accent-teal/60 text-text-primary rounded-lg transition-all duration-300 group"
+                    >
+                      <span className="font-medium">Play Game</span>
+                      <ExternalLinkIcon className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ) : project.liveUrl ? (
                     <a
                       href={project.liveUrl}
                       target="_blank"
@@ -100,7 +127,7 @@ export default function ProjectsPage() {
                       <span className="font-medium">View Live</span>
                       <ExternalLinkIcon className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                     </a>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
