@@ -6,6 +6,7 @@ import { getConfigObject, type EngineeringSocialConfig } from '@/lib/supabase/co
 import PostContent from '@/components/blog/PostContent';
 import TagsList from '@/components/blog/TagsList';
 import CommentSection from '@/components/blog/CommentSection';
+import HeroBackground from '@/components/blog/HeroBackground';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -95,8 +96,9 @@ export default async function BlogPostPage({ params }: PageProps) {
 
         {/* Article Header - Dramatic & Center Aligned */}
         <article>
-          <header className="pt-12 md:pt-16 mb-16 md:mb-20 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-text-primary mb-8 leading-tight font-montserrat max-w-4xl mx-auto">
+          <header className="relative pt-16 md:pt-24 mb-16 md:mb-20 text-center">
+            <HeroBackground imageUrl={post.featured_image_url} />
+            <h1 className="text-4xl font-bold text-text-primary mb-8 leading-tight font-montserrat max-w-4xl mx-auto">
               {post.title}
             </h1>
 
@@ -109,13 +111,6 @@ export default async function BlogPostPage({ params }: PageProps) {
               <span className="text-sm">Sam Swerczek</span>
             </div>
 
-            {/* Tags - Centered */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex justify-center mb-8">
-                <TagsList tags={post.tags} />
-              </div>
-            )}
-
             {/* Decorative Divider */}
             <div className="mt-12 h-px w-24 mx-auto bg-gradient-to-r from-transparent via-accent-teal/40 to-transparent" />
           </header>
@@ -123,6 +118,16 @@ export default async function BlogPostPage({ params }: PageProps) {
           {/* Article Content */}
           <PostContent content={post.content} />
         </article>
+
+        {/* Decorative Divider */}
+        <div className="mt-12 h-px w-24 mx-auto bg-gradient-to-r from-transparent via-accent-teal/40 to-transparent" />
+
+        {/* Tags - Bottom of Article */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex justify-center mt-12 mb-12">
+            <TagsList tags={post.tags} />
+          </div>
+        )}
 
         {/* Comments Section */}
         <div id="comments">
