@@ -116,13 +116,6 @@ export default async function BlogPostPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Excerpt - Centered & Dramatic */}
-            {post.excerpt && (
-              <p className="text-xl md:text-2xl text-text-secondary/80 font-light max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
-                {post.excerpt}
-              </p>
-            )}
-
             {/* Decorative Divider */}
             <div className="mt-12 h-px w-24 mx-auto bg-gradient-to-r from-transparent via-accent-teal/40 to-transparent" />
           </header>
