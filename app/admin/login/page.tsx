@@ -3,10 +3,11 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/components/providers/AuthProvider';
+import { GoogleIcon } from '@/components/ui/icons';
 
 export default function AdminLogin() {
   const router = useRouter();
-  const { signIn, loading } = useAuthContext();
+  const { signIn, signInWithGoogle, loading, user } = useAuthContext();
 
   const [formState, setFormState] = useState({
     email: '',
@@ -69,6 +70,20 @@ export default function AdminLogin() {
             Sign in to access the admin dashboard
           </p>
         </div>
+
+        {/* Admins are redirected to /admin by the middleware before this page
+            renders, so any authenticated user still seeing it is not on the
+            allowlist. Let them know rather than silently showing the form. */}
+        {!loading && user && (
+          <div
+            role="alert"
+            className="bg-yellow-900/20 border border-yellow-800 text-yellow-300 px-4 py-3 rounded-md text-sm text-center"
+          >
+            You&apos;re signed in as{' '}
+            <span className="font-medium">{user.email}</span>, but this account
+            doesn&apos;t have admin access.
+          </div>
+        )}
 
         <div className="bg-background-secondary rounded-lg shadow-lg p-8 border border-gray-800">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -164,6 +179,25 @@ export default function AdminLogin() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-gray-700" />
+            <span className="text-text-secondary text-sm">or</span>
+            <div className="flex-1 h-px bg-gray-700" />
+          </div>
+
+          {/* Google sign-in - admins signed in with an allow-listed Google
+              account are routed to /admin by the callback + middleware. */}
+          <button
+            type="button"
+            onClick={() => signInWithGoogle('/admin')}
+            disabled={isSubmitting || loading}
+            className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 bg-white text-gray-700 font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <GoogleIcon className="w-5 h-5" />
+            Sign in with Google
+          </button>
         </div>
 
         <p className="text-center text-sm text-text-secondary">

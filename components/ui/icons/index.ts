@@ -33,3 +33,4 @@ export { EmailIcon } from './EmailIcon';
 export { ExternalLinkIcon } from './ExternalLinkIcon';
 export { MessageIcon } from './MessageIcon';
 export { TrashIcon } from './TrashIcon';
+export { GoogleIcon } from './GoogleIcon';

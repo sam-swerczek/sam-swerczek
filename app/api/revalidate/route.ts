@@ -1,17 +1,20 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/auth/admin-allowlist';
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
+    // Verify authentication and admin authorization. This route is outside the
+    // /admin path, so middleware does not gate it - it must check the allowlist
+    // itself, otherwise any authenticated commenter could trigger revalidation.
     const supabase = await createRouteClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (authError || !isAdminEmail(user?.email)) {
       return NextResponse.json(
-        { error: 'Unauthorized: Authentication required' },
-        { status: 401 }
+        { error: 'Unauthorized: admin access required' },
+        { status: 403 }
       );
     }
 

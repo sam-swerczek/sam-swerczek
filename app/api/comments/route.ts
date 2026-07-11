@@ -120,10 +120,31 @@ export async function POST(request: NextRequest) {
     // Strip out any HTML/script tags - plain text only
     const sanitizedContent = sanitizeText(trimmedContent);
 
+    // Snapshot the author's display identity from their verified auth metadata
+    // (Google provides full_name / name / avatar_url). Captured server-side from
+    // the authenticated user so it cannot be spoofed by the client. Sanitize the
+    // name for the same reason we sanitize content.
+    const metadata = user.user_metadata ?? {};
+    const rawName = metadata.full_name || metadata.name || user.email || 'Anonymous';
+    const authorName = sanitizeText(String(rawName)).slice(0, 255) || 'Anonymous';
+
+    // Only store https avatar URLs within a sane length. This is rendered as an
+    // <img src>, so we reject anything that isn't a plain https URL (e.g.
+    // data:/javascript: schemes) to avoid storing attacker-influenced values.
+    const rawAvatar = metadata.avatar_url;
+    const avatarUrl =
+      typeof rawAvatar === 'string' &&
+      rawAvatar.startsWith('https://') &&
+      rawAvatar.length <= 2048
+        ? rawAvatar
+        : null;
+
     // Create comment - pass authenticated supabase client
     const comment = await createComment(supabase, {
       post_id: postId,
       author_id: user.id,
+      author_name: authorName,
+      author_avatar_url: avatarUrl,
       content: sanitizedContent,
       is_visible: true, // Auto-visible (no moderation for now)
     });

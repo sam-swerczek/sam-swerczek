@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isAdminEmail } from '@/lib/auth/admin-allowlist';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -53,18 +54,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Determine admin status via the ADMIN_EMAILS allowlist. Any Google account
+  // can authenticate (to leave comments), so authentication alone must NOT
+  // grant admin access — only allow-listed emails are treated as admins.
+  const isAdmin = isAdminEmail(user?.email);
+
   // Protect admin routes (except login page)
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    if (!user) {
-      // No user, redirect to login
+    if (!isAdmin) {
+      // Not an admin (anonymous or a non-admin commenter) - redirect to login
       const url = request.nextUrl.clone();
       url.pathname = '/admin/login';
       return NextResponse.redirect(url);
     }
   }
 
-  // Redirect logged-in users away from login page
-  if (pathname === '/admin/login' && user) {
+  // Redirect logged-in admins away from login page. Non-admin authenticated
+  // users (commenters) are left alone so they don't get bounced to /admin.
+  if (pathname === '/admin/login' && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin';
     return NextResponse.redirect(url);

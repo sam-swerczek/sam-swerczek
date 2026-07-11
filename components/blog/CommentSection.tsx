@@ -6,14 +6,14 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import CommentCard from './CommentCard';
 import CommentForm from './CommentForm';
 import Button from '@/components/ui/Button';
-import { MessageIcon, SpinnerIcon } from '@/components/ui/icons';
+import { MessageIcon, SpinnerIcon, GoogleIcon } from '@/components/ui/icons';
 
 interface CommentSectionProps {
   postId: string;
 }
 
 export default function CommentSection({ postId }: CommentSectionProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -95,13 +95,16 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       {/* Login prompt for non-authenticated users */}
       {!authLoading && !user && (
         <div className="mb-8 p-6 bg-background-secondary/20 border border-text-secondary/20 rounded-lg text-center">
-          <p className="text-text-secondary">
-            Please{' '}
-            <a href="/admin/login" className="text-accent-blue hover:text-accent-teal transition-colors underline">
-              sign in
-            </a>
-            {' '}to leave a comment.
+          <p className="text-text-secondary mb-4">
+            Sign in to join the conversation.
           </p>
+          <button
+            onClick={() => signInWithGoogle()}
+            className="inline-flex items-center gap-3 px-5 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 hover:shadow-md transition-all duration-200"
+          >
+            <GoogleIcon className="w-5 h-5" />
+            Sign in with Google
+          </button>
         </div>
       )}
 
