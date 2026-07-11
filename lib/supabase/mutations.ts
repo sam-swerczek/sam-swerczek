@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createServerClient } from './server';
 import { supabase } from './client';
+import { verifyAdminAuth } from '@/lib/auth/verify-admin';
 import type { Song, CreateSongData, UpdateSongData, Comment, CreateCommentData } from '../types';
 
 /**
@@ -36,6 +37,7 @@ export async function getAllSongs(): Promise<Song[]> {
  * @returns The created song
  */
 export async function createSong(songData: CreateSongData): Promise<Song> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   // If display_order not provided, get the max display_order and add 1
@@ -79,6 +81,7 @@ export async function createSong(songData: CreateSongData): Promise<Song> {
  * @returns The updated song
  */
 export async function updateSong(id: string, songData: UpdateSongData): Promise<Song> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   // If setting as featured, unfeature all other songs first
@@ -113,6 +116,7 @@ export async function updateSong(id: string, songData: UpdateSongData): Promise<
  * @returns Success status
  */
 export async function deleteSong(id: string): Promise<boolean> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { error } = await supabase
@@ -140,6 +144,7 @@ export async function deleteSong(id: string): Promise<boolean> {
  * @returns Success status
  */
 export async function permanentlyDeleteSong(id: string): Promise<boolean> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { error } = await supabase
@@ -164,6 +169,7 @@ export async function permanentlyDeleteSong(id: string): Promise<boolean> {
  * @returns Success status
  */
 export async function reorderSongs(orders: { id: string; display_order: number }[]): Promise<boolean> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   // Update each song's display_order
@@ -195,6 +201,7 @@ export async function reorderSongs(orders: { id: string; display_order: number }
  * @returns The updated song
  */
 export async function setFeaturedSong(id: string): Promise<Song> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   // First, unfeature all songs
@@ -249,6 +256,7 @@ async function unfeaturedAllSongs(): Promise<void> {
  * @returns The updated song
  */
 export async function toggleSongActive(id: string, currentStatus: boolean): Promise<Song> {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { data, error } = await supabase

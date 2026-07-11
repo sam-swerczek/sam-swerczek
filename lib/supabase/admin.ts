@@ -1,23 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createServerClient, createRouteClient } from './server';
+import { createServerClient } from './server';
+import { verifyAdminAuth } from '@/lib/auth/verify-admin';
 import type { Post, SiteConfig } from '../types';
-
-/**
- * Verify user authentication for admin operations
- * Throws error if user is not authenticated
- */
-async function verifyAdminAuth() {
-  const authClient = await createRouteClient();
-  const { data: { user }, error: authError } = await authClient.auth.getUser();
-
-  if (authError || !user) {
-    throw new Error('Unauthorized: User must be authenticated to perform admin operations');
-  }
-
-  return user;
-}
 
 // ADMIN QUERIES (using service role key for full access)
 
@@ -102,6 +88,7 @@ export async function getPostStats() {
 
 // Create a new post
 export async function createPost(postData: Omit<Post, 'id' | 'created_at' | 'updated_at'>) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   // If author_id is not provided or is empty, we need to get it from the session
@@ -130,6 +117,7 @@ export async function createPost(postData: Omit<Post, 'id' | 'created_at' | 'upd
 
 // Update an existing post
 export async function updatePost(id: string, postData: Partial<Post>) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -155,6 +143,7 @@ export async function updatePost(id: string, postData: Partial<Post>) {
 
 // Delete a post
 export async function deletePost(id: string) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { error } = await supabase
@@ -175,6 +164,7 @@ export async function deletePost(id: string) {
 
 // Toggle post published status
 export async function togglePostPublished(id: string, currentStatus: boolean) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const updates: Partial<Post> = {
@@ -318,6 +308,7 @@ export async function createMedia(mediaData: {
   caption?: string;
   uploaded_by: string;
 }) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { data, error } = await supabase
@@ -335,6 +326,7 @@ export async function createMedia(mediaData: {
 }
 
 export async function deleteMedia(id: string) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const { error } = await supabase
@@ -359,6 +351,7 @@ export async function deleteMedia(id: string) {
  * @returns The public URL of the uploaded image
  */
 export async function uploadProfileImage(formData: FormData) {
+  await verifyAdminAuth();
   const supabase = createServerClient();
 
   const file = formData.get('file') as File;

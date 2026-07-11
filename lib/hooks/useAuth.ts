@@ -101,6 +101,34 @@ export function useAuth() {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
+    try {
+      // Send users back to where they started (e.g. the blog post they were
+      // reading) after the OAuth round-trip completes.
+      const next = redirectTo ?? window.location.pathname;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
+      });
+
+      if (error) {
+        console.error('[useAuth] Google sign in error:', error);
+        setAuthState(prev => ({ ...prev, error: error.message }));
+        return { success: false, error: error.message };
+      }
+
+      // On success the browser is redirected to Google, so nothing else to do.
+      return { success: true, error: null };
+    } catch (err) {
+      console.error('[useAuth] Google sign in exception:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setAuthState(prev => ({ ...prev, error: errorMessage }));
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -143,6 +171,7 @@ export function useAuth() {
     loading: authState.loading,
     error: authState.error,
     signIn,
+    signInWithGoogle,
     signOut,
     getUser,
   };

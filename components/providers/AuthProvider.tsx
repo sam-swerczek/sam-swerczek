@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error: string | null }>;
+  signInWithGoogle: (redirectTo?: string) => Promise<{ success: boolean; error: string | null }>;
   signOut: () => Promise<{ success: boolean; error: string | null }>;
   getUser: () => User | null;
 }

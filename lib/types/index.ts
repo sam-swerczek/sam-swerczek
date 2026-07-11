@@ -85,6 +85,8 @@ export interface Comment {
   updated_at: string;
   post_id: string;
   author_id: string;
+  author_name: string | null;
+  author_avatar_url: string | null;
   content: string;
   is_visible: boolean;
 }

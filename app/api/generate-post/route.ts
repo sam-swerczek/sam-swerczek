@@ -4,6 +4,7 @@ import { generateSlug } from '@/lib/utils/slugify';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { rateLimit, getClientIp, RATE_LIMITS } from '@/lib/utils/rate-limiter';
+import { isAdminEmail } from '@/lib/auth/admin-allowlist';
 
 /**
  * POST /api/generate-post
@@ -39,10 +40,13 @@ export async function POST(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    // Admin-only: this route spends the owner's Anthropic API credits, and it
+    // lives outside the /admin path so middleware does not gate it. Any Google
+    // account can now sign in, so we must enforce the admin allowlist here.
+    if (!isAdminEmail(user?.email)) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in to generate blog posts.' },
-        { status: 401 }
+        { error: 'Unauthorized: admin access required.' },
+        { status: 403 }
       );
     }
 

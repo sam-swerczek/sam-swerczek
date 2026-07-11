@@ -27,10 +27,15 @@ export default function CommentCard({ comment, onDelete }: CommentCardProps) {
     minute: '2-digit',
   });
 
-  // Generate initials from author_id (simplified - in real app, fetch user data)
-  const getInitials = (id: string) => {
-    return id.substring(0, 2).toUpperCase();
-  };
+  // Display name and initials from the snapshotted author metadata, with
+  // graceful fallbacks for older comments that predate these fields.
+  const displayName = comment.author_name?.trim() || 'Anonymous';
+  const initials = displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase() || '?';
 
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this comment?')) {
@@ -64,14 +69,24 @@ export default function CommentCard({ comment, onDelete }: CommentCardProps) {
     <div className="bg-background-secondary/30 border border-text-secondary/10 rounded-lg p-6 mb-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          {/* Avatar placeholder */}
-          <div className="w-10 h-10 rounded-full bg-accent-blue/20 border border-accent-blue/40 flex items-center justify-center text-accent-blue font-semibold text-sm">
-            {getInitials(comment.author_id)}
-          </div>
+          {/* Avatar - real photo from the auth provider when available */}
+          {comment.author_avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={comment.author_avatar_url}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="w-10 h-10 rounded-full object-cover border border-accent-blue/40"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-accent-blue/20 border border-accent-blue/40 flex items-center justify-center text-accent-blue font-semibold text-sm">
+              {initials}
+            </div>
+          )}
 
           <div>
             <div className="text-text-primary font-medium">
-              User {getInitials(comment.author_id)}
+              {displayName}
             </div>
             <time className="text-text-secondary/70 text-sm" dateTime={comment.created_at}>
               {formattedDate}
