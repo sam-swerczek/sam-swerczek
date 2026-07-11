@@ -11,7 +11,8 @@ export default function PostContent({ content, className = '' }: PostContentProp
       // Handle bold text first (before italic to avoid conflicts)
       .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
       // Handle italic text (single asterisks not part of bold)
-      .replace(/\*(.+?)\*/g, '<em class="text-text-primary italic">$1</em>')
+      // Inherit surrounding text color so italics read as emphasis, not a brighter highlight
+      .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
       // Handle inline code
       .replace(/`(.+?)`/g, '<code class="px-2 py-1 bg-background-secondary text-accent-teal rounded text-sm font-mono">$1</code>');
   };
