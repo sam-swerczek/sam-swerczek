@@ -13,7 +13,7 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ postId }: CommentSectionProps) {
-  const { user, loading: authLoading, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -56,6 +56,15 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     fetchComments(); // Refresh comments
   };
 
+  const handleSignOut = async () => {
+    const { success, error: signOutError } = await signOut();
+    if (success) {
+      setShowForm(false);
+    } else {
+      setError(signOutError || 'Failed to sign out. Please try again.');
+    }
+  };
+
   return (
     <section className="mt-16 pt-12 border-t border-text-secondary/10">
       {/* Section header - Smaller & More Classy */}
@@ -80,6 +89,26 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           </button>
         )}
       </div>
+
+      {/* Signed-in identity + account switch. Lets a user see who they're
+          posting as and sign out to switch to a different Google account. */}
+      {!authLoading && user && (
+        <div className="flex items-center justify-end gap-2 -mt-4 mb-6 text-xs text-text-secondary/60">
+          <span>
+            Commenting as{' '}
+            <span className="text-text-secondary/90">
+              {String(user.user_metadata?.full_name || user.user_metadata?.name || 'Anonymous')}
+            </span>
+          </span>
+          <span aria-hidden="true">·</span>
+          <button
+            onClick={handleSignOut}
+            className="hover:text-accent-teal underline underline-offset-2 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
 
       {/* Comment form */}
       {showForm && user && (

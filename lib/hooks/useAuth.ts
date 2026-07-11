@@ -110,6 +110,11 @@ export function useAuth() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          // Always show Google's account chooser instead of silently reusing
+          // whichever Google session the browser already has.
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
 
