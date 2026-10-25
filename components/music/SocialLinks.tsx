@@ -81,13 +81,9 @@ export default function SocialLinks({
   // Filter out links without URLs
   const socialLinks = allLinks.filter(link => link.url);
 
-  // Require exactly 4 links for display
-  if (socialLinks.length !== 4) {
-    return (
-      <div className="text-center text-text-secondary">
-        Please configure exactly 4 social media links to display the Connect section.
-      </div>
-    );
+  // Render whichever links are configured; hide the section entirely if none are
+  if (socialLinks.length === 0) {
+    return null;
   }
 
   const layoutClasses = layout === "grid"
