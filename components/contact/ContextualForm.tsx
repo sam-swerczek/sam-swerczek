@@ -139,6 +139,7 @@ export default function ContextualForm({
                   instagramUrl={instagramUrl}
                   facebookUrl={facebookUrl}
                   linkedinUrl={linkedinUrl}
+                  tiktokUrl={tiktokUrl}
                   patreonUrl={patreonUrl}
                   layout="horizontal"
                 />

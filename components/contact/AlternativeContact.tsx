@@ -44,6 +44,7 @@ export default function AlternativeContact({
               instagramUrl={instagramUrl}
               facebookUrl={facebookUrl}
               linkedinUrl={linkedinUrl}
+              tiktokUrl={tiktokUrl}
               patreonUrl={patreonUrl}
               layout="horizontal"
             />
